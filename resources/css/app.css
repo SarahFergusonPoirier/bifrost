@@ -23,6 +23,7 @@
 @import './layouts/app-layout.css';
 
 /* Pages */
+@import './views/home.css';
 @import './views/projects.css';
 @import './views/project-details.css';
 @import './views/project-create.css';
