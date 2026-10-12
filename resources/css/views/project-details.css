@@ -1,0 +1,169 @@
+.project-details-view {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1rem 0 3rem;
+    color: #292824;
+}
+
+.project-details-view > a {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    color: #68665f;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.project-details-view > a:hover {
+    color: #292824;
+}
+
+.project-details-view .page-header {
+    margin-bottom: 0;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    background: #fff;
+    border: 1px solid #e8e5df;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgb(41 40 36 / 4%);
+}
+
+.project-details-view .page-header h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    line-height: 1.2;
+    font-weight: 650;
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+}
+
+.project-details-view .page-header p {
+    color: #68665f;
+    font-size: 1rem;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+
+.project-details-view form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+}
+
+.project-details-view form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-details-view form label {
+    color: #292824;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.project-details-view form input,
+.project-details-view form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    color: #292824;
+    background: #fdfcfb;
+    border: 1px solid #dcd8d0;
+    border-radius: 9px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.project-details-view form input:focus,
+.project-details-view form textarea:focus {
+    background: #fff;
+    border-color: #6d685d;
+    box-shadow: 0 0 0 3px rgb(109 104 93 / 12%);
+}
+
+.project-details-view form textarea {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.project-details-view form button,
+.project-details-view .page-header > button {
+    align-self: flex-start;
+    padding: 0.8rem 1.15rem;
+    color: #fff;
+    background: #292824;
+    border: 1px solid #292824;
+    border-radius: 9px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.project-details-view form button:hover:not(:disabled),
+.project-details-view .page-header > button:hover {
+    background: #45433c;
+}
+
+.project-details-view form button:active:not(:disabled),
+.project-details-view .page-header > button:active {
+    transform: translateY(1px);
+}
+
+.project-details-view form button:focus-visible,
+.project-details-view .page-header > button:focus-visible,
+.project-details-view > a:focus-visible {
+    outline: 3px solid #a8a092;
+    outline-offset: 3px;
+}
+
+.project-details-view form button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.project-details-view form button[type="button"] {
+    color: #45433c;
+    background: #f1efe9;
+    border-color: #e4e0d8;
+}
+
+.project-details-view form button[type="button"]:hover:not(:disabled) {
+    background: #e7e4dc;
+}
+
+.project-details-view .error {
+    padding: 0.85rem 1rem;
+    color: #a12622;
+    background: #fff1f0;
+    border: 1px solid #f3d0cc;
+    border-radius: 9px;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .project-details-view {
+        padding-top: 0.25rem;
+    }
+
+    .project-details-view .page-header {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .project-details-view form {
+        gap: 1.25rem;
+    }
+
+    .project-details-view form button {
+        width: 100%;
+    }
+}

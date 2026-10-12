@@ -1,0 +1,16 @@
+.app-header {
+    padding: 1rem 2rem;
+    background-color: #292824;
+}
+
+.app-logo {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-content {
+    width: min(100% - 2rem, 1000px);
+    margin: 2rem auto;
+}

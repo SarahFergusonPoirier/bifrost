@@ -1,0 +1,172 @@
+.project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+.project-form input,
+.project-form textarea,
+.project-form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    border: 1px solid #d1cec7;
+    border-radius: 4px;
+}
+
+.project-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.form-actions button,
+.section-heading button {
+    padding: 0.65rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #292824;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.form-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-actions .button-secondary {
+    background-color: #e7e4de;
+    color: #292824;
+}
+
+.error {
+    color: #b42318;
+}
+
+/* Saisie des tags */
+.project-tag-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.tag-entry {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.tag-entry input {
+    flex: 1;
+    min-width: 0;
+}
+
+.tag-entry button {
+    padding: 0.65rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #292824;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.tag-entry button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Tags sélectionnés */
+.selected-tags,
+.project-card-tags,
+.project-tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #d1cec7;
+    border-radius: 999px;
+    background-color: #f2f0eb;
+    color: #292824;
+    font-size: 0.875rem;
+}
+
+.selected-tags .tag-chip button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Suggestions de tags */
+.tag-suggestions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.75rem;
+    border: 1px solid #e2dfd8;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+.tag-suggestions p {
+    margin: 0;
+    color: #68665f;
+    font-size: 0.875rem;
+}
+
+.tag-suggestions button {
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: transparent;
+    color: #292824;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tag-suggestions button:hover {
+    background-color: #f2f0eb;
+}
+
+.tag-suggestion-hint {
+    padding-top: 0.35rem;
+}
+
+@media (max-width: 480px) {
+    .project-form {
+        padding: 1rem;
+    }
+
+    .tag-entry {
+        flex-direction: column;
+    }
+
+    .tag-entry button {
+        width: 100%;
+    }
+}

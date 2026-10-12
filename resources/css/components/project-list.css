@@ -1,0 +1,252 @@
+.projects-view {
+    padding-bottom: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.page-header p {
+    color: #68665f;
+}
+
+.projects-section {
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border: 1px solid #e8e5df;
+    border-radius: 12px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.section-heading button {
+    padding: 0.7rem 1rem;
+    color: #ffffff;
+    background-color: #292824;
+    border: 1px solid #292824;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.section-heading button:hover {
+    background-color: #45433c;
+}
+
+.project-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+    gap: 1rem;
+    margin-top: 1.75rem;
+}
+
+.project-search,
+.project-sort,
+.project-tag-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-filters label {
+    color: #45433c;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.project-filters input,
+.project-filters select {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.7rem 0.85rem;
+    color: #292824;
+    background-color: #fdfcfb;
+    border: 1px solid #dcd8d0;
+    border-radius: 8px;
+    font: inherit;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.project-filters input:focus,
+.project-filters select:focus {
+    border-color: #6d685d;
+    box-shadow: 0 0 0 3px rgb(109 104 93 / 12%);
+}
+
+/* Filtres par tag */
+.project-tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.project-tag-filters > span {
+    margin-right: 0.25rem;
+    color: #45433c;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Apparence commune des tags */
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 0.4rem 0.75rem;
+    color: #45433c;
+    background-color: #f2f0eb;
+    border: 1px solid #dedad1;
+    border-radius: 999px;
+    font-size: 0.825rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+/* État normal des boutons de filtre */
+.projects-section .project-tag-filters button.tag-chip {
+    color: #45433c;
+    background: #f2f0eb;
+    background-color: #f2f0eb;
+    border: 1px solid #dedad1;
+    cursor: pointer;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+/* Survol d'un tag non sélectionné */
+.projects-section .project-tag-filters button.tag-chip:not(.tag-chip-active):hover {
+    color: #45433c;
+    background: #e7e4de;
+    background-color: #e7e4de;
+    border-color: #c8c2b7;
+}
+
+/* Tag sélectionné */
+.projects-section .project-tag-filters button.tag-chip.tag-chip-active,
+.projects-section .project-tag-filters button.tag-chip.tag-chip-active:hover {
+    color: #ffffff;
+    background: #292824;
+    background-color: #292824;
+    border-color: #292824;
+}
+
+/* Cartes de projets */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.project-card {
+    min-width: 0;
+    padding: 1.15rem;
+    background: #ffffff;
+    border: 1px solid #e2dfd8;
+    border-radius: 10px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.project-card:hover {
+    border-color: #c8c2b7;
+    box-shadow: 0 5px 18px rgb(41 40 36 / 5%);
+    transform: translateY(-2px);
+}
+
+.project-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.project-link:focus-visible {
+    outline: 2px solid #6d685d;
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+.project-card h3 {
+    margin: 0 0 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.project-card p {
+    margin-bottom: 0;
+    color: #68665f;
+    font-size: 0.925rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+/* Tags affichés dans les cartes */
+.project-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.project-card-tags .tag-chip {
+    color: #45433c;
+    background-color: #f2f0eb;
+    border-color: #dedad1;
+}
+
+.tag-filter-button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+/* Affichage sur petit écran */
+@media (max-width: 600px) {
+    .projects-section {
+        padding: 1rem;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .project-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .project-grid {
+        grid-template-columns: 1fr;
+    }
+}
