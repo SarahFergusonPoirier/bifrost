@@ -1,6 +1,7 @@
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useProjects } from '../composables/useProjects';
+import { updateProjectFavorite } from '../services/project';
 
 function getProjectDate(project) {
     return new Date(project.updated_at || project.created_at || 0);
@@ -64,6 +65,9 @@ export default {
             loadProjects,
         } = useProjects();
 
+        const favoriteLoadingIds = ref([]);
+        const favoriteErrors = ref({});
+
         const sortedProjects = computed(() => {
             return [...projects.value].sort((a, b) => {
                 return getProjectDate(b) - getProjectDate(a);
@@ -89,6 +93,55 @@ export default {
             );
         }
 
+        function isFavoriteLoading(projectId) {
+            return favoriteLoadingIds.value.includes(projectId);
+        }
+
+        async function toggleFavorite(project) {
+            if (!project || isFavoriteLoading(project.id)) {
+                return;
+            }
+
+            const projectId = project.id;
+            const newFavoriteState = !project.is_favorite;
+
+            favoriteLoadingIds.value = [
+                ...favoriteLoadingIds.value,
+                projectId,
+            ];
+
+            const updatedErrors = { ...favoriteErrors.value };
+            delete updatedErrors[projectId];
+            favoriteErrors.value = updatedErrors;
+
+            try {
+                await updateProjectFavorite(
+                    projectId,
+                    newFavoriteState
+                );
+
+                const currentProject = projects.value.find(
+                    (item) => item.id === projectId
+                );
+
+                if (currentProject) {
+                    currentProject.is_favorite = newFavoriteState;
+                }
+            } catch (error) {
+                favoriteErrors.value = {
+                    ...favoriteErrors.value,
+                    [projectId]:
+                        error.message
+                        || 'Impossible de modifier ce favori.',
+                };
+            } finally {
+                favoriteLoadingIds.value =
+                    favoriteLoadingIds.value.filter(
+                        (id) => id !== projectId
+                    );
+            }
+        }
+
         onMounted(() => {
             loadProjects();
         });
@@ -98,9 +151,12 @@ export default {
             loadError,
             featuredProject,
             recentProjects,
+            favoriteErrors,
             projectTags,
             remainingTagCount,
             formatRelativeDate,
+            isFavoriteLoading,
+            toggleFavorite,
         };
     },
 };

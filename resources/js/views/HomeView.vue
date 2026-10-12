@@ -28,10 +28,7 @@
             </RouterLink>
         </section>
 
-        <section
-            v-else-if="!featuredProject"
-            class="home-empty"
-        >
+        <section v-else-if="!featuredProject" class="home-empty">
             <div class="home-empty__symbol" aria-hidden="true">
                 ✦
             </div>
@@ -55,7 +52,9 @@
             <section class="home-featured-section">
                 <div class="home-section-heading">
                     <div>
-                        <p class="home-eyebrow">POUR REPRENDRE OÙ TU EN ÉTAIS</p>
+                        <p class="home-eyebrow">
+                            POUR REPRENDRE OÙ TU EN ÉTAIS
+                        </p>
                         <h2>Ton projet à la une</h2>
                     </div>
                 </div>
@@ -80,7 +79,9 @@
                             aria-hidden="true"
                         >
                             <span>✦</span>
-                            <span>Ton prochain chef-d’œuvre commence ici</span>
+                            <span>
+                                Ton prochain chef-d’œuvre commence ici
+                            </span>
                         </div>
                     </RouterLink>
 
@@ -95,7 +96,45 @@
                             }}
                         </p>
 
-                        <h3>{{ featuredProject.name }}</h3>
+                        <div class="home-project-title">
+                            <h3>{{ featuredProject.name }}</h3>
+
+                            <button
+                                type="button"
+                                class="home-favorite-button"
+                                :class="{
+                                    'home-favorite-button--active':
+                                        featuredProject.is_favorite
+                                }"
+                                :aria-pressed="Boolean(featuredProject.is_favorite)"
+                                :aria-label="
+                                    featuredProject.is_favorite
+                                        ? 'Retirer des favoris'
+                                        : 'Ajouter aux favoris'
+                                "
+                                :title="
+                                    featuredProject.is_favorite
+                                        ? 'Retirer des favoris'
+                                        : 'Ajouter aux favoris'
+                                "
+                                :disabled="
+                                    isFavoriteLoading(featuredProject.id)
+                                "
+                                @click.stop="toggleFavorite(featuredProject)"
+                            >
+                                {{
+                                    featuredProject.is_favorite ? '★' : '☆'
+                                }}
+                            </button>
+                        </div>
+
+                        <p
+                            v-if="favoriteErrors[featuredProject.id]"
+                            class="home-favorite-error"
+                            role="alert"
+                        >
+                            {{ favoriteErrors[featuredProject.id] }}
+                        </p>
 
                         <p
                             v-if="featuredProject.description"
@@ -148,7 +187,9 @@
             <section class="home-recent-section">
                 <div class="home-section-heading">
                     <div>
-                        <p class="home-eyebrow">TES DERNIÈRES CRÉATIONS</p>
+                        <p class="home-eyebrow">
+                            TES DERNIÈRES CRÉATIONS
+                        </p>
                         <h2>Activité récente</h2>
                     </div>
 
@@ -193,47 +234,91 @@
                                     <span>✦</span>
                                 </div>
                             </div>
-
-                            <div class="home-recent-card__content">
-                                <p class="home-card-meta">
-                                    {{
-                                        formatRelativeDate(
-                                            project.updated_at
-                                            || project.created_at
-                                        )
-                                    }}
-                                </p>
-
-                                <h3>{{ project.name }}</h3>
-
-                                <p
-                                    v-if="project.description"
-                                    class="home-recent-card__description"
-                                >
-                                    {{ project.description }}
-                                </p>
-
-                                <div
-                                    v-if="project.tags?.length"
-                                    class="home-tags"
-                                >
-                                    <span
-                                        v-for="tag in projectTags(project, 2)"
-                                        :key="tag.id"
-                                        class="tag-chip"
-                                    >
-                                        {{ tag.name }}
-                                    </span>
-
-                                    <span
-                                        v-if="remainingTagCount(project, 2)"
-                                        class="tag-chip home-tags__more"
-                                    >
-                                        +{{ remainingTagCount(project, 2) }}
-                                    </span>
-                                </div>
-                            </div>
                         </RouterLink>
+
+                        <div class="home-recent-card__content">
+                            <p class="home-card-meta">
+                                {{
+                                    formatRelativeDate(
+                                        project.updated_at
+                                        || project.created_at
+                                    )
+                                }}
+                            </p>
+
+                            <div class="home-project-title">
+                                <h3>
+                                    <RouterLink
+                                        :to="{
+                                            name: 'project-details',
+                                            params: { id: project.id }
+                                        }"
+                                        class="home-project-title__link"
+                                    >
+                                        {{ project.name }}
+                                    </RouterLink>
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    class="home-favorite-button"
+                                    :class="{
+                                        'home-favorite-button--active':
+                                            project.is_favorite
+                                    }"
+                                    :aria-pressed="Boolean(project.is_favorite)"
+                                    :aria-label="
+                                        project.is_favorite
+                                            ? `Retirer ${project.name} des favoris`
+                                            : `Ajouter ${project.name} aux favoris`
+                                    "
+                                    :title="
+                                        project.is_favorite
+                                            ? 'Retirer des favoris'
+                                            : 'Ajouter aux favoris'
+                                    "
+                                    :disabled="isFavoriteLoading(project.id)"
+                                    @click.stop="toggleFavorite(project)"
+                                >
+                                    {{ project.is_favorite ? '★' : '☆' }}
+                                </button>
+                            </div>
+
+                            <p
+                                v-if="favoriteErrors[project.id]"
+                                class="home-favorite-error"
+                                role="alert"
+                            >
+                                {{ favoriteErrors[project.id] }}
+                            </p>
+
+                            <p
+                                v-if="project.description"
+                                class="home-recent-card__description"
+                            >
+                                {{ project.description }}
+                            </p>
+
+                            <div
+                                v-if="project.tags?.length"
+                                class="home-tags"
+                            >
+                                <span
+                                    v-for="tag in projectTags(project, 2)"
+                                    :key="tag.id"
+                                    class="tag-chip"
+                                >
+                                    {{ tag.name }}
+                                </span>
+
+                                <span
+                                    v-if="remainingTagCount(project, 2)"
+                                    class="tag-chip home-tags__more"
+                                >
+                                    +{{ remainingTagCount(project, 2) }}
+                                </span>
+                            </div>
+                        </div>
                     </article>
                 </div>
 
