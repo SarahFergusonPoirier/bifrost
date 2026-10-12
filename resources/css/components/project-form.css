@@ -170,3 +170,53 @@
         width: 100%;
     }
 }
+
+/* Image de couverture du projet */
+.project-image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.project-image-preview {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid #e2dfd8;
+    border-radius: 8px;
+    background-color: #f2f0eb;
+}
+
+.project-image-preview__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.project-image-preview__placeholder {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #68665f;
+    background: linear-gradient(135deg, #f2f0eb, #e7e4de);
+    font-size: 0.9rem;
+}
+
+.project-image-preview__placeholder span:first-child {
+    font-size: 2rem;
+}
+
+.project-image-upload input[type="file"] {
+    padding: 0.5rem 0;
+    border: none;
+}
+
+.project-image-remove {
+    align-self: flex-start;
+}

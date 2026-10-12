@@ -29,6 +29,25 @@
                     }"
                     class="project-link"
                 >
+                    <div class="project-card-cover">
+                        <img
+                            v-if="project.cover_image"
+                            :src="`/storage/${project.cover_image}`"
+                            :alt="`Couverture du projet ${project.name}`"
+                            class="project-card-cover__image"
+                            loading="lazy"
+                        >
+
+                        <div
+                            v-else
+                            class="project-card-cover__placeholder"
+                            aria-hidden="true"
+                        >
+                            <span class="project-card-cover__symbol">✦</span>
+                            <span>Couverture du projet</span>
+                        </div>
+                    </div>
+
                     <h3>{{ project.name }}</h3>
 
                     <p v-if="project.description">

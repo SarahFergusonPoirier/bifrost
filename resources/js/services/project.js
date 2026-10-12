@@ -30,6 +30,33 @@ async function request(url, options = {}) {
     return data;
 }
 
+function hasCoverImage(project) {
+    return project.coverImage instanceof File;
+}
+
+function toFormData(project) {
+    const formData = new FormData();
+
+    formData.append('name', project.name);
+    formData.append('description', project.description ?? '');
+
+    (project.tags ?? []).forEach((tag) => {
+        formData.append('tags[]', tag);
+    });
+
+    if (hasCoverImage(project)) {
+        formData.append('cover_image', project.coverImage);
+    }
+
+    return formData;
+}
+
+function toJsonProject(project) {
+    const { coverImage, ...data } = project;
+
+    return data;
+}
+
 export function getProjects(tagId = null) {
     const url = tagId
         ? `/api/projects?tag_id=${encodeURIComponent(tagId)}`
@@ -39,22 +66,41 @@ export function getProjects(tagId = null) {
 }
 
 export function createProject(project) {
+    if (hasCoverImage(project)) {
+        return request('/api/projects', {
+            method: 'POST',
+            body: toFormData(project),
+        });
+    }
+
     return request('/api/projects', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(project),
+        body: JSON.stringify(toJsonProject(project)),
     });
 }
 
 export function updateProject(id, project) {
+    if (hasCoverImage(project)) {
+        const formData = toFormData(project);
+
+        // Laravel interprète cette requête comme une mise à jour PUT.
+        formData.append('_method', 'PUT');
+
+        return request(`/api/projects/${id}`, {
+            method: 'POST',
+            body: formData,
+        });
+    }
+
     return request(`/api/projects/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(project),
+        body: JSON.stringify(toJsonProject(project)),
     });
 }
 

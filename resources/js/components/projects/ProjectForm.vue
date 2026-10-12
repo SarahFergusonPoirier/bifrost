@@ -18,7 +18,53 @@
             placeholder="Décris ton projet..."
         ></textarea>
 
+        <div class="project-image-upload">
+            <label for="project-cover-image">
+                Image de couverture (facultatif)
+            </label>
+
+            <div class="project-image-preview">
+                <img
+                    v-if="imagePreviewUrl"
+                    :src="imagePreviewUrl"
+                    alt="Aperçu de la couverture du projet"
+                    class="project-image-preview__image"
+                >
+
+                <div
+                    v-else
+                    class="project-image-preview__placeholder"
+                    aria-label="Aucune image sélectionnée"
+                >
+                    <span aria-hidden="true">✦</span>
+                    <span>Couverture du projet</span>
+                </div>
+            </div>
+
+            <input
+                id="project-cover-image"
+                type="file"
+                accept="image/*"
+                :disabled="saving"
+                @change="handleImageChange"
+            >
+
+            <button
+                v-if="coverImage"
+                type="button"
+                class="button-secondary project-image-remove"
+                :disabled="saving"
+                @click="removeImage"
+            >
+                Retirer l’image
+            </button>
+        </div>
+
         <ProjectTagInput v-model="tags" />
+
+        <p v-if="imageError" class="error">
+            {{ imageError }}
+        </p>
 
         <p v-if="error" class="error">{{ error }}</p>
 

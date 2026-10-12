@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -28,11 +29,23 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string'],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['required', 'string', 'max:255'],
+            'cover_image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:5120',
+            ],
         ]);
 
         $tagNames = $validated['tags'] ?? [];
 
-        unset($validated['tags']);
+        unset($validated['tags'], $validated['cover_image']);
+
+        if ($request->hasFile('cover_image')) {
+            $validated['cover_image'] = $request
+                ->file('cover_image')
+                ->store('project-covers', 'public');
+        }
 
         $project = Project::create($validated);
 
@@ -48,12 +61,28 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string'],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['required', 'string', 'max:255'],
+            'cover_image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:5120',
+            ],
         ]);
 
         $tagsWereProvided = array_key_exists('tags', $validated);
         $tagNames = $validated['tags'] ?? [];
 
-        unset($validated['tags']);
+        unset($validated['tags'], $validated['cover_image']);
+
+        if ($request->hasFile('cover_image')) {
+            if ($project->cover_image) {
+                Storage::disk('public')->delete($project->cover_image);
+            }
+
+            $validated['cover_image'] = $request
+                ->file('cover_image')
+                ->store('project-covers', 'public');
+        }
 
         $project->update($validated);
 
@@ -66,6 +95,10 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        if ($project->cover_image) {
+            Storage::disk('public')->delete($project->cover_image);
+        }
+
         $project->delete();
 
         return response()->json([
