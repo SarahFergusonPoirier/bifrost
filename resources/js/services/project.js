@@ -1,3 +1,4 @@
+
 async function request(url, options = {}) {
     let response;
 
@@ -31,7 +32,10 @@ async function request(url, options = {}) {
 }
 
 function hasCoverImage(project) {
-    return project.coverImage instanceof File;
+    return (
+        typeof File !== 'undefined' &&
+        project.coverImage instanceof File
+    );
 }
 
 function toFormData(project) {
@@ -48,11 +52,19 @@ function toFormData(project) {
         formData.append('cover_image', project.coverImage);
     }
 
+    if (project.removeCoverImage) {
+        formData.append('remove_cover_image', '1');
+    }
+
     return formData;
 }
 
 function toJsonProject(project) {
-    const { coverImage, ...data } = project;
+    const {
+        coverImage,
+        removeCoverImage,
+        ...data
+    } = project;
 
     return data;
 }
@@ -83,10 +95,15 @@ export function createProject(project) {
 }
 
 export function updateProject(id, project) {
-    if (hasCoverImage(project)) {
+    const needsFormData =
+        hasCoverImage(project) ||
+        project.removeCoverImage === true;
+
+    if (needsFormData) {
         const formData = toFormData(project);
 
-        // Laravel interprète cette requête comme une mise à jour PUT.
+        // Laravel utilise cette méthode pour traiter
+        // le multipart comme une requête PUT.
         formData.append('_method', 'PUT');
 
         return request(`/api/projects/${id}`, {

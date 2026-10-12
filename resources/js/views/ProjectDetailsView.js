@@ -1,11 +1,22 @@
-import { ref, onMounted, watch } from 'vue';
+
+import {
+    ref,
+    onMounted,
+    onBeforeUnmount,
+    watch,
+} from 'vue';
+
 import { useRoute, useRouter } from 'vue-router';
+
 import {
     getProjects,
     updateProject,
     deleteProject,
 } from '../services/project';
+
 import ProjectTagInput from '../components/projects/ProjectTagInput.vue';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 export default {
     components: {
@@ -33,18 +44,64 @@ export default {
             tags: [],
         });
 
+        const coverImage = ref(null);
+        const coverImageInput = ref(null);
+        const imagePreviewUrl = ref('');
+        const imageError = ref('');
+        const removeCoverImage = ref(false);
+
+        function clearImagePreview() {
+            if (imagePreviewUrl.value) {
+                URL.revokeObjectURL(imagePreviewUrl.value);
+                imagePreviewUrl.value = '';
+            }
+        }
+
+        function clearSelectedImage() {
+            coverImage.value = null;
+            clearImagePreview();
+
+            if (coverImageInput.value) {
+                coverImageInput.value.value = '';
+            }
+        }
+
+        function resetFormFromProject() {
+            if (!project.value) {
+                return;
+            }
+
+            form.value = {
+                name: project.value.name,
+                description: project.value.description || '',
+                tags: (project.value.tags || []).map(
+                    (tag) => tag.name
+                ),
+            };
+
+            clearSelectedImage();
+            removeCoverImage.value = false;
+            imageError.value = '';
+        }
+
         async function loadProject() {
             loading.value = true;
             error.value = '';
             project.value = null;
             editing.value = false;
             deleteError.value = '';
+            saveError.value = '';
+
+            clearSelectedImage();
+            removeCoverImage.value = false;
+            imageError.value = '';
 
             try {
                 const projects = await getProjects();
 
                 project.value = projects.find(
-                    (item) => String(item.id) === String(route.params.id)
+                    (item) =>
+                        String(item.id) === String(route.params.id)
                 );
 
                 if (!project.value) {
@@ -52,43 +109,92 @@ export default {
                     return;
                 }
 
-                form.value = {
-                    name: project.value.name,
-                    description: project.value.description || '',
-                    tags: (project.value.tags || []).map((tag) => tag.name),
-                };
+                resetFormFromProject();
             } catch (err) {
                 error.value =
-                    err.message || 'Impossible de charger le projet.';
+                    err.message ||
+                    'Impossible de charger le projet.';
             } finally {
                 loading.value = false;
             }
         }
 
         function startEditing() {
-            form.value = {
-                name: project.value.name,
-                description: project.value.description || '',
-                tags: (project.value.tags || []).map((tag) => tag.name),
-            };
+            resetFormFromProject();
 
             saveError.value = '';
+            deleteError.value = '';
             editing.value = true;
         }
 
         function cancelEditing() {
-            form.value = {
-                name: project.value.name,
-                description: project.value.description || '',
-                tags: (project.value.tags || []).map((tag) => tag.name),
-            };
+            resetFormFromProject();
 
             saveError.value = '';
             editing.value = false;
         }
 
+        function handleImageChange(event) {
+            imageError.value = '';
+
+            const file = event.target.files?.[0] ?? null;
+
+            if (!file) {
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                clearSelectedImage();
+                imageError.value =
+                    'Le fichier sélectionné doit être une image.';
+                return;
+            }
+
+            if (file.size > MAX_IMAGE_SIZE) {
+                clearSelectedImage();
+                imageError.value =
+                    'L’image ne doit pas dépasser 5 Mo.';
+                return;
+            }
+
+            clearImagePreview();
+
+            coverImage.value = file;
+            removeCoverImage.value = false;
+            imagePreviewUrl.value = URL.createObjectURL(file);
+        }
+
+        function removeImage() {
+            imageError.value = '';
+
+            if (removeCoverImage.value) {
+                // Annule la suppression demandée.
+                removeCoverImage.value = false;
+                return;
+            }
+
+            if (coverImage.value) {
+                clearSelectedImage();
+
+                // Si le projet possédait déjà une image,
+                // le bouton retire également cette couverture.
+                removeCoverImage.value =
+                    Boolean(project.value?.cover_image);
+
+                return;
+            }
+
+            if (project.value?.cover_image) {
+                removeCoverImage.value = true;
+            }
+        }
+
         async function handleUpdate() {
             if (saving.value || !project.value) {
+                return;
+            }
+
+            if (imageError.value) {
                 return;
             }
 
@@ -100,22 +206,21 @@ export default {
                     project.value.id,
                     {
                         name: form.value.name.trim(),
-                        description: form.value.description.trim() || null,
+                        description:
+                            form.value.description.trim() || null,
                         tags: [...form.value.tags],
+                        coverImage: coverImage.value,
+                        removeCoverImage: removeCoverImage.value,
                     }
                 );
 
                 project.value = updatedProject;
-                form.value = {
-                    name: updatedProject.name,
-                    description: updatedProject.description || '',
-                    tags: (updatedProject.tags || []).map((tag) => tag.name),
-                };
-
+                resetFormFromProject();
                 editing.value = false;
             } catch (err) {
                 saveError.value =
-                    err.message || 'Impossible de modifier le projet.';
+                    err.message ||
+                    'Impossible de modifier le projet.';
             } finally {
                 saving.value = false;
             }
@@ -139,10 +244,12 @@ export default {
 
             try {
                 await deleteProject(project.value.id);
+
                 await router.push({ name: 'projects' });
             } catch (err) {
                 deleteError.value =
-                    err.message || 'Impossible de supprimer le projet.';
+                    err.message ||
+                    'Impossible de supprimer le projet.';
             } finally {
                 deleting.value = false;
             }
@@ -151,6 +258,10 @@ export default {
         onMounted(loadProject);
 
         watch(() => route.params.id, loadProject);
+
+        onBeforeUnmount(() => {
+            clearImagePreview();
+        });
 
         return {
             project,
@@ -163,6 +274,13 @@ export default {
             startEditing,
             cancelEditing,
             handleUpdate,
+            coverImage,
+            coverImageInput,
+            imagePreviewUrl,
+            imageError,
+            removeCoverImage,
+            handleImageChange,
+            removeImage,
             deleting,
             deleteError,
             handleDelete,

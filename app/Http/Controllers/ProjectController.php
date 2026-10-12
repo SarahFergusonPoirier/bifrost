@@ -67,21 +67,44 @@ class ProjectController extends Controller
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:5120',
             ],
+            'remove_cover_image' => ['sometimes', 'boolean'],
         ]);
 
         $tagsWereProvided = array_key_exists('tags', $validated);
         $tagNames = $validated['tags'] ?? [];
+        $shouldRemoveCover = (bool) (
+            $validated['remove_cover_image'] ?? false
+        );
 
-        unset($validated['tags'], $validated['cover_image']);
+        unset(
+            $validated['tags'],
+            $validated['cover_image'],
+            $validated['remove_cover_image']
+        );
 
         if ($request->hasFile('cover_image')) {
-            if ($project->cover_image) {
-                Storage::disk('public')->delete($project->cover_image);
-            }
-
-            $validated['cover_image'] = $request
+            // Enregistrer la nouvelle image avant de supprimer
+            // l'ancienne, afin de ne pas perdre la couverture
+            // si le téléversement échoue.
+            $newCoverPath = $request
                 ->file('cover_image')
                 ->store('project-covers', 'public');
+
+            if ($project->cover_image) {
+                Storage::disk('public')->delete(
+                    $project->cover_image
+                );
+            }
+
+            $validated['cover_image'] = $newCoverPath;
+        } elseif ($shouldRemoveCover) {
+            if ($project->cover_image) {
+                Storage::disk('public')->delete(
+                    $project->cover_image
+                );
+            }
+
+            $validated['cover_image'] = null;
         }
 
         $project->update($validated);
@@ -96,7 +119,9 @@ class ProjectController extends Controller
     public function destroy(Project $project)
     {
         if ($project->cover_image) {
-            Storage::disk('public')->delete($project->cover_image);
+            Storage::disk('public')->delete(
+                $project->cover_image
+            );
         }
 
         $project->delete();

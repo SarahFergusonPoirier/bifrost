@@ -34,6 +34,7 @@ describe('Composant ProjectForm', () => {
                 name: 'Nouveau projet',
                 description: 'Description test',
                 tags: [],
+                coverImage: null,
             }],
         ]);
     });
@@ -56,6 +57,7 @@ describe('Composant ProjectForm', () => {
                 name: 'Projet avec tags',
                 description: null,
                 tags: ['Lecture', 'Programmation'],
+                coverImage: null,
             }],
         ]);
     });
@@ -74,6 +76,7 @@ describe('Composant ProjectForm', () => {
                 name: 'Mon projet',
                 description: 'Ma description',
                 tags: [],
+                coverImage: null,
             }],
         ]);
     });
