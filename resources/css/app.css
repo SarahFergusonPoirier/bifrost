@@ -25,3 +25,4 @@
 /* Pages */
 @import './views/projects.css';
 @import './views/project-details.css';
+@import './views/project-create.css';

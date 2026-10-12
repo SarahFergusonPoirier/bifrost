@@ -1,33 +1,35 @@
+
 .projects-view {
     width: 100%;
 }
 
 .projects-view .page-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-7);
 }
 
-.projects-view .page-header h1 {
+.projects-view .page-header h1,
+.projects-view .page-header p {
     margin: 0;
 }
 
 .projects-view .page-header p {
-    margin: 0.5rem 0 0;
+    color: var(--color-text-muted);
 }
 
 .projects-view .projects-section {
-    margin-top: 2rem;
+    margin-top: var(--space-7);
 }
 
 .projects-view .section-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
 }
 
 .projects-view .section-heading h2 {
@@ -36,33 +38,56 @@
 
 .projects-view .project-filters {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    align-items: flex-end;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
 }
 
-.projects-view .project-search {
-    flex: 1;
+.projects-view .project-search,
+.projects-view .project-tag-mode {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: var(--space-2);
     min-width: 0;
+}
+
+.projects-view .project-search label,
+.projects-view .project-tag-mode label,
+.projects-view .project-sort label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
 }
 
 .projects-view .project-sort {
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
+    min-width: 0;
 }
 
 .projects-view .project-sort label {
     white-space: nowrap;
 }
 
+.projects-view .project-sort select {
+    width: auto;
+    min-width: 9rem;
+}
+
 .projects-view .project-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    align-items: stretch;
+    gap: var(--space-6);
 }
 
 .projects-view .project-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
     overflow: hidden;
     background-color: var(--color-surface);
     border: 1px solid var(--color-border-light);
@@ -84,6 +109,10 @@
     text-decoration: none;
 }
 
+.projects-view .project-link:focus-visible {
+    outline-offset: -3px;
+}
+
 .projects-view .project-card-cover {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -98,32 +127,77 @@
     object-fit: cover;
 }
 
-.projects-view .project-card-content {
-    padding: 1.25rem;
-}
-
-.projects-view .project-card h3 {
-    margin: 0 0 0.5rem;
-}
-
-.projects-view .project-card p {
-    margin: 0;
+.projects-view .project-card-cover__placeholder {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
     color: var(--color-text-muted);
+    background: linear-gradient(
+        135deg,
+        var(--color-surface-muted),
+        var(--color-surface-hover)
+    );
+    font-size: var(--font-size-small);
 }
 
-@media (max-width: 700px) {
-    .projects-view .page-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
+.projects-view .project-card-cover__symbol {
+    font-size: 2rem;
+}
 
+.projects-view .project-link h3 {
+    margin: 0;
+    padding: var(--space-5) var(--space-5) var(--space-2);
+    overflow-wrap: anywhere;
+}
+
+.projects-view .project-link > p {
+    margin: 0;
+    padding: 0 var(--space-5) var(--space-5);
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+}
+
+.projects-view .project-card-tags {
+    margin-top: auto;
+    padding: 0 var(--space-5) var(--space-5);
+}
+
+@media (max-width: 760px) {
     .projects-view .project-filters {
         flex-direction: column;
         align-items: stretch;
     }
 
+    .projects-view .project-search,
+    .projects-view .project-tag-mode {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
     .projects-view .project-sort {
         justify-content: space-between;
+    }
+
+    .projects-view .project-sort select {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .projects-view .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .projects-view .section-heading > a {
+        width: 100%;
+        text-align: center;
     }
 
     .projects-view .project-grid {

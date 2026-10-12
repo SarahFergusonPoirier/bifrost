@@ -1,0 +1,48 @@
+
+.project-create-view {
+    max-width: var(--details-width);
+    margin: 0 auto;
+    padding: var(--space-4) 0 var(--space-8);
+}
+
+.project-create-view > a {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.project-create-view > a:hover {
+    color: var(--color-text);
+}
+
+.project-create-view .page-header {
+    margin-bottom: var(--space-5);
+}
+
+.project-create-view .page-header h1 {
+    margin: 0 0 var(--space-2);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    line-height: 1.2;
+    letter-spacing: -0.045em;
+}
+
+.project-create-view .page-header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+}
+
+.project-create-view .project-create-section {
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .project-create-view {
+        padding-top: var(--space-1);
+    }
+}
