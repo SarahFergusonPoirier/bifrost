@@ -19,7 +19,7 @@ const globalOptions = {
     stubs: {
         RouterLink: {
             props: ['to'],
-            template: '<a><slot /></a>',
+            template: '<a :href="typeof to === \'string\' ? to : to.name"><slot /></a>',
         },
     },
 };
@@ -33,11 +33,8 @@ function createProjectsState(overrides = {}) {
     return {
         projects: ref([]),
         loading: ref(false),
-        saving: ref(false),
         loadError: ref(''),
-        saveError: ref(''),
         loadProjects: vi.fn(),
-        addProject: vi.fn().mockResolvedValue({}),
         ...overrides,
     };
 }
@@ -80,21 +77,17 @@ describe('ProjectsView.vue', () => {
         expect(wrapper.find('h2').text()).toBe('Projets');
     });
 
-    it('affiche le formulaire après un clic sur Nouveau projet', async () => {
+    it('affiche un lien vers la page de création', () => {
         const wrapper = mountProjectsView();
+        const createLink = wrapper.find('.section-heading a');
 
-        expect(wrapper.findComponent(ProjectForm).exists()).toBe(false);
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        expect(wrapper.findComponent(ProjectForm).exists()).toBe(true);
+        expect(createLink.exists()).toBe(true);
+        expect(createLink.text()).toContain('Nouveau projet');
+        expect(createLink.attributes('href')).toBe('project-create');
     });
 
-    it('masque le formulaire après un clic sur Annuler', async () => {
+    it('ne contient plus le formulaire de création sur la page d’accueil', () => {
         const wrapper = mountProjectsView();
-
-        await wrapper.find('.section-heading button').trigger('click');
-        await wrapper.find('.form-actions .button-secondary').trigger('click');
 
         expect(wrapper.findComponent(ProjectForm).exists()).toBe(false);
     });
@@ -210,123 +203,13 @@ describe('ProjectsView.vue', () => {
         );
     });
 
-    it('crée un projet et ferme le formulaire après la réussite', async () => {
-        const addProject = vi.fn().mockResolvedValue({
-            id: 1,
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        useProjects.mockReturnValue(
-            createProjectsState({ addProject })
-        );
-
-        const wrapper = mountProjectsView();
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        await wrapper.findComponent(ProjectForm).vm.$emit('submit', {
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
+    it('affiche le projet dans la liste', async () => {
+        const wrapper = mountProjectsViewWithProjects();
 
         await flushPromises();
 
-        expect(addProject).toHaveBeenCalledWith({
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-        expect(wrapper.findComponent(ProjectForm).exists()).toBe(false);
-    });
-
-    it('transmet les tags lors de la création d’un projet', async () => {
-        const projectData = {
-            name: 'Mon projet',
-            description: 'Ma description',
-            tags: ['Lecture', 'Programmation'],
-        };
-
-        const addProject = vi.fn().mockResolvedValue({
-            id: 1,
-            ...projectData,
-        });
-
-        useProjects.mockReturnValue(
-            createProjectsState({ addProject })
-        );
-
-        getTags.mockResolvedValue(availableTags);
-
-        const wrapper = mountProjectsView();
-
-        await flushPromises();
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        await wrapper.findComponent(ProjectForm).vm.$emit(
-            'submit',
-            projectData
-        );
-
-        await flushPromises();
-
-        expect(addProject).toHaveBeenCalledWith(projectData);
-        expect(wrapper.findComponent(ProjectForm).exists()).toBe(false);
-        expect(getTags).toHaveBeenCalled();
-    });
-
-    it('garde le formulaire ouvert si la création échoue', async () => {
-        const addProject = vi.fn().mockRejectedValue(
-            new Error('Erreur de création')
-        );
-
-        useProjects.mockReturnValue(
-            createProjectsState({
-                addProject,
-                saveError: ref('Erreur de création'),
-            })
-        );
-
-        const wrapper = mountProjectsView();
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        await wrapper.findComponent(ProjectForm).vm.$emit('submit', {
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        await flushPromises();
-
-        expect(wrapper.findComponent(ProjectForm).exists()).toBe(true);
-    });
-
-    it('affiche le projet créé dans la liste', async () => {
-        const projects = ref([]);
-
-        const addProject = vi.fn().mockImplementation(async projectData => {
-            const project = { id: 1, ...projectData };
-            projects.value.unshift(project);
-            return project;
-        });
-
-        useProjects.mockReturnValue(
-            createProjectsState({ projects, addProject })
-        );
-
-        const wrapper = mountProjectsView();
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        await wrapper.findComponent(ProjectForm).vm.$emit('submit', {
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        await flushPromises();
-
-        expect(wrapper.text()).toContain('Mon projet');
-        expect(wrapper.text()).toContain('Ma description');
+        expect(wrapper.text()).toContain('Projet test');
+        expect(wrapper.text()).toContain('Description test');
     });
 
     it('affiche le message de chargement pendant le chargement des projets', () => {
@@ -337,57 +220,6 @@ describe('ProjectsView.vue', () => {
         const wrapper = mountProjectsView();
 
         expect(wrapper.text()).toContain('Chargement des projets…');
-    });
-
-    it('empêche une nouvelle soumission pendant la création', async () => {
-        let resolveCreation;
-
-        const saving = ref(false);
-
-        const addProject = vi.fn(() => {
-            saving.value = true;
-
-            return new Promise(resolve => {
-                resolveCreation = project => {
-                    saving.value = false;
-                    resolve(project);
-                };
-            });
-        });
-
-        useProjects.mockReturnValue(
-            createProjectsState({ saving, addProject })
-        );
-
-        const wrapper = mountProjectsView();
-
-        await wrapper.find('.section-heading button').trigger('click');
-
-        const form = wrapper.findComponent(ProjectForm);
-
-        form.vm.$emit('submit', {
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        await flushPromises();
-
-        expect(addProject).toHaveBeenCalledTimes(1);
-
-        form.vm.$emit('submit', {
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        expect(addProject).toHaveBeenCalledTimes(1);
-
-        resolveCreation({
-            id: 1,
-            name: 'Mon projet',
-            description: 'Ma description',
-        });
-
-        await flushPromises();
     });
 
     it('masque les filtres lorsqu’aucun projet n’existe', () => {

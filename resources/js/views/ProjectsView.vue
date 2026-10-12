@@ -8,21 +8,14 @@
         <section class="projects-section">
             <div class="section-heading">
                 <h2>Projets</h2>
-                <button
-                    type="button"
-                    @click="showForm = !showForm"
-                >
-                    {{ showForm ? 'Annuler' : '+ Nouveau projet' }}
-                </button>
-            </div>
 
-            <ProjectForm
-                v-if="showForm"
-                :saving="saving"
-                :error="saveError"
-                @submit="handleCreate"
-                @cancel="showForm = false"
-            />
+                <RouterLink
+                    :to="{ name: 'project-create' }"
+                    class="button"
+                >
+                    + Nouveau projet
+                </RouterLink>
+            </div>
 
             <template v-if="projects.length > 0">
                 <div class="project-filters">

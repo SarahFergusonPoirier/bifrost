@@ -1,17 +1,14 @@
 import { ref, onMounted } from 'vue';
-import ProjectForm from '../components/projects/ProjectForm.vue';
 import ProjectList from '../components/projects/ProjectList.vue';
 import { useProjects } from '../composables/useProjects';
 import { getTags } from '../services/tag';
 
 export default {
     components: {
-        ProjectForm,
         ProjectList,
     },
 
     setup() {
-        const showForm = ref(false);
         const searchQuery = ref('');
         const sortOrder = ref('newest');
         const tags = ref([]);
@@ -22,11 +19,8 @@ export default {
         const {
             projects,
             loading,
-            saving,
             loadError,
-            saveError,
             loadProjects,
-            addProject,
         } = useProjects();
 
         async function loadTags() {
@@ -40,30 +34,16 @@ export default {
             }
         }
 
-        async function handleCreate(projectData) {
-            if (saving.value) {
-                return;
-            }
-
-            try {
-                await addProject(projectData);
-                showForm.value = false;
-                await loadTags();
-            } catch {
-                // L'erreur est déjà gérée par useProjects.
-            }
-        }
-
         function selectTag(tagId) {
             const id = String(tagId);
 
             const alreadySelected = selectedTagIds.value.some(
-                (selectedId) => String(selectedId) === id
+                selectedId => String(selectedId) === id
             );
 
             if (alreadySelected) {
                 selectedTagIds.value = selectedTagIds.value.filter(
-                    (selectedId) => String(selectedId) !== id
+                    selectedId => String(selectedId) !== id
                 );
             } else {
                 selectedTagIds.value = [
@@ -83,15 +63,11 @@ export default {
         });
 
         return {
-            showForm,
             searchQuery,
             sortOrder,
             projects,
             loading,
-            saving,
             loadError,
-            saveError,
-            handleCreate,
             tags,
             selectedTagIds,
             tagMatchMode,
