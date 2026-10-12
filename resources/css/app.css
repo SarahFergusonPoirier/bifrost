@@ -8,9 +8,20 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Fondations */
+@import './base/tokens.css';
 @import './base/global.css';
+
+/* Composants réutilisables */
+@import './components/buttons.css';
+@import './components/forms.css';
+@import './components/tags.css';
 @import './components/project-form.css';
-@import './components/project-list.css';
-@import './layouts/app-layout.css';
-@import './views/project-details.css';
 @import './components/project-delete-modal.css';
+
+/* Structure de l'application */
+@import './layouts/app-layout.css';
+
+/* Pages */
+@import './views/projects.css';
+@import './views/project-details.css';

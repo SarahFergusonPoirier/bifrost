@@ -1,0 +1,84 @@
+
+/* Conteneurs de tags */
+
+.selected-tags,
+.project-card-tags,
+.project-tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* Tag non interactif */
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    padding: 0.35rem 0.7rem;
+    color: var(--color-text-secondary);
+    background-color: var(--color-surface-muted);
+    border: 1px solid #dedad1;
+    border-radius: var(--radius-pill);
+    font-size: 0.825rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+/* Petit bouton de retrait d'un tag */
+
+.selected-tags .tag-chip button {
+    min-height: 0;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.selected-tags .tag-chip button:hover:not(:disabled) {
+    color: var(--color-danger);
+    background: transparent;
+}
+
+/* Filtres par tag */
+
+.project-tag-filters {
+    margin-top: var(--space-5);
+}
+
+.project-tag-filters > span {
+    margin-right: 0.25rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+}
+
+.projects-section .project-tag-filters button.tag-chip {
+    color: var(--color-text-secondary);
+    background-color: var(--color-surface-muted);
+    border-color: #dedad1;
+}
+
+.projects-section .project-tag-filters button.tag-chip:not(.tag-chip-active):hover {
+    color: var(--color-text-secondary);
+    background-color: var(--color-surface-hover);
+    border-color: #c8c2b7;
+}
+
+.projects-section .project-tag-filters button.tag-chip.tag-chip-active,
+.projects-section .project-tag-filters button.tag-chip.tag-chip-active:hover {
+    color: #fff;
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.tag-filter-button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}

@@ -1,71 +1,68 @@
+/* Formulaire de projet */
+
 .project-form {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    background-color: #ffffff;
-    border-radius: 8px;
-}
-
-.project-form input,
-.project-form textarea,
-.project-form select {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0.75rem;
-    border: 1px solid #d1cec7;
-    border-radius: 4px;
+    gap: var(--space-3);
+    margin: var(--space-6) 0;
+    padding: var(--space-6);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-card);
 }
 
 .project-form textarea {
     min-height: 100px;
-    resize: vertical;
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
 }
 
 .form-actions button,
-.section-heading button {
-    padding: 0.65rem 1rem;
-    border: none;
-    border-radius: 4px;
-    background-color: #292824;
-    color: #ffffff;
-    cursor: pointer;
+.section-heading button,
+.tag-entry button {
+    color: #fff;
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
 }
 
-.form-actions button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.form-actions button:hover:not(:disabled),
+.section-heading button:hover:not(:disabled),
+.tag-entry button:hover:not(:disabled) {
+    color: #fff;
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
 }
 
 .form-actions .button-secondary {
-    background-color: #e7e4de;
-    color: #292824;
+    color: var(--color-text);
+    background-color: var(--color-surface-hover);
+    border-color: var(--color-border-light);
 }
 
-.error {
-    color: #b42318;
+.form-actions .button-secondary:hover:not(:disabled) {
+    color: var(--color-text);
+    background-color: #dedad1;
 }
 
 /* Saisie des tags */
+
 .project-tag-input {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
 }
 
 .tag-entry {
     display: flex;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .tag-entry input {
@@ -73,119 +70,62 @@
     min-width: 0;
 }
 
-.tag-entry button {
-    padding: 0.65rem 1rem;
-    border: none;
-    border-radius: 4px;
-    background-color: #292824;
-    color: #ffffff;
-    cursor: pointer;
-}
-
-.tag-entry button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Tags sélectionnés */
-.selected-tags,
-.project-card-tags,
-.project-tag-filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.7rem;
-    border: 1px solid #d1cec7;
-    border-radius: 999px;
-    background-color: #f2f0eb;
-    color: #292824;
-    font-size: 0.875rem;
-}
-
-.selected-tags .tag-chip button {
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: inherit;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-/* Suggestions de tags */
 .tag-suggestions {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.35rem;
+    gap: var(--space-1);
     max-height: 200px;
     overflow-y: auto;
-    padding: 0.75rem;
+    padding: var(--space-3);
+    background-color: var(--color-surface);
     border: 1px solid #e2dfd8;
     border-radius: 6px;
-    background-color: #ffffff;
 }
 
 .tag-suggestions p {
     margin: 0;
-    color: #68665f;
-    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-small);
 }
 
 .tag-suggestions button {
     width: 100%;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 4px;
-    background-color: transparent;
-    color: #292824;
+    min-height: 0;
+    padding: var(--space-2);
+    color: var(--color-text);
+    background: transparent;
+    border-color: transparent;
+    border-radius: var(--radius-small);
     text-align: left;
-    cursor: pointer;
 }
 
-.tag-suggestions button:hover {
-    background-color: #f2f0eb;
+.tag-suggestions button:hover:not(:disabled) {
+    color: var(--color-text);
+    background-color: var(--color-surface-muted);
+    border-color: transparent;
 }
 
 .tag-suggestion-hint {
-    padding-top: 0.35rem;
-}
-
-@media (max-width: 480px) {
-    .project-form {
-        padding: 1rem;
-    }
-
-    .tag-entry {
-        flex-direction: column;
-    }
-
-    .tag-entry button {
-        width: 100%;
-    }
+    padding-top: var(--space-1);
 }
 
 /* Image de couverture du projet */
+
 .project-image-upload {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
 }
 
 .project-image-preview {
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
+    background-color: var(--color-surface-muted);
     border: 1px solid #e2dfd8;
-    border-radius: 8px;
-    background-color: #f2f0eb;
+    border-radius: var(--radius-control);
 }
 
 .project-image-preview__image {
@@ -202,9 +142,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    color: #68665f;
-    background: linear-gradient(135deg, #f2f0eb, #e7e4de);
+    gap: var(--space-2);
+    color: var(--color-text-muted);
+    background: linear-gradient(
+        135deg,
+        var(--color-surface-muted),
+        var(--color-surface-hover)
+    );
     font-size: 0.9rem;
 }
 
@@ -213,10 +157,40 @@
 }
 
 .project-image-upload input[type="file"] {
-    padding: 0.5rem 0;
+    width: 100%;
+    padding: var(--space-2) 0;
     border: none;
+    background: transparent;
+}
+
+.project-image-upload input[type="file"]:focus {
+    box-shadow: none;
 }
 
 .project-image-remove {
     align-self: flex-start;
+}
+
+/* Adaptation mobile */
+
+@media (max-width: 480px) {
+    .project-form {
+        padding: var(--space-4);
+    }
+
+    .tag-entry {
+        flex-direction: column;
+    }
+
+    .tag-entry button {
+        width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
 }

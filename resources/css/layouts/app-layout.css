@@ -1,16 +1,27 @@
 .app-header {
-    padding: 1rem 2rem;
-    background-color: #292824;
+    padding: var(--space-4) var(--space-7);
+    background-color: var(--color-primary);
 }
 
 .app-logo {
-    color: #ffffff;
+    color: #fff;
     font-size: 1.25rem;
     font-weight: 600;
     text-decoration: none;
 }
 
 .app-content {
-    width: min(100% - 2rem, 1000px);
-    margin: 2rem auto;
+    width: min(100% - 2rem, var(--content-width));
+    margin: var(--space-7) auto;
+}
+
+@media (max-width: 600px) {
+    .app-header {
+        padding: var(--space-4);
+    }
+
+    .app-content {
+        width: min(100% - 1.5rem, var(--content-width));
+        margin: var(--space-4) auto;
+    }
 }

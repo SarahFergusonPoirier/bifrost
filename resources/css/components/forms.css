@@ -1,0 +1,64 @@
+
+/* Champs de saisie communs */
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 0.85rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background-color var(--transition-fast);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select {
+    min-height: var(--control-height);
+}
+
+textarea {
+    line-height: 1.6;
+    resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-placeholder);
+    opacity: 1;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+    border-color: var(--color-focus);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+    background-color: var(--color-surface-muted);
+    opacity: 0.7;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--color-primary);
+}
+
+input[type="file"] {
+    max-width: 100%;
+}
+
+/* Messages d'erreur */
+
+.error {
+    color: var(--color-error);
+}

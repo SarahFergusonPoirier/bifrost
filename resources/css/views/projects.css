@@ -1,0 +1,132 @@
+.projects-view {
+    width: 100%;
+}
+
+.projects-view .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.projects-view .page-header h1 {
+    margin: 0;
+}
+
+.projects-view .page-header p {
+    margin: 0.5rem 0 0;
+}
+
+.projects-view .projects-section {
+    margin-top: 2rem;
+}
+
+.projects-view .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.projects-view .section-heading h2 {
+    margin: 0;
+}
+
+.projects-view .project-filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.projects-view .project-search {
+    flex: 1;
+    min-width: 0;
+}
+
+.projects-view .project-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.projects-view .project-sort label {
+    white-space: nowrap;
+}
+
+.projects-view .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.projects-view .project-card {
+    overflow: hidden;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.projects-view .project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-panel);
+}
+
+.projects-view .project-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.projects-view .project-card-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--color-surface-muted);
+}
+
+.projects-view .project-card-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.projects-view .project-card-content {
+    padding: 1.25rem;
+}
+
+.projects-view .project-card h3 {
+    margin: 0 0 0.5rem;
+}
+
+.projects-view .project-card p {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+@media (max-width: 700px) {
+    .projects-view .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .projects-view .project-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .projects-view .project-sort {
+        justify-content: space-between;
+    }
+
+    .projects-view .project-grid {
+        grid-template-columns: 1fr;
+    }
+}

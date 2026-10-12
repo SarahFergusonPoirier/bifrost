@@ -1,0 +1,66 @@
+:root {
+    /* Couleurs principales */
+    --color-background: #f5f3ef;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f2f0eb;
+    --color-surface-hover: #e7e4de;
+
+    /* Texte */
+    --color-text: #292824;
+    --color-text-secondary: #45433c;
+    --color-text-muted: #68665f;
+    --color-text-placeholder: #88847b;
+
+    /* Bordures */
+    --color-border: #d1cec7;
+    --color-border-light: #e8e5df;
+    --color-border-strong: #bdb8ad;
+
+    /* Actions */
+    --color-primary: #292824;
+    --color-primary-hover: #45433c;
+    --color-danger: #a12622;
+    --color-danger-hover: #821e1b;
+
+    /* États */
+    --color-focus: #6d685d;
+    --color-focus-ring: rgb(109 104 93 / 14%);
+    --color-error: #a12622;
+    --color-error-background: #fff1f0;
+    --color-error-border: #f3d0cc;
+
+    /* Typographie */
+    --font-size-small: 0.875rem;
+    --font-size-body: 1rem;
+    --line-height-body: 1.5;
+
+    /* Espacements */
+    --space-1: 0.35rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-7: 2rem;
+    --space-8: 3rem;
+
+    /* Arrondis */
+    --radius-small: 4px;
+    --radius-control: 8px;
+    --radius-card: 12px;
+    --radius-modal: 16px;
+    --radius-pill: 999px;
+
+    /* Ombres */
+    --shadow-card: 0 5px 18px rgb(41 40 36 / 5%);
+    --shadow-panel: 0 8px 30px rgb(41 40 36 / 4%);
+    --shadow-modal: 0 24px 80px rgb(0 0 0 / 22%);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+
+    /* Dimensions */
+    --control-height: 44px;
+    --content-width: 1000px;
+    --details-width: 760px;
+}
