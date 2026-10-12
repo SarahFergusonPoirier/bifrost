@@ -35,13 +35,23 @@ export default {
             type: String,
             default: 'or',
         },
+        favoritesOnly: {
+            type: Boolean,
+            default: false,
+        },
+        favoriteLoadingIds: {
+            type: Array,
+            default: () => [],
+        },
     },
 
-    emits: ['select-tag'],
+    emits: ['select-tag', 'toggle-favorite'],
 
     setup(props, { emit }) {
         const filteredProjects = computed(() => {
-            const query = props.searchQuery.trim().toLocaleLowerCase('fr');
+            const query = props.searchQuery
+                .trim()
+                .toLocaleLowerCase('fr');
 
             const result = props.projects.filter((project) => {
                 const matchesSearch = (project.name || '')
@@ -64,7 +74,11 @@ export default {
                             )
                     );
 
-                return matchesSearch && matchesTag;
+                const matchesFavorite =
+                    !props.favoritesOnly ||
+                    Boolean(project.is_favorite);
+
+                return matchesSearch && matchesTag && matchesFavorite;
             });
 
             return result.sort((a, b) => {
@@ -89,9 +103,14 @@ export default {
             emit('select-tag', tagId);
         }
 
+        function emitToggleFavorite(project) {
+            emit('toggle-favorite', project);
+        }
+
         return {
             filteredProjects,
             selectTag,
+            emitToggleFavorite,
         };
     },
 };

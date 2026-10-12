@@ -1,4 +1,3 @@
-
 async function request(url, options = {}) {
     let response;
 
@@ -124,5 +123,17 @@ export function updateProject(id, project) {
 export function deleteProject(id) {
     return request(`/api/projects/${id}`, {
         method: 'DELETE',
+    });
+}
+
+export function updateProjectFavorite(id, isFavorite) {
+    return request(`/api/projects/${id}/favorite`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            is_favorite: isFavorite,
+        }),
     });
 }

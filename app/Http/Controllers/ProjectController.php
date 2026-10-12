@@ -116,6 +116,19 @@ class ProjectController extends Controller
         return $project->load('tags');
     }
 
+    public function updateFavorite(Request $request, Project $project)
+    {
+        $validated = $request->validate([
+            'is_favorite' => ['required', 'boolean'],
+        ]);
+
+        $project->update([
+            'is_favorite' => $validated['is_favorite'],
+        ]);
+
+        return $project->load('tags');
+    }
+
     public function destroy(Project $project)
     {
         if ($project->cover_image) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\TagController;
 Route::get('/projects', [ProjectController::class, 'index']);
 Route::post('/projects', [ProjectController::class, 'store']);
 Route::put('/projects/{project}', [ProjectController::class, 'update']);
+Route::patch('/projects/{project}/favorite', [ProjectController::class, 'updateFavorite']);
 Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
 Route::get('/tags', [TagController::class, 'index']);

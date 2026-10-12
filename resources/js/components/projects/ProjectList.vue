@@ -13,7 +13,10 @@
         </p>
 
         <p v-else-if="filteredProjects.length === 0">
-            Aucun projet ne correspond aux filtres sélectionnés.
+            {{ favoritesOnly
+                ? 'Tu n’as pas encore de projet favori correspondant aux filtres.'
+                : 'Aucun projet ne correspond aux filtres sélectionnés.'
+            }}
         </p>
 
         <div v-else class="project-grid">
@@ -54,6 +57,29 @@
                         {{ project.description }}
                     </p>
                 </RouterLink>
+
+                <button
+                    type="button"
+                    class="project-favorite-button"
+                    :class="{
+                        'project-favorite-button--active': project.is_favorite
+                    }"
+                    :disabled="favoriteLoadingIds.includes(String(project.id))"
+                    :aria-pressed="Boolean(project.is_favorite)"
+                    :aria-label="project.is_favorite
+                        ? `Retirer ${project.name} des favoris`
+                        : `Ajouter ${project.name} aux favoris`
+                    "
+                    :title="project.is_favorite
+                        ? 'Retirer des favoris'
+                        : 'Ajouter aux favoris'
+                    "
+                    @click.stop="emitToggleFavorite(project)"
+                >
+                    <span aria-hidden="true">
+                        {{ project.is_favorite ? '★' : '☆' }}
+                    </span>
+                </button>
 
                 <div
                     v-if="project.tags && project.tags.length"

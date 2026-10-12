@@ -2,6 +2,7 @@ import { ref, onMounted } from 'vue';
 import ProjectList from '../components/projects/ProjectList.vue';
 import { useProjects } from '../composables/useProjects';
 import { getTags } from '../services/tag';
+import { updateProjectFavorite } from '../services/project';
 
 export default {
     components: {
@@ -15,6 +16,9 @@ export default {
         const selectedTagIds = ref([]);
         const tagMatchMode = ref('or');
         const tagError = ref('');
+        const favoriteError = ref('');
+        const favoritesOnly = ref(false);
+        const favoriteLoadingIds = ref([]);
 
         const {
             projects,
@@ -57,6 +61,47 @@ export default {
             selectedTagIds.value = [];
         }
 
+        async function toggleFavorite(project) {
+            const projectId = String(project.id);
+
+            if (favoriteLoadingIds.value.includes(projectId)) {
+                return;
+            }
+
+            favoriteError.value = '';
+            favoriteLoadingIds.value = [
+                ...favoriteLoadingIds.value,
+                projectId,
+            ];
+
+            try {
+                const updatedProject = await updateProjectFavorite(
+                    project.id,
+                    !Boolean(project.is_favorite)
+                );
+
+                const index = projects.value.findIndex(
+                    item => String(item.id) === projectId
+                );
+
+                if (index !== -1) {
+                    projects.value[index] = {
+                        ...projects.value[index],
+                        ...updatedProject,
+                        is_favorite: Boolean(updatedProject.is_favorite),
+                    };
+                }
+            } catch (err) {
+                favoriteError.value =
+                    err.message || 'Impossible de modifier ce favori.';
+            } finally {
+                favoriteLoadingIds.value =
+                    favoriteLoadingIds.value.filter(
+                        id => id !== projectId
+                    );
+            }
+        }
+
         onMounted(() => {
             loadProjects();
             loadTags();
@@ -72,8 +117,12 @@ export default {
             selectedTagIds,
             tagMatchMode,
             tagError,
+            favoriteError,
+            favoritesOnly,
+            favoriteLoadingIds,
             selectTag,
             clearTagFilter,
+            toggleFavorite,
         };
     },
 };

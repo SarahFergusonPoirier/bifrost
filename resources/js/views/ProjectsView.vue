@@ -18,6 +18,36 @@
             </div>
 
             <template v-if="projects.length > 0">
+                <div
+                    class="project-view-tabs"
+                    aria-label="Afficher les projets"
+                >
+                    <button
+                        type="button"
+                        class="project-view-tab"
+                        :class="{
+                            'project-view-tab--active': !favoritesOnly
+                        }"
+                        :aria-pressed="!favoritesOnly"
+                        @click="favoritesOnly = false"
+                    >
+                        Tous les projets
+                    </button>
+
+                    <button
+                        type="button"
+                        class="project-view-tab"
+                        :class="{
+                            'project-view-tab--active': favoritesOnly
+                        }"
+                        :aria-pressed="favoritesOnly"
+                        @click="favoritesOnly = true"
+                    >
+                        <span aria-hidden="true">★</span>
+                        Favoris
+                    </button>
+                </div>
+
                 <div class="project-filters">
                     <div class="project-search">
                         <label for="project-search">
@@ -91,6 +121,10 @@
                 <p v-if="tagError" class="error">
                     {{ tagError }}
                 </p>
+
+                <p v-if="favoriteError" class="error">
+                    {{ favoriteError }}
+                </p>
             </template>
 
             <ProjectList
@@ -101,7 +135,10 @@
                 :sort-order="sortOrder"
                 :selected-tag-ids="selectedTagIds"
                 :tag-match-mode="tagMatchMode"
+                :favorites-only="favoritesOnly"
+                :favorite-loading-ids="favoriteLoadingIds"
                 @select-tag="selectTag"
+                @toggle-favorite="toggleFavorite"
             />
         </section>
     </main>

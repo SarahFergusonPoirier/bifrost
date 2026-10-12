@@ -11,7 +11,15 @@ class Project extends Model
         'name',
         'description',
         'cover_image',
+        'is_favorite',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_favorite' => 'boolean',
+        ];
+    }
 
     public function tags(): BelongsToMany
     {
