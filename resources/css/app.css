@@ -13,3 +13,4 @@
 @import './components/project-list.css';
 @import './layouts/app-layout.css';
 @import './views/project-details.css';
+@import './components/project-delete-modal.css';

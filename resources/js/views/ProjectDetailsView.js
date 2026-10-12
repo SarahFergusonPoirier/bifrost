@@ -1,4 +1,3 @@
-
 import {
     ref,
     onMounted,
@@ -37,6 +36,8 @@ export default {
 
         const deleting = ref(false);
         const deleteError = ref('');
+        const showDeleteModal = ref(false);
+        const deleteConfirmation = ref('');
 
         const form = ref({
             name: '',
@@ -91,6 +92,8 @@ export default {
             editing.value = false;
             deleteError.value = '';
             saveError.value = '';
+            showDeleteModal.value = false;
+            deleteConfirmation.value = '';
 
             clearSelectedImage();
             removeCoverImage.value = false;
@@ -134,6 +137,26 @@ export default {
             editing.value = false;
         }
 
+        function openDeleteModal() {
+            if (deleting.value || !project.value) {
+                return;
+            }
+
+            deleteConfirmation.value = '';
+            deleteError.value = '';
+            showDeleteModal.value = true;
+        }
+
+        function closeDeleteModal() {
+            if (deleting.value) {
+                return;
+            }
+
+            showDeleteModal.value = false;
+            deleteConfirmation.value = '';
+            deleteError.value = '';
+        }
+
         function handleImageChange(event) {
             imageError.value = '';
 
@@ -168,7 +191,6 @@ export default {
             imageError.value = '';
 
             if (removeCoverImage.value) {
-                // Annule la suppression demandée.
                 removeCoverImage.value = false;
                 return;
             }
@@ -176,8 +198,6 @@ export default {
             if (coverImage.value) {
                 clearSelectedImage();
 
-                // Si le projet possédait déjà une image,
-                // le bouton retire également cette couverture.
                 removeCoverImage.value =
                     Boolean(project.value?.cover_image);
 
@@ -227,15 +247,11 @@ export default {
         }
 
         async function handleDelete() {
-            if (deleting.value || !project.value) {
-                return;
-            }
-
-            const confirmed = window.confirm(
-                `Veux-tu vraiment supprimer le projet « ${project.value.name} » ? Cette action est définitive.`
-            );
-
-            if (!confirmed) {
+            if (
+                deleting.value ||
+                !project.value ||
+                deleteConfirmation.value !== 'DELETE'
+            ) {
                 return;
             }
 
@@ -283,6 +299,10 @@ export default {
             removeImage,
             deleting,
             deleteError,
+            showDeleteModal,
+            deleteConfirmation,
+            openDeleteModal,
+            closeDeleteModal,
             handleDelete,
         };
     },

@@ -1,4 +1,3 @@
-
 <template>
     <main class="project-details-view">
         <p v-if="loading">
@@ -70,17 +69,10 @@
                         type="button"
                         class="button-danger"
                         :disabled="deleting"
-                        @click="handleDelete"
+                        @click="openDeleteModal"
                     >
-                        {{ deleting
-                            ? 'Suppression…'
-                            : 'Supprimer le projet'
-                        }}
+                        Supprimer le projet
                     </button>
-
-                    <p v-if="deleteError" class="error">
-                        {{ deleteError }}
-                    </p>
                 </template>
 
                 <form v-else @submit.prevent="handleUpdate">
@@ -191,6 +183,84 @@
                 </form>
             </header>
         </template>
+
+        <div
+            v-if="showDeleteModal"
+            class="project-delete-modal"
+            @click.self="closeDeleteModal"
+            @keydown.esc="closeDeleteModal"
+        >
+            <section
+                class="project-delete-modal__dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-modal-title"
+                aria-describedby="delete-modal-description"
+            >
+                <h2 id="delete-modal-title">
+                    Supprimer ce projet ?
+                </h2>
+
+                <p id="delete-modal-description">
+                    Tu es sur le point de supprimer définitivement
+                    le projet <strong>« {{ project?.name }} »</strong>.
+                    Cette action est irréversible et les données
+                    associées à ce projet seront perdues.
+                </p>
+
+                <div class="project-delete-modal__field">
+                    <label for="delete-confirmation">
+                        Pour confirmer, tape
+                        <strong>DELETE</strong> ci-dessous :
+                    </label>
+
+                    <input
+                        id="delete-confirmation"
+                        v-model="deleteConfirmation"
+                        type="text"
+                        placeholder="Tape DELETE"
+                        autocomplete="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        :disabled="deleting"
+                    >
+                </div>
+
+                <p
+                    v-if="deleteError"
+                    class="error"
+                    role="alert"
+                >
+                    {{ deleteError }}
+                </p>
+
+                <div class="project-delete-modal__actions">
+                    <button
+                        type="button"
+                        class="project-delete-modal__cancel"
+                        :disabled="deleting"
+                        @click="closeDeleteModal"
+                    >
+                        Annuler
+                    </button>
+
+                    <button
+                        type="button"
+                        class="project-delete-modal__confirm"
+                        :disabled="
+                            deleteConfirmation !== 'DELETE' ||
+                            deleting
+                        "
+                        @click="handleDelete"
+                    >
+                        {{ deleting
+                            ? 'Suppression…'
+                            : 'Supprimer définitivement'
+                        }}
+                    </button>
+                </div>
+            </section>
+        </div>
     </main>
 </template>
 
