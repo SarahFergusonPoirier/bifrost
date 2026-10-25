@@ -6,6 +6,9 @@ Bifrost est une application locale construite avec Laravel, Vue 3 et Vue Router.
 Laravel fournit l’API et la persistance; Vue affiche l’interface et gère la navigation
 côté client.
 
+Pour les règles de conception des entités, des portées de données, des références et
+des migrations, consulter [Architecture des données](data-architecture.md).
+
 ## Organisation du code
 
 - `app/Models/` : modèles Eloquent et relations.
