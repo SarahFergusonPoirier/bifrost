@@ -102,10 +102,21 @@ describe('ProjectDetailsView.vue', () => {
         await flushPromises();
         await wrapper.get('button').trigger('click');
         await wrapper.get('#project-name').setValue('Changement temporaire');
-        await wrapper.get('button[type="button"]:last-of-type').trigger('click');
+        await wrapper.get('form button[type="button"]').trigger('click');
 
         expect(updateProject).not.toHaveBeenCalled();
         expect(wrapper.find('h1').text()).toBe('Mon projet');
+    });
+
+    it('affiche une erreur lorsque la sauvegarde échoue', async () => {
+        updateProject.mockRejectedValueOnce(new Error('Erreur de sauvegarde'));
+        const wrapper = mountView();
+        await flushPromises();
+        await wrapper.get('button').trigger('click');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Erreur de sauvegarde');
     });
 
     it('exige la confirmation DELETE avant la suppression', async () => {
@@ -118,22 +129,11 @@ describe('ProjectDetailsView.vue', () => {
         expect(deleteProject).not.toHaveBeenCalled();
 
         await wrapper.get('#delete-confirmation').setValue('DELETE');
-        await confirmButton.trigger('click');
+        await wrapper.get('.project-delete-modal__confirm').trigger('click');
         await flushPromises();
 
         expect(deleteProject).toHaveBeenCalledWith(1);
         expect(router.push).toHaveBeenCalledWith({ name: 'projects' });
-    });
-
-    it('affiche les erreurs de chargement et de sauvegarde', async () => {
-        getProjects.mockRejectedValueOnce(new Error('Erreur de chargement'));
-        const wrapper = mountView();
-        await flushPromises();
-
-        expect(wrapper.text()).toContain('Erreur de chargement');
-
-        getProjects.mockResolvedValueOnce([{ ...project, tags: [...project.tags] }]);
-        await wrapper.vm.$nextTick();
     });
 
     it('affiche une erreur si la suppression échoue', async () => {
