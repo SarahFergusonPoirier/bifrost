@@ -51,7 +51,7 @@ class ProjectController extends Controller
 
         $this->syncTags($project, $tagNames);
 
-        return $project->load('tags');
+        return response()->json($project->load('tags'), 201);
     }
 
     public function update(Request $request, Project $project)
