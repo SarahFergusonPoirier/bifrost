@@ -8,6 +8,10 @@ côté client.
 
 Pour les règles de conception des entités, des portées de données, des références et
 des migrations, consulter [Architecture des données](data-architecture.md).
+Le [bilan des décisions d’architecture](bilan-decisions-architecture.md) consolide
+les choix fonctionnels et distingue les fondations des fonctionnalités à reporter.
+Le [schéma relationnel initial proposé](schema-relationnel-propose.md) décrit les
+entités, associations et contraintes envisagées avant la création des migrations.
 
 ## Organisation du code
 
