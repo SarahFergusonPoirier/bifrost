@@ -72,7 +72,7 @@ Champs de départ :
 
 Le statut de travail et le statut canonique restent deux notions différentes. Le canon par branche n'est pas implémenté dans ce lot.
 
-**Statuts de travail pour le premier lot :** utiliser des clés système validées côté serveur, avec une valeur par défaut définie. Ne pas accepter une chaîne arbitraire comme statut valide. La personnalisation complète des statuts et leur table de définitions seront ajoutées dans un lot dédié, avant de développer l'interface de gestion des statuts. Cette décision limite le premier lot sans fermer la voie à la personnalisation future.
+**Statuts de travail du premier lot :** `draft` (Brouillon), `in_progress` (En cours), `completed` (Terminé) et `abandoned` (Abandonné). Ils sont validés côté serveur; une chaîne arbitraire n'est pas acceptée. Le statut `abandoned` est disponible pour tous les types de contenus et ne supprime ni la fiche ni ses blocs : le contenu reste conservé et peut être repris ou réutilisé. L'archivage reste distinct du statut de travail, via `archived_at`, afin de pouvoir masquer une fiche des vues habituelles sans la déclarer abandonnée. La personnalisation complète des statuts et leur table de définitions seront ajoutées dans un lot dédié.
 
 Les clés de portée doivent rester cohérentes avec `scope_type`. Les contraintes inter-tables impossibles à garantir avec une simple clé étrangère doivent être vérifiées par la validation Laravel et des tests.
 
@@ -132,7 +132,8 @@ Ces fonctionnalités restent prévues; elles seront ajoutées après validation 
 - [x] Migrations appliquées dans la base locale; avant les derniers tests d'intégrité, les 43 tests existants passaient.
 - [ ] Exécuter à nouveau `php artisan test` après les derniers changements et corriger tout échec.
 - [ ] Exécuter la suite JavaScript et le build pour vérifier l'absence de régression.
-- [ ] Compléter la validation des clés de statut de travail avant de développer les points d'entrée d'édition des contenus.
+- [x] Valider les clés de statut de travail côté serveur : brouillon, en cours, terminé et abandonné.
+- [x] Garder l'archivage séparé des statuts de travail.
 - [ ] Vérifier le lot sur une base SQLite neuve et sur la base locale existante.
 - [ ] Passer au lot 2 seulement lorsque le lot 1 est stable.
 
