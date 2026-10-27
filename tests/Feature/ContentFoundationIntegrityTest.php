@@ -106,6 +106,24 @@ class ContentFoundationIntegrityTest extends TestCase
         }
     }
 
+    public function test_abandoned_status_is_available_to_any_content_type(): void
+    {
+        $type = ContentType::create(['key' => 'story', 'name' => 'Histoire']);
+
+        $content = Content::create([
+            'content_type_id' => $type->id,
+            'title' => 'Histoire abandonnée',
+            'scope_type' => 'global',
+            'work_status_key' => 'abandoned',
+        ]);
+
+        $this->assertSame('abandoned', $content->work_status_key);
+        $this->assertDatabaseHas('contents', [
+            'id' => $content->id,
+            'work_status_key' => 'abandoned',
+        ]);
+    }
+
     public function test_content_rejects_unknown_work_status(): void
     {
         $type = ContentType::create(['key' => 'note', 'name' => 'Note']);
