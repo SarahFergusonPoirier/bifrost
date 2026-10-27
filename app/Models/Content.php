@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Content extends Model
 {
@@ -29,6 +30,29 @@ class Content extends Model
                 $content->public_id = (string) Str::uuid();
             }
         });
+
+        static::saving(function (Content $content): void {
+            $content->validateScope();
+        });
+    }
+
+    private function validateScope(): void
+    {
+        $hasProject = $this->project_id !== null;
+        $hasUniverse = $this->universe_id !== null;
+
+        $valid = match ($this->scope_type) {
+            'global' => ! $hasProject && ! $hasUniverse,
+            'project' => $hasProject && ! $hasUniverse,
+            'universe' => ! $hasProject && $hasUniverse,
+            default => false,
+        };
+
+        if (! $valid) {
+            throw ValidationException::withMessages([
+                'scope_type' => 'La portée du contenu doit correspondre à sa référence de projet ou d’univers.',
+            ]);
+        }
     }
 
     public function contentType(): BelongsTo
