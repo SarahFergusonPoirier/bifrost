@@ -11,6 +11,12 @@ use LogicException;
 
 class ContentType extends Model
 {
+    protected $attributes = [
+        'scope_type' => 'system',
+        'is_system' => false,
+        'is_active' => true,
+    ];
+
     protected $fillable = [
         'key', 'name', 'description', 'scope_type', 'project_id', 'universe_id',
         'is_system', 'is_active',
