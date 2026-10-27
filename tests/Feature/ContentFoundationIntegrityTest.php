@@ -159,4 +159,25 @@ class ContentFoundationIntegrityTest extends TestCase
         $this->assertDatabaseMissing('contents', ['id' => $content->id]);
         $this->assertDatabaseMissing('content_blocks', ['id' => $block->id]);
     }
+
+    public function test_content_cannot_use_a_project_scoped_type_from_another_project(): void
+    {
+        $firstProject = Project::create(['name' => 'Premier projet']);
+        $secondProject = Project::create(['name' => 'Deuxième projet']);
+        $type = ContentType::create([
+            'key' => 'local-note',
+            'name' => 'Note locale',
+            'scope_type' => 'project',
+            'project_id' => $firstProject->id,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        Content::create([
+            'content_type_id' => $type->id,
+            'title' => 'Note dans le mauvais projet',
+            'scope_type' => 'project',
+            'project_id' => $secondProject->id,
+        ]);
+    }
 }
