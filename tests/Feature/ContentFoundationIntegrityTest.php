@@ -73,6 +73,53 @@ class ContentFoundationIntegrityTest extends TestCase
         ]);
     }
 
+    public function test_content_defaults_to_draft_work_status(): void
+    {
+        $type = ContentType::create(['key' => 'note', 'name' => 'Note']);
+
+        $content = Content::create([
+            'content_type_id' => $type->id,
+            'title' => 'Brouillon par défaut',
+            'scope_type' => 'global',
+        ]);
+
+        $this->assertSame('draft', $content->work_status_key);
+        $this->assertDatabaseHas('contents', [
+            'id' => $content->id,
+            'work_status_key' => 'draft',
+        ]);
+    }
+
+    public function test_content_accepts_each_supported_work_status(): void
+    {
+        $type = ContentType::create(['key' => 'note', 'name' => 'Note']);
+
+        foreach (Content::WORK_STATUS_KEYS as $status) {
+            $content = Content::create([
+                'content_type_id' => $type->id,
+                'title' => 'Contenu ' . $status,
+                'scope_type' => 'global',
+                'work_status_key' => $status,
+            ]);
+
+            $this->assertSame($status, $content->work_status_key);
+        }
+    }
+
+    public function test_content_rejects_unknown_work_status(): void
+    {
+        $type = ContentType::create(['key' => 'note', 'name' => 'Note']);
+
+        $this->expectException(ValidationException::class);
+
+        Content::create([
+            'content_type_id' => $type->id,
+            'title' => 'Statut invalide',
+            'scope_type' => 'global',
+            'work_status_key' => 'published',
+        ]);
+    }
+
     public function test_system_content_types_cannot_be_updated_or_deleted(): void
     {
         $type = ContentType::create([
