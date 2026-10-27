@@ -418,3 +418,59 @@ Avant d’approuver les migrations, vérifier conceptuellement et par tests que 
 3. Confirmer le moteur de base de données cible et ses contraintes concrètes avant de fixer les types SQL, index et contraintes complexes.
 
 Ces trois points seront présentés avec une recommandation technique et leurs conséquences. Ils ne doivent pas déclencher une longue nouvelle série de questions indépendantes.
+
+
+## 14. Revue technique et recommandations
+
+Cette section transforme les points ouverts en recommandations de travail. Elle ne crée pas de migration et ne remplace pas une validation fonctionnelle.
+
+### Moteur de base de données : SQLite
+
+Le dépôt configure déjà SQLite comme moteur par défaut dans `config/database.php` et `.env.example`. Bifrost étant local d’abord, **conserver SQLite pour la première version** est le choix le plus simple : aucun serveur de base de données séparé à installer ou à maintenir.
+
+Conséquences techniques :
+- utiliser des clés étrangères et activer leur vérification;
+- privilégier les contraintes et index compatibles avec SQLite et les migrations Laravel;
+- stocker les structures JSON uniquement pour les options réellement flexibles, sans y cacher les données à filtrer ou à relier;
+- tester les migrations et les contraintes sur SQLite, pas seulement sur un autre moteur;
+- éviter les fonctionnalités SQL propres à un serveur tant qu’un besoin concret ne les justifie pas.
+
+### Variantes et branches : concepts séparés, primitives partagées
+
+**Recommandation : garder les tables de variantes et de branches distinctes dans le modèle métier.** Une variante locale répond à la question « quelle valeur ce projet personnalise-t-il? »; une branche répond à « quel état alternatif de l’univers est exploré? ». Les fusionner en une seule table polymorphe rendrait les règles de portée, de canon et d’héritage plus difficiles à valider.
+
+En revanche, les implémentations peuvent partager du code de validation et de résolution des valeurs héritées. Éviter une table polymorphe générique de contexte pour la première version : elle compliquerait les clés étrangères et l’intégrité référentielle.
+
+Avant les migrations, clarifier une règle importante : si un contenu possède à la fois une variante locale et un état dans une branche, l’ordre de résolution doit être explicite. Proposition : contenu de base, puis variante locale du projet, puis remplacement propre à la branche; une valeur absente à un niveau hérite du niveau précédent. Les tests devront couvrir les conflits entre ces niveaux.
+
+### Périmètre des migrations : fondations par étapes
+
+Ne pas créer toutes les tables proposées en une seule vague. Les migrations existantes pour les projets et les tags doivent être conservées et étendues par de nouvelles migrations. Les étapes recommandées sont :
+
+1. **Socle de contenu :** univers et association projet-univers, types de contenu, contenus et blocs de texte.
+2. **Structure réutilisable :** modèles/versionnements, définitions de champs et valeurs typées, relations entre contenus.
+3. **Organisation :** placements/dossiers et extension du système de tags existant pour les contenus sans casser les associations de projets.
+4. **Fiabilité :** ressources et usages, révisions minimales, suppression/restauration et tests d’intégrité.
+5. **Fonctions avancées ensuite :** variantes locales et branches, chronologies, recherche documentaire, tâches/objectifs, historique détaillé et notifications.
+
+Cette séquence ne signifie pas que les fonctions avancées sont abandonnées. Elle réduit le risque d’introduire d’un coup des règles d’héritage, de canon et de restauration avant que le socle de contenu soit testé.
+
+### Corrections à intégrer avant d’écrire les migrations
+
+- **Statuts configurables :** remplacer les seules clés libres telles que `work_status_key` et `canon_status_key` par des définitions de statuts configurables, ou définir clairement qu’elles sont des clés système fixes dans la première version. Ne pas laisser une chaîne arbitraire devenir un statut valide.
+- **Valeurs de champs :** documenter la règle « une seule colonne de valeur renseignée » et la faire respecter par la validation applicative et les tests. Les valeurs multivaluées et les références doivent avoir un modèle précis avant d’être utilisées.
+- **Version de modèle :** l’association du contenu doit référencer la version exacte utilisée; la table de liaison doit empêcher plusieurs affectations actives contradictoires.
+- **Canon :** `content_canon_states` doit représenter l’état courant sans ambiguïté. L’historique des transitions doit être conservé séparément, plutôt que de dépendre d’une seule date `changed_at`.
+- **Suppression/restauration :** définir précisément quelles associations sont conservées et lesquelles sont marquées supprimées. Les clés étrangères seules ne peuvent pas garantir une restauration cohérente des liens et placements.
+- **Identifiants et portée :** toute clé étrangère doit respecter la portée autorisée. Les règles impliquant plusieurs tables nécessiteront des validations Laravel et des tests, car une simple clé étrangère ne garantit pas à elle seule la cohérence entre `scope_type`, `project_id` et `universe_id`.
+- **Favoris et vues :** éviter les cibles polymorphes non contraintes si une table d’association typée peut assurer une meilleure intégrité. La forme exacte de ces tables peut attendre la fonctionnalité concernée.
+
+### Décision de revue proposée
+
+Pour avancer sans rouvrir chaque choix fonctionnel, utiliser les paramètres suivants comme base technique :
+- SQLite pour le développement local et les tests;
+- variantes et branches séparées dans le schéma métier, avec règles d’héritage explicites;
+- migrations en plusieurs étapes, en conservant toutes les migrations historiques;
+- aucune migration de branche ou de chronologie avant que le socle de contenu et ses tests d’intégrité soient en place.
+
+Ces recommandations restent révisables avant implémentation; elles ne modifient pas les données existantes.
