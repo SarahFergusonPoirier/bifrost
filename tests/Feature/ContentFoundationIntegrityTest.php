@@ -106,7 +106,7 @@ class ContentFoundationIntegrityTest extends TestCase
         ]);
 
         $this->expectException(QueryException::class);
-        $project->delete();
+        $project->forceDelete();
     }
 
     public function test_content_type_cannot_be_hard_deleted_while_content_references_it(): void
