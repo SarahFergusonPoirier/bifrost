@@ -13,6 +13,16 @@ class Content extends Model
 {
     use SoftDeletes;
 
+    public const WORK_STATUS_KEYS = [
+        'draft',
+        'in_progress',
+        'completed',
+    ];
+
+    protected $attributes = [
+        'work_status_key' => 'draft',
+    ];
+
     protected $fillable = [
         'content_type_id', 'title', 'summary', 'work_status_key', 'scope_type',
         'project_id', 'universe_id', 'origin_content_id', 'archived_at',
@@ -33,6 +43,7 @@ class Content extends Model
 
         static::saving(function (Content $content): void {
             $content->validateScope();
+            $content->validateWorkStatus();
             $content->validateContentTypeScope();
         });
     }
@@ -52,6 +63,15 @@ class Content extends Model
         if (! $valid) {
             throw ValidationException::withMessages([
                 'scope_type' => 'La portée du contenu doit correspondre à sa référence de projet ou d’univers.',
+            ]);
+        }
+    }
+
+    private function validateWorkStatus(): void
+    {
+        if (! in_array($this->work_status_key, self::WORK_STATUS_KEYS, true)) {
+            throw ValidationException::withMessages([
+                'work_status_key' => 'Le statut de travail doit être une valeur autorisée.',
             ]);
         }
     }
