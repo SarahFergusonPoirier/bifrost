@@ -34,7 +34,7 @@ return new class extends Migration
             $table->foreignId('origin_content_id')
                 ->nullable()
                 ->constrained('contents')
-                ->nullOnDelete();
+                ->restrictOnDelete();
 
             $table->timestamps();
             $table->softDeletes();
