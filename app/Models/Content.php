@@ -17,6 +17,7 @@ class Content extends Model
         'draft',
         'in_progress',
         'completed',
+        'abandoned',
     ];
 
     protected $attributes = [
