@@ -124,11 +124,16 @@ Ces fonctionnalités restent prévues; elles seront ajoutées après validation 
 
 - [x] Inventaire des migrations versionnées dans le dépôt.
 - [x] Migrations du lot 1 ajoutées sans modifier les anciennes.
-- [x] Premier fichier de tests de schéma et d'intégrité ajouté : `tests/Feature/ContentFoundationSchemaTest.php`.
-- [ ] Exécuter `php artisan test` sur l'environnement local et corriger tout échec.
-- [ ] Vérifier l'état réel de la base locale et appliquer les migrations en attente après sauvegarde.
-- [ ] Créer les modèles Eloquent et leurs relations, puis les tests de comportement associés.
+- [x] Tests de schéma ajoutés : `tests/Feature/ContentFoundationSchemaTest.php`.
+- [x] Modèles Eloquent et relations ajoutés pour les univers, types de contenu, contenus et blocs.
+- [x] Tests de relations ajoutés : `tests/Feature/ContentFoundationModelsTest.php`.
+- [x] Première couche de validation des portées et protection des types système ajoutées.
+- [x] Tests d'intégrité ajoutés : `tests/Feature/ContentFoundationIntegrityTest.php`.
+- [x] Migrations appliquées dans la base locale; avant les derniers tests d'intégrité, les 43 tests existants passaient.
+- [ ] Exécuter à nouveau `php artisan test` après les derniers changements et corriger tout échec.
 - [ ] Exécuter la suite JavaScript et le build pour vérifier l'absence de régression.
+- [ ] Compléter la validation des clés de statut de travail avant de développer les points d'entrée d'édition des contenus.
+- [ ] Vérifier le lot sur une base SQLite neuve et sur la base locale existante.
 - [ ] Passer au lot 2 seulement lorsque le lot 1 est stable.
 
 ## Décisions techniques de départ
