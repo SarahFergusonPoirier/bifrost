@@ -2,7 +2,7 @@
 
 ## Statut
 
-Plan technique de référence pour le premier lot de migrations. Il complète le schéma relationnel proposé sans le remplacer. Aucune migration applicative n'est créée par ce document.
+Plan technique de référence pour le premier lot de migrations. Il complète le schéma relationnel proposé sans le remplacer. Les cinq migrations et un premier fichier de tests de schéma ont maintenant été ajoutés à la branche; les tests doivent encore être exécutés localement.
 
 ## Contraintes à respecter
 
@@ -120,14 +120,16 @@ Ces fonctionnalités restent prévues; elles seront ajoutées après validation 
 9. Les tables et associations existantes de projets et de tags continuent de fonctionner.
 10. Les migrations passent sur une base vide et sur une base déjà migrée.
 
-## Ordre d'implémentation après validation du plan
+## État de l'implémentation
 
-1. Vérifier la liste réelle des migrations et l'état de la base locale.
-2. Écrire les migrations du lot 1, sans toucher aux anciennes.
-3. Créer les modèles Eloquent et leurs relations pour les entités du lot.
-4. Ajouter les tests de migration, d'intégrité et de portée.
-5. Exécuter les tests Laravel et la suite de tests JavaScript, puis vérifier le build.
-6. Passer au lot 2 seulement lorsque le lot 1 est stable.
+- [x] Inventaire des migrations versionnées dans le dépôt.
+- [x] Migrations du lot 1 ajoutées sans modifier les anciennes.
+- [x] Premier fichier de tests de schéma et d'intégrité ajouté : `tests/Feature/ContentFoundationSchemaTest.php`.
+- [ ] Exécuter `php artisan test` sur l'environnement local et corriger tout échec.
+- [ ] Vérifier l'état réel de la base locale et appliquer les migrations en attente après sauvegarde.
+- [ ] Créer les modèles Eloquent et leurs relations, puis les tests de comportement associés.
+- [ ] Exécuter la suite JavaScript et le build pour vérifier l'absence de régression.
+- [ ] Passer au lot 2 seulement lorsque le lot 1 est stable.
 
 ## Décisions techniques de départ
 
