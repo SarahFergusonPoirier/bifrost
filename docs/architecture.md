@@ -12,6 +12,7 @@ Le [bilan des décisions d’architecture](bilan-decisions-architecture.md) cons
 les choix fonctionnels et distingue les fondations des fonctionnalités à reporter.
 Le [schéma relationnel initial proposé](schema-relationnel-propose.md) décrit les
 entités, associations et contraintes envisagées avant la création des migrations.
+Le [plan final des premières migrations](plan-premieres-migrations.md) fixe le périmètre du premier lot avant l'implémentation.
 
 ## Organisation du code
 
