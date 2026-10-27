@@ -33,6 +33,7 @@ class Content extends Model
 
         static::saving(function (Content $content): void {
             $content->validateScope();
+            $content->validateContentTypeScope();
         });
     }
 
@@ -51,6 +52,29 @@ class Content extends Model
         if (! $valid) {
             throw ValidationException::withMessages([
                 'scope_type' => 'La portée du contenu doit correspondre à sa référence de projet ou d’univers.',
+            ]);
+        }
+    }
+
+    private function validateContentTypeScope(): void
+    {
+        $contentType = ContentType::query()->find($this->content_type_id);
+
+        if (! $contentType) {
+            return;
+        }
+
+        $valid = match ($contentType->scope_type) {
+            'project' => $this->scope_type === 'project'
+                && (string) $this->project_id === (string) $contentType->project_id,
+            'universe' => $this->scope_type === 'universe'
+                && (string) $this->universe_id === (string) $contentType->universe_id,
+            default => true,
+        };
+
+        if (! $valid) {
+            throw ValidationException::withMessages([
+                'content_type_id' => 'Le type de contenu doit être accessible dans la même portée que le contenu.',
             ]);
         }
     }
