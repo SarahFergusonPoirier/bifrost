@@ -32,6 +32,9 @@ class FieldDefinition extends Model
         });
 
         static::saving(function (FieldDefinition $field): void {
+            // Apply the same default as the database before validating the model.
+            $field->scope_type ??= 'global';
+
             $scopeValid = match ($field->scope_type) {
                 'global' => $field->project_id === null && $field->universe_id === null,
                 'project' => $field->project_id !== null && $field->universe_id === null,
