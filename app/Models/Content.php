@@ -13,16 +13,9 @@ class Content extends Model
 {
     use SoftDeletes;
 
-    public const WORK_STATUS_KEYS = [
-        'draft',
-        'in_progress',
-        'completed',
-        'abandoned',
-    ];
+    public const WORK_STATUS_KEYS = ['draft', 'in_progress', 'completed', 'abandoned'];
 
-    protected $attributes = [
-        'work_status_key' => 'draft',
-    ];
+    protected $attributes = ['work_status_key' => 'draft'];
 
     protected $fillable = [
         'content_type_id', 'title', 'summary', 'work_status_key', 'scope_type',
@@ -37,9 +30,7 @@ class Content extends Model
     protected static function booted(): void
     {
         static::creating(function (Content $content): void {
-            if (empty($content->public_id)) {
-                $content->public_id = (string) Str::uuid();
-            }
+            $content->public_id = $content->public_id ?: (string) Str::uuid();
         });
 
         static::saving(function (Content $content): void {
@@ -80,7 +71,6 @@ class Content extends Model
     private function validateContentTypeScope(): void
     {
         $contentType = ContentType::query()->find($this->content_type_id);
-
         if (! $contentType) {
             return;
         }
@@ -100,33 +90,13 @@ class Content extends Model
         }
     }
 
-    public function contentType(): BelongsTo
-    {
-        return $this->belongsTo(ContentType::class);
-    }
-
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
-    }
-
-    public function universe(): BelongsTo
-    {
-        return $this->belongsTo(Universe::class);
-    }
-
-    public function originContent(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'origin_content_id');
-    }
-
-    public function derivedContents(): HasMany
-    {
-        return $this->hasMany(self::class, 'origin_content_id');
-    }
-
-    public function blocks(): HasMany
-    {
-        return $this->hasMany(ContentBlock::class)->orderBy('position');
-    }
+    public function contentType(): BelongsTo { return $this->belongsTo(ContentType::class); }
+    public function project(): BelongsTo { return $this->belongsTo(Project::class); }
+    public function universe(): BelongsTo { return $this->belongsTo(Universe::class); }
+    public function originContent(): BelongsTo { return $this->belongsTo(self::class, 'origin_content_id'); }
+    public function derivedContents(): HasMany { return $this->hasMany(self::class, 'origin_content_id'); }
+    public function blocks(): HasMany { return $this->hasMany(ContentBlock::class)->orderBy('position'); }
+    public function fieldValues(): HasMany { return $this->hasMany(ContentFieldValue::class); }
+    public function templateAssignment(): HasMany { return $this->hasMany(ContentTemplateAssignment::class); }
+    public function templateUpdateEvents(): HasMany { return $this->hasMany(ContentTemplateUpdateEvent::class); }
 }
