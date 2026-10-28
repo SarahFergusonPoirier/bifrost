@@ -130,12 +130,14 @@ Ces fonctionnalités restent prévues; elles seront ajoutées après validation 
 - [x] Première couche de validation des portées et protection des types système ajoutées.
 - [x] Tests d'intégrité ajoutés : `tests/Feature/ContentFoundationIntegrityTest.php`.
 - [x] Migrations appliquées dans la base locale; avant les derniers tests d'intégrité, les 43 tests existants passaient.
-- [ ] Exécuter à nouveau `php artisan test` après les derniers changements et corriger tout échec.
-- [ ] Exécuter la suite JavaScript et le build pour vérifier l'absence de régression.
+- [x] Exécuter `php artisan test` après les derniers changements : 57 tests réussis (173 assertions).
+- [x] Exécuter `npx vitest run` : 110 tests réussis dans 14 fichiers.
+- [x] Exécuter `npm run build` : compilation Vite réussie.
 - [x] Valider les clés de statut de travail côté serveur : brouillon, en cours, terminé et abandonné.
 - [x] Garder l'archivage séparé des statuts de travail.
-- [ ] Vérifier le lot sur une base SQLite neuve et sur la base locale existante.
-- [ ] Passer au lot 2 seulement lorsque le lot 1 est stable.
+- [x] Vérifier les migrations sur une base SQLite neuve en mémoire via la suite de tests `RefreshDatabase`.
+- [x] Appliquer les cinq migrations sur la base locale existante et vérifier que les tests Laravel passent.
+- [x] Lot 1 stable; passer à la revue de conception du lot 2 avant d'ajouter de nouvelles migrations.
 
 ## Décisions techniques de départ
 
