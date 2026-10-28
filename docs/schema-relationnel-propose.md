@@ -99,6 +99,15 @@ Contrainte : index sur `content_id + position`. La disposition visuelle n’est 
 
 ## 3. Modèles et champs personnalisés
 
+### Principes d'intégrité
+
+- Une version publiée est immuable. Modifier la structure crée une nouvelle version.
+- Les valeurs d'une fiche sont indépendantes de la version de modèle actuellement affichée.
+- Retirer un champ d'une nouvelle version ne supprime ni sa définition ni les valeurs déjà enregistrées.
+- Les définitions de champs utilisées historiquement ne sont pas supprimées physiquement. Une définition inutilisée peut être désactivée ou archivée.
+- Un changement incompatible de type crée une nouvelle définition de champ; il ne change pas rétroactivement le sens des anciennes valeurs.
+- La mise à jour d'une fiche vers une nouvelle version est explicite, prévisualisée et traçable.
+
 ### `content_templates`
 
 - `id`, `public_id`, `name`, `description`.
@@ -108,27 +117,28 @@ Contrainte : index sur `content_id + position`. La disposition visuelle n’est 
 - `is_system`, `is_active`.
 - `created_at`, `updated_at`, `deleted_at`.
 
+Le modèle représente l'identité durable et la portée du modèle, pas sa structure à un instant précis. Les modèles système sont protégés; l'utilisateur peut les adapter en créant un modèle distinct.
+
 ### `template_versions`
 
 - `id`, `template_id`.
 - `version_number`.
 - `change_summary`.
-- `snapshot_data` — instantané complet et versionné de la structure du modèle, incluant la composition des sections/champs et les règles de présentation.
 - `created_at`.
 
-Contrainte : unicité de `template_id + version_number`. Une version publiée est immuable; les changements produisent une nouvelle version.
+Contrainte : unicité de `template_id + version_number`. Une version publiée est immuable. La structure exacte de chaque version est définie par ses lignes `template_version_fields` et les options de présentation qui y sont enregistrées. Éviter un second instantané structurel faisant autorité en parallèle de ces lignes. Si un instantané d'export ou de diagnostic est utile, il doit être explicitement dérivé et non servir de source concurrente.
 
 ### `field_definitions`
 
-Définitions de champs réutilisables.
+Définitions stables de champs réutilisables.
 
 - `id`, `public_id`, `key`, `label`, `description`.
 - `value_type` — texte, nombre, booléen, date, choix, référence, etc.
 - `scope_type`, `project_id`, `universe_id`.
-- `options_data` — options et contraintes spécifiques au type de champ.
+- `options_data` — options et contraintes propres au type, lorsque celles-ci ne nécessitent pas de relations dédiées.
 - `created_at`, `updated_at`, `deleted_at`.
 
-Les clés techniques des champs restent stables même si le libellé change. Une modification incompatible du type de valeur nécessite une migration de données contrôlée.
+La clé technique et le type d'une définition utilisée ne sont pas modifiés rétroactivement. Un changement incompatible de type crée une nouvelle définition; une migration de valeur éventuelle doit être explicite et contrôlée. Les définitions retirées des modèles restent conservées afin que les anciennes valeurs gardent leur sens.
 
 ### `template_version_fields`
 
@@ -136,35 +146,51 @@ Les clés techniques des champs restent stables même si le libellé change. Une
 - `section_key` — section logique.
 - `position`.
 - `is_required`.
-- `default_value` — valeur par défaut si compatible avec le type.
-- `display_options` — paramètres de présentation non liés à la valeur.
+- `default_value` — valeur par défaut compatible avec le type.
+- `display_options` — présentation de ce champ dans cette version.
 
-Contrainte : unicité de `template_version_id + field_definition_id), sauf si le produit autorise explicitement plusieurs occurrences d’un même champ.
+Contrainte : unicité du couple `template_version_id + field_definition_id`, sauf si un besoin confirmé exige plusieurs occurrences d'un même champ. Les règles de présentation sont versionnées ici; elles ne modifient pas les valeurs de contenu.
 
 ### `content_field_values`
 
-Valeurs des champs d’un contenu.
+Valeurs conservées par contenu, indépendamment de la version de modèle affichée.
 
 - `id`.
 - `content_id`, `field_definition_id`.
 - `value_text`, `value_number`, `value_boolean`, `value_date`, `value_json`, `reference_content_id`.
-- `updated_at`.
+- `created_at`, `updated_at`.
 
-Une seule colonne de valeur compatible avec le type de champ doit être renseignée pour une valeur simple. Des tables dédiées pourront être ajoutées pour les valeurs multivaluées si le besoin est confirmé. Des contraintes applicatives et tests vérifient que le type et la colonne utilisée concordent.
+Contrainte : unicité du couple `content_id + field_definition_id` pour les champs à valeur unique. Une seule colonne de valeur compatible avec le type est renseignée pour une valeur simple; cette règle est vérifiée par la validation Laravel et les tests. Les valeurs multivaluées ne sont pas implicitement encodées dans ces colonnes : leur représentation sera conçue avant de proposer ce comportement dans l'interface.
 
-Cette approche hybride garde les champs filtrables et indexables sans créer une colonne SQL pour chaque nouveau champ. Les valeurs structurées complexes ne doivent utiliser `value_json` que lorsque les requêtes attendues le permettent.
+**Champ retiré d'un modèle :** enlever le champ de `template_version_fields` dans une nouvelle version ne supprime pas sa ligne dans `content_field_values`. La valeur est conservée et reste consultable dans une section « Champs retirés du modèle » de la fiche. Si le champ est réintroduit, Bifrost vérifie que la définition et le type sont compatibles avant de réutiliser cette valeur. Les valeurs ne sont supprimées qu'à la suite d'une action explicite de l'utilisateur.
+
+Les valeurs typées permettent le filtrage et la recherche sans créer de colonne SQL pour chaque champ. `value_json` est réservé aux valeurs complexes qui ne doivent pas être filtrées comme des données relationnelles. Les références vers un contenu utilisent une clé étrangère; la cohérence des portées doit également être validée par l'application.
 
 ### `content_template_assignments`
 
+- `id`.
 - `content_id`.
 - `template_id`, `template_version_id`.
 - `assigned_at`.
 
-Garde la trace du modèle et de sa version utilisés par le contenu. Une nouvelle version de modèle ne remplace pas automatiquement cette association.
+Cette table représente l'affectation courante du modèle et de sa version à une fiche. Une contrainte d'unicité doit empêcher plusieurs affectations courantes contradictoires pour une même fiche. Une fiche sans modèle peut ne pas avoir d'affectation. Une nouvelle version de modèle ne remplace jamais cette association automatiquement.
+
+### `content_template_update_events`
+
+Historique des mises à jour de modèle explicitement appliquées à une fiche.
+
+- `id`, `content_id`.
+- `from_template_version_id` nullable pour la première affectation.
+- `to_template_version_id`.
+- `change_summary`.
+- `change_data` — résumé structuré des champs ajoutés, retirés ou modifiés et du traitement choisi pour les valeurs.
+- `applied_at`.
+
+Cet historique permet d'expliquer quelle mise à jour a été appliquée et quand. Il ne remplace pas les valeurs conservées ni l'historique général des révisions de contenu.
 
 ### Mise à jour des modèles
 
-L’application doit comparer la version utilisée et la nouvelle version, présenter les champs ajoutés/modifiés/supprimés, détecter les valeurs locales et conflits, puis enregistrer une application explicite de la mise à jour. Un journal de changement doit permettre de comprendre ce qui a été appliqué.
+Avant application, Bifrost compare les deux versions et prévisualise les champs ajoutés, retirés ou modifiés. L'utilisateur confirme la mise à jour. Les nouvelles valeurs par défaut ne remplacent pas les valeurs déjà saisies. Les valeurs de champs retirés sont conservées et consultables. Toute conversion de type est proposée explicitement; les valeurs non compatibles sont préservées jusqu'à résolution manuelle. Les blocs de texte libre (`content_blocks`) restent indépendants des modèles et ne sont pas modifiés par une mise à jour de modèle.
 
 ## 4. Relations et références
 
@@ -409,6 +435,7 @@ Avant d’approuver les migrations, vérifier conceptuellement et par tests que 
 7. Une ressource utilisée par plusieurs contenus, dont un est supprimé sans supprimer la ressource encore utilisée.
 8. Un champ personnalisé filtrable et recherchable, avec validation de son type.
 9. Une mise à jour de modèle proposée sans écraser une valeur personnalisée.
+11. Le retrait d'un champ dans une nouvelle version conserve la valeur de la fiche et permet de la consulter; un changement incompatible de type ne réinterprète pas cette ancienne valeur.
 10. Un événement imprécis ou sans date exacte placé dans une chronologie sans date inventée.
 
 ## Points à trancher lors de la revue du schéma
