@@ -97,6 +97,6 @@ class Content extends Model
     public function derivedContents(): HasMany { return $this->hasMany(self::class, 'origin_content_id'); }
     public function blocks(): HasMany { return $this->hasMany(ContentBlock::class)->orderBy('position'); }
     public function fieldValues(): HasMany { return $this->hasMany(ContentFieldValue::class); }
-    public function templateAssignment(): HasMany { return $this->hasMany(ContentTemplateAssignment::class); }
+    public function templateAssignment(): HasOne { return $this->hasOne(ContentTemplateAssignment::class); }
     public function templateUpdateEvents(): HasMany { return $this->hasMany(ContentTemplateUpdateEvent::class); }
 }
