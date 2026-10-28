@@ -216,6 +216,61 @@ La compatibilité de portée entre modèles, définitions de champs et contenus 
 - Les valeurs des champs absents de la version actuelle restent conservées et accessibles dans « Champs retirés du modèle ».
 - Les blocs de texte libre demeurent indépendants des modèles et de leurs mises à jour.
 
+
+### Contraintes techniques à fixer pour le lot 2 (SQLite/Laravel)
+
+Cette section précise les contraintes à utiliser lors de la rédaction des migrations. Elle ne modifie aucune migration existante.
+
+#### Identifiants, unicité et index
+
+- Toutes les tables du lot 2 utilisent une clé primaire entière `id`. Les entités qui doivent être référencées à l’import/export (`content_templates` et `field_definitions`) ont aussi un `public_id` UUID unique. Les tables de liaison et d’historique n’ont pas besoin d’identifiant public tant qu’elles ne sont pas exposées comme objets importables.
+- `template_versions` impose `UNIQUE(template_id, version_number)`.
+- `template_version_fields` impose `UNIQUE(template_version_id, field_definition_id)` et un index pour retrouver rapidement les usages d’une définition de champ.
+- `content_field_values` impose `UNIQUE(content_id, field_definition_id)`, car le premier lot ne prend en charge que les champs à valeur unique.
+- `content_template_assignments` impose `UNIQUE(content_id)`, pour garantir une seule affectation courante par fiche.
+- `content_template_update_events` est indexée par `content_id, applied_at`; les versions source et cible sont référencées par clés étrangères.
+
+#### Clés étrangères et suppressions
+
+- `content_templates.content_type_id` référence `content_types` avec suppression restrictive. Un type déjà utilisé ne doit pas être supprimé en cascade.
+- `content_templates.base_template_id` est une auto-référence nullable, avec suppression restrictive. L’application vérifie l’absence de cycle et la compatibilité du modèle parent; la contrainte SQL seule ne suffit pas.
+- `template_versions.template_id` référence `content_templates` avec suppression restrictive. Les versions publiées ne sont pas supprimées physiquement.
+- `field_definitions.project_id` et `universe_id` suivent les mêmes règles de portée que les types de contenu : clés nulles pour les portées système/globales, une seule clé correspondante pour les portées projet/univers. Les suppressions sont restrictives.
+- `template_version_fields.template_version_id` et `field_definition_id` sont des clés étrangères restrictives. Les lignes d’une version publiée ne sont pas modifiées en place; les changements sont portés par une nouvelle version.
+- `content_field_values.content_id` et `field_definition_id` sont des clés étrangères restrictives au niveau SQL, afin qu’une suppression physique ne détruise pas silencieusement des valeurs. Les contenus utilisant normalement `SoftDeletes` restent restaurables; une purge définitive doit être une opération explicite.
+- `content_field_values.reference_content_id` est nullable et référence `contents` avec suppression restrictive. Une cible supprimée de façon réversible reste donc référencée.
+- `content_template_assignments.content_id`, `template_id` et `template_version_id` sont des clés étrangères restrictives. Laravel vérifie que la version appartient au modèle et qu’elle est publiée/valide pour l’affectation.
+- `content_template_update_events.content_id`, `from_template_version_id` et `to_template_version_id` sont des clés étrangères restrictives; la version source peut être nulle pour une première affectation. L’historique ne doit pas disparaître parce qu’un modèle ou une version est retiré de l’interface.
+
+#### Valeurs typées et valeurs par défaut
+
+- `field_definitions.value_type` utilise une liste fermée de clés techniques initiales (texte, nombre, booléen, date, choix simple, référence et JSON si un besoin concret le justifie). Une clé inconnue est rejetée par Laravel.
+- Pour `content_field_values`, Laravel valide qu’exactement une colonne de valeur est renseignée et qu’elle correspond au type de la définition. SQLite ne peut pas garantir à lui seul toutes les règles inter-tables; des tests d’intégrité sont obligatoires.
+- Les valeurs de choix simples doivent utiliser une représentation clairement définie et validée. Les choix multiples et les champs multivalués sont hors périmètre.
+- `default_value` ne doit pas être une chaîne SQL arbitraire. Recommandation : stocker une représentation JSON nullable de la valeur par défaut, puis la valider selon `value_type` dans Laravel. Elle sert de valeur initiale pour les nouvelles fiches, jamais à écraser une valeur existante.
+- Pour une valeur de référence, seule `reference_content_id` est renseignée; la cible doit respecter les types et portées autorisés dans les options du champ.
+
+#### Publication et immuabilité des versions
+
+Le schéma actuel doit rendre l’état de publication explicite : ajouter `published_at` nullable à `template_versions`. Une version avec `published_at = NULL` est un brouillon modifiable; une version publiée est immuable. L’application doit empêcher la modification ou la suppression d’une version publiée et de ses lignes `template_version_fields`. Les affectations courantes ne peuvent pointer que vers une version publiée. Une version publiée est remplacée par une nouvelle version, jamais réécrite.
+
+#### Portées et intégrité applicative
+
+Les clés étrangères garantissent l’existence des enregistrements, mais pas que leurs portées sont compatibles. Avant toute affectation ou sauvegarde de valeur, Laravel doit vérifier :
+- que le type de contenu du modèle correspond au contenu;
+- que la portée du modèle et celle du contenu sont compatibles;
+- que chaque champ est utilisable dans la portée du modèle;
+- que chaque référence cible un type de contenu et une portée autorisés;
+- que `template_version_id` appartient au `template_id` sélectionné;
+- qu’aucun cycle n’existe dans `base_template_id`.
+
+Ces règles doivent être testées au niveau des modèles/services et des requêtes de validation, pas seulement dans les migrations.
+
+#### Transactions et historique de mise à jour
+
+L’application d’une version doit se faire dans une transaction SQL : vérifier la version cible, calculer les changements, conserver toutes les valeurs, mettre à jour l’affectation courante et écrire `content_template_update_events`. En cas d’échec, aucune partie de l’opération ne doit rester appliquée. L’historique consigne l’action et les choix de traitement, sans dupliquer la valeur courante comme source de vérité.
+
+
 ## 4. Relations et références
 
 ### `content_relation_types`
