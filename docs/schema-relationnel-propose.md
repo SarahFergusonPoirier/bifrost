@@ -138,7 +138,7 @@ Définitions stables de champs réutilisables.
 - `options_data` — options et contraintes propres au type, lorsque celles-ci ne nécessitent pas de relations dédiées.
 - `created_at`, `updated_at`, `deleted_at`.
 
-La clé technique et le type d'une définition utilisée ne sont pas modifiés rétroactivement. Un changement incompatible de type crée une nouvelle définition; une migration de valeur éventuelle doit être explicite et contrôlée. Les définitions retirées des modèles restent conservées afin que les anciennes valeurs gardent leur sens.
+La clé technique et le type d'une définition utilisée ne sont pas modifiés rétroactivement. Le libellé canonique de la définition sert de nom par défaut; `label_override` permet à chaque modèle/version d'employer un libellé adapté sans modifier les autres modèles qui réutilisent le même champ. Un changement incompatible de type crée une nouvelle définition; une migration de valeur éventuelle doit être explicite et contrôlée. Les définitions retirées des modèles restent conservées afin que les anciennes valeurs gardent leur sens.
 
 ### `template_version_fields`
 
@@ -148,6 +148,8 @@ La clé technique et le type d'une définition utilisée ne sont pas modifiés r
 - `is_required`.
 - `default_value` — valeur par défaut compatible avec le type.
 - `display_options` — présentation de ce champ dans cette version.
+- `label_override` nullable — libellé propre à cette version si le modèle veut présenter différemment un champ partagé.
+- `help_text` nullable — consigne propre à cette version.
 
 Contrainte : unicité du couple `template_version_id + field_definition_id`, sauf si un besoin confirmé exige plusieurs occurrences d'un même champ. Les règles de présentation sont versionnées ici; elles ne modifient pas les valeurs de contenu.
 
@@ -164,7 +166,7 @@ Contrainte : unicité du couple `content_id + field_definition_id` pour les cham
 
 **Champ retiré d'un modèle :** enlever le champ de `template_version_fields` dans une nouvelle version ne supprime pas sa ligne dans `content_field_values`. La valeur est conservée et reste consultable dans une section « Champs retirés du modèle » de la fiche. Si le champ est réintroduit, Bifrost vérifie que la définition et le type sont compatibles avant de réutiliser cette valeur. Les valeurs ne sont supprimées qu'à la suite d'une action explicite de l'utilisateur.
 
-Les valeurs typées permettent le filtrage et la recherche sans créer de colonne SQL pour chaque champ. `value_json` est réservé aux valeurs complexes qui ne doivent pas être filtrées comme des données relationnelles. Les références vers un contenu utilisent une clé étrangère; la cohérence des portées doit également être validée par l'application.
+Les valeurs typées permettent le filtrage et la recherche sans créer de colonne SQL pour chaque champ. `value_json` est réservé aux valeurs complexes qui ne doivent pas être filtrées comme des données relationnelles. Les références vers un contenu utilisent une clé étrangère; la cohérence des portées doit également être validée par l'application. Pour les champs de type référence, `options_data` peut préciser les types de contenus cibles autorisés et les règles de portée. La suppression réversible d'un contenu cible ne supprime pas la valeur de référence; l'interface signale que la cible est supprimée ou indisponible. La suppression définitive doit être bloquée ou traitée par une règle explicite afin de ne pas laisser une référence silencieusement cassée.
 
 ### `content_template_assignments`
 
@@ -173,7 +175,7 @@ Les valeurs typées permettent le filtrage et la recherche sans créer de colonn
 - `template_id`, `template_version_id`.
 - `assigned_at`.
 
-Cette table représente l'affectation courante du modèle et de sa version à une fiche. Une contrainte d'unicité doit empêcher plusieurs affectations courantes contradictoires pour une même fiche. Une fiche sans modèle peut ne pas avoir d'affectation. Une nouvelle version de modèle ne remplace jamais cette association automatiquement.
+Cette table représente l'affectation courante du modèle et de sa version à une fiche. Recommandation : une seule affectation courante par fiche, avec unicité de `content_id`; une fiche sans modèle n'a aucune ligne. L'application vérifie que `template_version_id` appartient bien à `template_id` et que le type et les portées du modèle sont compatibles avec le contenu. Ces vérifications doivent être couvertes par des tests d'intégrité. Une fiche sans modèle peut ne pas avoir d'affectation. Une nouvelle version de modèle ne remplace jamais cette association automatiquement.
 
 ### `content_template_update_events`
 
@@ -191,6 +193,28 @@ Cet historique permet d'expliquer quelle mise à jour a été appliquée et quan
 ### Mise à jour des modèles
 
 Avant application, Bifrost compare les deux versions et prévisualise les champs ajoutés, retirés ou modifiés. L'utilisateur confirme la mise à jour. Les nouvelles valeurs par défaut ne remplacent pas les valeurs déjà saisies. Les valeurs de champs retirés sont conservées et consultables. Toute conversion de type est proposée explicitement; les valeurs non compatibles sont préservées jusqu'à résolution manuelle. Les blocs de texte libre (`content_blocks`) restent indépendants des modèles et ne sont pas modifiés par une mise à jour de modèle.
+
+
+### Réutilisation des champs entre modèles
+
+Une même définition peut être référencée par plusieurs lignes de `template_version_fields`, y compris dans des modèles différents, si sa portée autorise cet usage. La réutilisation partage l'identité et le type du champ, pas nécessairement son libellé d'affichage, son aide, sa section, son ordre ni son caractère obligatoire. Ces paramètres appartiennent à la version du modèle.
+
+Règles de portée proposées :
+- un champ système/global peut être utilisé par les modèles des portées autorisées;
+- un champ propre à un univers ne peut être utilisé que dans cet univers et les projets qui y ont accès selon les règles de portée de Bifrost;
+- un champ propre à un projet reste limité à ce projet;
+- une version de modèle ne peut référencer qu'un champ dont la portée est compatible avec celle du modèle.
+
+La compatibilité de portée entre modèles, définitions de champs et contenus doit être validée par Laravel et couverte par des tests; les clés étrangères seules ne suffisent pas à la garantir.
+
+### Cohérence des valeurs et contraintes
+
+- Une fiche ne possède qu'une valeur courante par définition de champ à valeur unique. Les valeurs multivaluées exigeront une structure dédiée avant leur prise en charge.
+- La valeur doit utiliser une colonne compatible avec `value_type`; une valeur de référence doit utiliser `reference_content_id` et respecter les types de cible autorisés.
+- L'affectation courante doit pointer vers une version appartenant réellement au modèle indiqué.
+- Les versions publiées et leurs lignes `template_version_fields` ne sont pas modifiées en place; toute modification crée une nouvelle version.
+- Les valeurs des champs absents de la version actuelle restent conservées et accessibles dans « Champs retirés du modèle ».
+- Les blocs de texte libre demeurent indépendants des modèles et de leurs mises à jour.
 
 ## 4. Relations et références
 
@@ -436,6 +460,8 @@ Avant d’approuver les migrations, vérifier conceptuellement et par tests que 
 8. Un champ personnalisé filtrable et recherchable, avec validation de son type.
 9. Une mise à jour de modèle proposée sans écraser une valeur personnalisée.
 11. Le retrait d'un champ dans une nouvelle version conserve la valeur de la fiche et permet de la consulter; un changement incompatible de type ne réinterprète pas cette ancienne valeur.
+12. Un champ partagé entre plusieurs modèles conserve une identité et un type stables, tandis que le libellé d'affichage et les règles de présentation peuvent différer selon la version du modèle.
+13. Une affectation de modèle référence une version appartenant à ce modèle; les champs réutilisés et les références de contenu respectent les règles de portée et de type.
 10. Un événement imprécis ou sans date exacte placé dans une chronologie sans date inventée.
 
 ## Points à trancher lors de la revue du schéma
