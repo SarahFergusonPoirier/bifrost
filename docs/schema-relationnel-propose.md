@@ -124,7 +124,8 @@ Le modèle représente l'identité durable et la portée du modèle, pas sa stru
 - `id`, `template_id`.
 - `version_number`.
 - `change_summary`.
-- `created_at`.
+- `published_at` — nul tant que la version est un brouillon; une fois publiée, la version et sa structure deviennent immuables.
+- `created_at`, `updated_at`.
 
 Contrainte : unicité de `template_id + version_number`. Une version publiée est immuable. La structure exacte de chaque version est définie par ses lignes `template_version_fields` et les options de présentation qui y sont enregistrées. Éviter un second instantané structurel faisant autorité en parallèle de ces lignes. Si un instantané d'export ou de diagnostic est utile, il doit être explicitement dérivé et non servir de source concurrente.
 
@@ -133,7 +134,7 @@ Contrainte : unicité de `template_id + version_number`. Une version publiée es
 Définitions stables de champs réutilisables.
 
 - `id`, `public_id`, `key`, `label`, `description`.
-- `value_type` — texte, nombre, booléen, date, choix, référence, etc.
+- `value_type` — l’un des types initiaux `text`, `number`, `boolean`, `date`, `choice`, `reference` ou `json`; toute extension doit ajouter sa validation et ses tests.
 - `scope_type`, `project_id`, `universe_id`.
 - `options_data` — options et contraintes propres au type, lorsque celles-ci ne nécessitent pas de relations dédiées.
 - `created_at`, `updated_at`, `deleted_at`.
@@ -146,7 +147,7 @@ La clé technique et le type d'une définition utilisée ne sont pas modifiés r
 - `section_key` — section logique.
 - `position`.
 - `is_required`.
-- `default_value` — valeur par défaut compatible avec le type.
+- `default_value` — représentation JSON nullable d’une valeur par défaut, validée selon le type du champ par Laravel.
 - `display_options` — présentation de ce champ dans cette version.
 - `label_override` nullable — libellé propre à cette version si le modèle veut présenter différemment un champ partagé.
 - `help_text` nullable — consigne propre à cette version.
