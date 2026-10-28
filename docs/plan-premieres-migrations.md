@@ -217,8 +217,8 @@ Les migrations doivent respecter les clés étrangères et les dépendances. Les
 - [x] Revue des règles de conservation des valeurs et d’immuabilité des versions.
 - [x] Revue de la réutilisation des champs, des portées et des références.
 - [x] Périmètre et ordre de dépendance documentés.
-- [ ] Vérifier le schéma final des sept tables et les contraintes SQLite.
-- [ ] Créer les migrations et modèles.
-- [ ] Ajouter et exécuter les tests d’intégrité.
-- [ ] Exécuter les suites Laravel/Vitest et la compilation Vite.
+- [x] Vérifier les contraintes SQLite et documenter les règles d’intégrité.
+- [x] Créer les sept migrations et les sept modèles Eloquent.
+- [x] Ajouter les premiers tests d’intégrité ciblés (exécution locale encore nécessaire).
+- [ ] Exécuter les suites Laravel/Vitest et la compilation Vite sur la branche mise à jour.
  
