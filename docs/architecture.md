@@ -6,6 +6,14 @@ Bifrost est une application locale construite avec Laravel, Vue 3 et Vue Router.
 Laravel fournit l’API et la persistance; Vue affiche l’interface et gère la navigation
 côté client.
 
+Pour les règles de conception des entités, des portées de données, des références et
+des migrations, consulter [Architecture des données](data-architecture.md).
+Le [bilan des décisions d’architecture](bilan-decisions-architecture.md) consolide
+les choix fonctionnels et distingue les fondations des fonctionnalités à reporter.
+Le [schéma relationnel initial proposé](schema-relationnel-propose.md) décrit les
+entités, associations et contraintes envisagées avant la création des migrations.
+Le [plan final des premières migrations](plan-premieres-migrations.md) fixe le périmètre du premier lot avant l'implémentation.
+
 ## Organisation du code
 
 - `app/Models/` : modèles Eloquent et relations.
