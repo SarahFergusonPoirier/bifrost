@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\ContentTemplate;
-use App\\Models\\ContentType;
-use Database\\Seeders\\WorldbuildingCatalogSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Models\ContentTemplate;
+use App\Models\ContentType;
+use Database\Seeders\WorldbuildingCatalogSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class WorldbuildingCatalogTest extends TestCase
 {
