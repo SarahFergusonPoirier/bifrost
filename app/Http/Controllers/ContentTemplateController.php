@@ -83,7 +83,7 @@ class ContentTemplateController extends Controller
     }
 
 
-    public function clone(ContentTemplate $contentTemplate)
+    public function duplicate(ContentTemplate $contentTemplate)
     {
         abort_unless($contentTemplate->is_system, 403, 'Seuls les modèles système peuvent être clonés ici.');
 
