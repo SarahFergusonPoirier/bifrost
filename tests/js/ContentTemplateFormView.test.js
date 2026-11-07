@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import ContentTemplateFormView from '../../resources/js/views/ContentTemplateFormView.vue';
 
-const push = vi.fn();
-const route = { params: {} };
+const { push, route } = vi.hoisted(() => ({
+    push: vi.fn(),
+    route: { params: {} },
+}));
 
 vi.mock('vue-router', () => ({
     useRoute: () => route,
