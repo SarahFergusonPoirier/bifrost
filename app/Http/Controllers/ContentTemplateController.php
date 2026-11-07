@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentTemplate;
 use App\Models\ContentType;
-use App\Models\Project;
 use App\Models\Universe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ContentTemplateController extends Controller
