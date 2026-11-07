@@ -127,4 +127,93 @@ class ContentTemplateListTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('scope');
     }
+
+    public function test_custom_template_creation_starts_with_a_draft_version(): void
+    {
+        $type = ContentType::create([
+            'key' => 'custom-personnage',
+            'name' => 'Personnage',
+        ]);
+
+        $this->postJson('/api/content-templates', [
+            'name' => 'Fiche de héros',
+            'description' => 'Une fiche personnalisée.',
+            'content_type_id' => $type->id,
+            'scope_type' => 'global',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('name', 'Fiche de héros')
+            ->assertJsonPath('is_system', false)
+            ->assertJsonPath('versions.0.version_number', 1)
+            ->assertJsonPath('versions.0.published_at', null);
+
+        $this->assertDatabaseHas('content_templates', [
+            'name' => 'Fiche de héros',
+            'scope_type' => 'global',
+            'is_system' => false,
+        ]);
+    }
+
+    public function test_custom_template_can_be_created_for_a_project(): void
+    {
+        $project = Project::create(['name' => 'Projet ciblé']);
+        $type = ContentType::create([
+            'key' => 'project-character',
+            'name' => 'Personnage de projet',
+        ]);
+
+        $this->postJson('/api/content-templates', [
+            'name' => 'Fiche locale',
+            'content_type_id' => $type->id,
+            'scope_type' => 'project',
+            'project_id' => $project->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('scope_type', 'project')
+            ->assertJsonPath('project.id', $project->id);
+    }
+
+    public function test_custom_template_metadata_can_be_updated(): void
+    {
+        $template = $this->createTemplate(['name' => 'Ancien nom']);
+
+        $this->putJson('/api/content-templates/' . $template->id, [
+            'name' => 'Nouveau nom',
+            'description' => 'Description mise à jour.',
+            'content_type_id' => $template->content_type_id,
+            'scope_type' => 'global',
+        ])
+            ->assertOk()
+            ->assertJsonPath('name', 'Nouveau nom')
+            ->assertJsonPath('description', 'Description mise à jour.');
+    }
+
+    public function test_system_templates_cannot_be_edited(): void
+    {
+        $type = ContentType::create([
+            'key' => 'system-example',
+            'name' => 'Type système',
+            'scope_type' => 'system',
+            'is_system' => true,
+        ]);
+
+        $template = ContentTemplate::create([
+            'name' => 'Modèle système',
+            'content_type_id' => $type->id,
+            'scope_type' => 'global',
+            'is_system' => true,
+        ]);
+
+        $this->putJson('/api/content-templates/' . $template->id, [
+            'name' => 'Nom modifié',
+            'content_type_id' => $type->id,
+            'scope_type' => 'global',
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('content_templates', [
+            'id' => $template->id,
+            'name' => 'Modèle système',
+        ]);
+    }
+
 }
