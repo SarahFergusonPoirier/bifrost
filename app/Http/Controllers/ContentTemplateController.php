@@ -44,7 +44,7 @@ class ContentTemplateController extends Controller
 
         $search = trim($validated['search'] ?? '');
         if ($search !== '') {
-            $query->where('name', 'like', '%' . addcslashes($search, '%_\\') . '%');
+            $query->where('name', 'like', '%' . addcslashes($search, '%_') . '%');
         }
 
         return $query->get();
