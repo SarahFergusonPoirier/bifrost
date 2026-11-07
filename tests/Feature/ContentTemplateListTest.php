@@ -216,4 +216,59 @@ class ContentTemplateListTest extends TestCase
         ]);
     }
 
+
+    public function test_system_template_can_be_cloned_as_a_custom_draft(): void
+    {
+        $type = ContentType::create([
+            'key' => 'system-character',
+            'name' => 'Personnage',
+            'scope_type' => 'system',
+            'is_system' => true,
+        ]);
+
+        $source = ContentTemplate::create([
+            'name' => 'Personnage système',
+            'description' => 'Modèle original.',
+            'content_type_id' => $type->id,
+            'scope_type' => 'global',
+            'is_system' => true,
+        ]);
+
+        $sourceVersion = TemplateVersion::create([
+            'template_id' => $source->id,
+            'version_number' => 1,
+            'published_at' => now(),
+        ]);
+
+        $definition = FieldDefinition::create([
+            'key' => 'character-name-test',
+            'label' => 'Nom',
+            'value_type' => 'text',
+            'scope_type' => 'global',
+        ]);
+
+        TemplateVersionField::create([
+            'template_version_id' => $sourceVersion->id,
+            'field_definition_id' => $definition->id,
+            'section_key' => 'identity',
+            'position' => 0,
+            'is_required' => false,
+        ]);
+
+        $response = $this->postJson('/api/content-templates/' . $source->id . '/clone')
+            ->assertCreated()
+            ->assertJsonPath('name', 'Personnage système (copie)')
+            ->assertJsonPath('is_system', false)
+            ->assertJsonPath('base_template_id', $source->id)
+            ->assertJsonPath('versions.0.published_at', null);
+
+        $copyId = $response->json('id');
+        $this->assertDatabaseHas('template_version_fields', [
+            'template_version_id' => TemplateVersion::where('template_id', $copyId)->value('id'),
+            'field_definition_id' => $definition->id,
+            'section_key' => 'identity',
+        ]);
+    }
+
+
 }
