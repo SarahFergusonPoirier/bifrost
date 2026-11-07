@@ -82,6 +82,55 @@ class ContentTemplateController extends Controller
         );
     }
 
+
+    public function clone(ContentTemplate $contentTemplate)
+    {
+        abort_unless($contentTemplate->is_system, 403, 'Seuls les modèles système peuvent être clonés ici.');
+
+        $sourceVersion = $contentTemplate->versions()
+            ->whereNotNull('published_at')
+            ->with('fields')
+            ->latest('version_number')
+            ->firstOrFail();
+
+        $copy = DB::transaction(function () use ($contentTemplate, $sourceVersion) {
+            $copy = ContentTemplate::create([
+                'name' => $contentTemplate->name . ' (copie)',
+                'description' => $contentTemplate->description,
+                'content_type_id' => $contentTemplate->content_type_id,
+                'scope_type' => 'global',
+                'base_template_id' => $contentTemplate->id,
+                'is_active' => true,
+                'is_system' => false,
+            ]);
+
+            $version = $copy->versions()->create([
+                'version_number' => 1,
+                'change_summary' => 'Copie personnalisable du modèle système.',
+            ]);
+
+            foreach ($sourceVersion->fields as $field) {
+                $version->fields()->create([
+                    'field_definition_id' => $field->field_definition_id,
+                    'section_key' => $field->section_key,
+                    'position' => $field->position,
+                    'is_required' => $field->is_required,
+                    'default_value' => $field->default_value,
+                    'display_options' => $field->display_options,
+                    'label_override' => $field->label_override,
+                    'help_text' => $field->help_text,
+                ]);
+            }
+
+            return $copy;
+        });
+
+        return response()->json(
+            $copy->load(['contentType:id,name', 'versions' => fn ($versions) => $versions->latest('version_number')->limit(1)]),
+            201
+        );
+    }
+
     public function show(ContentTemplate $contentTemplate)
     {
         abort_if($contentTemplate->is_system, 403, 'Les modèles système ne peuvent pas être modifiés.');
