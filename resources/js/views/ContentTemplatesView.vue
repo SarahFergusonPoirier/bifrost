@@ -6,8 +6,11 @@
         </header>
 
         <section class="content-templates-section">
-            <div class="section-heading">
+            <div class="section-heading content-templates-heading">
                 <h2>Tous les modèles</h2>
+                <RouterLink :to="{ name: 'content-template-create' }" class="button-primary">
+                    + Nouveau modèle
+                </RouterLink>
             </div>
 
             <div class="content-template-filters">
