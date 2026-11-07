@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\\Support\\Facades\\Route;
-use App\\Http\\Controllers\\ProjectController;
-use App\\Http\\Controllers\\TagController;
-use App\\Http\\Controllers\\ContentTemplateController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\ContentTemplateController;
 
 Route::get('/projects', [ProjectController::class, 'index']);
 Route::post('/projects', [ProjectController::class, 'store']);
