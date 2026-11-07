@@ -50,7 +50,7 @@
             </p>
 
             <div
-                v-else-if="templates.length"
+                v-else-if="!loadError && templates.length"
                 class="content-template-list"
             >
                 <article
@@ -87,7 +87,7 @@
                 </article>
             </div>
 
-            <div v-else class="content-templates-empty">
+            <div v-else-if="!loadError" class="content-templates-empty">
                 <h3>Aucun modèle trouvé</h3>
                 <p v-if="hasFilters">
                     Essaie de modifier tes filtres ou ta recherche.
