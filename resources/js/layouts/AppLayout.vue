@@ -27,6 +27,15 @@
                     <span>Projets</span>
                 </RouterLink>
 
+                <RouterLink
+                    :to="{ name: 'content-templates' }"
+                    class="app-navigation__link"
+                    active-class="app-navigation__link--active"
+                >
+                    <span class="app-navigation__icon" aria-hidden="true">▧</span>
+                    <span>Modèles</span>
+                </RouterLink>
+
                 <span
                     class="app-navigation__link app-navigation__link--disabled"
                     aria-disabled="true"
