@@ -15,4 +15,5 @@ Route::get('/tags', [TagController::class, 'index']);
 Route::post('/tags', [TagController::class, 'store']);
 Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
 
+Route::get('/content-types', [ContentTemplateController::class, 'types']);
 Route::get('/content-templates', [ContentTemplateController::class, 'index']);
