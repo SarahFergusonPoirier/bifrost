@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\ContentTemplate;
-use App\\Models\\ContentType;
-use App\\Models\\Project;
-use App\\Models\\Universe;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Models\ContentTemplate;
+use App\Models\ContentType;
+use App\Models\Project;
+use App\Models\Universe;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ContentTemplateListTest extends TestCase
 {
