@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\\Support\\Facades\\Route;
 
 Route::view('/', 'welcome');
 
@@ -10,3 +10,5 @@ Route::view('/projects', 'welcome');
 Route::view('/projects/create', 'welcome');
 Route::view('/projects/{id}', 'welcome')->where('id', '[^/]+');
 Route::view('/templates', 'welcome');
+Route::view('/templates/create', 'welcome');
+Route::view('/templates/{id}/edit', 'welcome')->where('id', '[^/]+');
