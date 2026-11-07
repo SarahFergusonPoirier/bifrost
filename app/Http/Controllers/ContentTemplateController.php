@@ -21,11 +21,6 @@ class ContentTemplateController extends Controller
             ->get(['id', 'key', 'name', 'description', 'scope_type', 'is_system']);
     }
 
-    public function projects()
-    {
-        return Project::query()->orderBy('name')->get(['id', 'name']);
-    }
-
     public function universes()
     {
         return Universe::query()->orderBy('name')->get(['id', 'name']);
@@ -114,7 +109,7 @@ class ContentTemplateController extends Controller
         ]);
     }
 
-    private function validateTemplate(Request $request, ?ContentTemplate $template = null): array
+    private function validateTemplate(Request $request): array
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
