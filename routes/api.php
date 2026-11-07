@@ -19,6 +19,6 @@ Route::get('/content-types', [ContentTemplateController::class, 'types']);
 Route::get('/universes', [ContentTemplateController::class, 'universes']);
 Route::get('/content-templates', [ContentTemplateController::class, 'index']);
 Route::post('/content-templates', [ContentTemplateController::class, 'store']);
-Route::post('/content-templates/{contentTemplate}/clone', [ContentTemplateController::class, 'clone']);
+Route::post('/content-templates/{contentTemplate}/clone', [ContentTemplateController::class, 'duplicate']);
 Route::get('/content-templates/{contentTemplate}', [ContentTemplateController::class, 'show']);
 Route::put('/content-templates/{contentTemplate}', [ContentTemplateController::class, 'update']);
