@@ -47,6 +47,9 @@
             <p v-if="loadError" class="error" role="alert">
                 {{ loadError }}
             </p>
+            <p v-if="cloneError" class="error" role="alert">
+                {{ cloneError }}
+            </p>
 
             <p v-if="loading" class="content-templates-message">
                 Chargement des modèles…
@@ -99,6 +102,15 @@
                         >
                             Modifier
                         </RouterLink>
+                        <button
+                            v-if="template.is_system"
+                            type="button"
+                            class="content-template-card__clone"
+                            :disabled="cloningId !== null"
+                            @click="cloneTemplate(template)"
+                        >
+                            {{ cloningId === template.id ? 'Copie…' : 'Personnaliser' }}
+                        </button>
                     </div>
                 </article>
             </div>
