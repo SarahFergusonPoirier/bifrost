@@ -1,13 +1,13 @@
 <?php
 
-namespace Database\\Seeders;
+namespace Database\Seeders;
 
-use App\\Models\\ContentTemplate;
-use App\\Models\\ContentType;
-use App\\Models\\FieldDefinition;
-use App\\Models\\TemplateVersion;
-use App\\Models\\TemplateVersionField;
-use Illuminate\\Database\\Seeder;
+use App\Models\ContentTemplate;
+use App\Models\ContentType;
+use App\Models\FieldDefinition;
+use App\Models\TemplateVersion;
+use App\Models\TemplateVersionField;
+use Illuminate\Database\Seeder;
 
 class WorldbuildingCatalogSeeder extends Seeder
 {
