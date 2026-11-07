@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\ContentTemplate;
 use App\Models\ContentType;
+use App\Models\FieldDefinition;
+use App\Models\TemplateVersion;
+use App\Models\TemplateVersionField;
 use App\Models\Project;
 use App\Models\Universe;
 use Illuminate\Foundation\Testing\RefreshDatabase;
