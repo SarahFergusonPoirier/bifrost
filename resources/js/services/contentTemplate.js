@@ -74,3 +74,9 @@ export function updateContentTemplate(id, template) {
         body: JSON.stringify(template),
     });
 }
+
+export function cloneContentTemplate(id) {
+    return request(`/api/content-templates/${encodeURIComponent(id)}/clone`, {
+        method: 'POST',
+    });
+}
