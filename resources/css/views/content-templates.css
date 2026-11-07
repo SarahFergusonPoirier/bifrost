@@ -277,3 +277,18 @@
         width: 100%;
     }
 }
+
+.content-template-card__clone {
+    min-height: 0;
+    padding: 0.25rem 0.5rem;
+    color: var(--color-primary);
+    background: transparent;
+    border-color: transparent;
+    font-size: var(--font-size-small);
+}
+
+.content-template-card__clone:hover:not(:disabled) {
+    color: var(--color-primary-hover);
+    background: var(--color-surface-muted);
+    border-color: transparent;
+}
