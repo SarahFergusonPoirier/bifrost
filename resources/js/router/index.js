@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue';
 import ProjectsView from '../views/ProjectsView.vue';
 import ProjectCreateView from '../views/ProjectCreateView.vue';
 import ProjectDetailsView from '../views/ProjectDetailsView.vue';
+import ContentTemplatesView from '../views/ContentTemplatesView.vue';
 
 const routes = [
     {
@@ -25,6 +26,11 @@ const routes = [
         path: '/projects/:id',
         name: 'project-details',
         component: ProjectDetailsView,
+    },
+    {
+        path: '/templates',
+        name: 'content-templates',
+        component: ContentTemplatesView,
     },
 ];
 
