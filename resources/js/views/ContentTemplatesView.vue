@@ -86,6 +86,19 @@
                         >
                             {{ template.is_active ? 'Actif' : 'Désactivé' }}
                         </span>
+                        <span
+                            v-if="template.versions?.[0] && !template.versions[0].published_at"
+                            class="content-template-card__draft"
+                        >
+                            Brouillon
+                        </span>
+                        <RouterLink
+                            v-if="!template.is_system"
+                            :to="{ name: 'content-template-edit', params: { id: template.id } }"
+                            class="content-template-card__edit"
+                        >
+                            Modifier
+                        </RouterLink>
                     </div>
                 </article>
             </div>
