@@ -145,7 +145,7 @@ class ContentTemplateController extends Controller
     {
         abort_if($contentTemplate->is_system, 403, 'Les modèles système ne peuvent pas être modifiés.');
 
-        $validated = $this->validateTemplate($request, $contentTemplate);
+        $validated = $this->validateTemplate($request);
         $contentTemplate->update($validated);
 
         return $contentTemplate->fresh()->load([
