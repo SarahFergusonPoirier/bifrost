@@ -1,9 +1,9 @@
 <?php
 
-namespace App\\Http\\Controllers;
+namespace App\Http\Controllers;
 
-use App\\Models\\ContentTemplate;
-use Illuminate\\Http\\Request;
+use App\Models\ContentTemplate;
+use Illuminate\Http\Request;
 
 class ContentTemplateController extends Controller
 {
@@ -35,7 +35,7 @@ class ContentTemplateController extends Controller
 
         $search = trim($validated['search'] ?? '');
         if ($search !== '') {
-            $query->where('name', 'like', '%' . addcslashes($search, '%_\\\\') . '%');
+            $query->where('name', 'like', '%' . addcslashes($search, '%_\\') . '%');
         }
 
         return $query->get();
