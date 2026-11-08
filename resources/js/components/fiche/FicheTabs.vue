@@ -8,7 +8,7 @@
     <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Réessayer</button></p>
     <details v-if="layout" class="fiche-tab-settings">
         <summary>Gérer les onglets</summary>
-        <form @submit.prevent="save()">
+        <form @submit.prevent="saveTabs">
             <fieldset :disabled="saving">
                 <legend>Disposition des onglets</legend>
                 <div v-for="(tab, index) in tabs" :key="tab.id" class="fiche-tab-settings__row">
@@ -48,7 +48,7 @@
                     <button type="button" :disabled="!templateName || !layout.version" @click="saveTemplate">Enregistrer l’onglet actif comme modèle</button>
                     <p>Le modèle reprend la disposition enregistrée des blocs réutilisables.</p>
                 </details>
-                <button type="submit">Enregistrer la disposition</button>
+                <button type="submit" :disabled="hasPendingText && !canCopy">Enregistrer la disposition</button>
                 <button type="button" @click="reset">Annuler les changements</button>
             </fieldset>
         </form>

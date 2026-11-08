@@ -37,10 +37,17 @@ class FicheTabTemplateController extends Controller
 
         $tab = collect(json_decode($layout->tabs, true, flags: JSON_THROW_ON_ERROR))->firstWhere('id', $input['tab']);
         abort_if(! $tab, 404);
-        $placements = collect($tab['placements'] ?? [])
-            ->reject(fn (array $placement): bool => str_starts_with($placement['source'], 'text:'))
-            ->map(fn (array $placement): array => array_diff_key($placement, ['id' => true]))
-            ->values()->all();
+        $textSlots = [];
+        $placements = array_map(function (array $placement) use (&$textSlots): array {
+            $source = $placement['source'];
+            if (str_starts_with($source, 'text:')) {
+                $textSlots[$source] ??= 'blank:'.count($textSlots);
+                $placement['source'] = $textSlots[$source];
+            }
+            unset($placement['id']);
+
+            return $placement;
+        }, $tab['placements'] ?? []);
         $definition = ['title' => $tab['title'], 'icon' => $tab['icon'], 'placements' => $placements];
         $id = DB::table('fiche_tab_templates')->insertGetId([
             'project_id' => $input['scope'] === 'project' ? $project->id : null,

@@ -150,8 +150,9 @@ class FicheLayoutTest extends TestCase
 
         $definition = ['name' => 'Aperçu', 'tab' => 'overview', 'version' => 1];
         $this->postJson("$base/fiche-tab-templates", $definition + ['scope' => 'project'])
-            ->assertCreated()->assertJsonCount(1, 'definition.placements')
+            ->assertCreated()->assertJsonCount(2, 'definition.placements')
             ->assertJsonPath('definition.placements.0.source', 'summary')
+            ->assertJsonPath('definition.placements.1.source', 'blank:0')
             ->assertJsonMissingPath('definition.placements.0.id')->assertDontSee('Texte privé');
         $otherLibrary = "/api/projects/{$other->id}/fiche-tab-templates";
         $this->getJson($otherLibrary)->assertOk()->assertJsonCount(0);

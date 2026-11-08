@@ -13,10 +13,13 @@ const fallbackTabs = [
 
 export default {
     components: { WorkspaceIcon },
-    props: { path: String, templatesPath: String, active: String },
+    props: { path: String, templatesPath: String, active: String, canCopy: Boolean },
     emits: ['select', 'copied'],
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null }),
     computed: {
+        hasPendingText() {
+            return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
+        },
         selectedTemplate() {
             return this.templates?.find(template => template.id === this.templateId);
         },
@@ -71,12 +74,18 @@ export default {
         applyTemplate() {
             const definition = this.selectedTemplate?.definition;
             if (!definition || this.tabs.length >= 24) return;
+            const textSlots = new Map();
             this.tabs.push({
                 id: 'tab-' + crypto.randomUUID(),
                 title: definition.title,
                 icon: definition.icon,
                 hidden: false,
-                placements: definition.placements.map(placement => ({ ...placement, id: crypto.randomUUID() })),
+                placements: definition.placements.map(placement => {
+                    const id = crypto.randomUUID();
+                    if (!placement.source.startsWith('blank:')) return { ...placement, id };
+                    if (!textSlots.has(placement.source)) textSlots.set(placement.source, crypto.randomUUID());
+                    return { ...placement, id, source: 'text:' + textSlots.get(placement.source), newText: true };
+                }),
             });
         },
         reset() {
@@ -101,7 +110,23 @@ export default {
                 return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults : [])), ...added] } : tab;
             }), copies);
         },
-        async save(tabs = this.tabs, copies = []) {
+        saveTabs() {
+            if (this.hasPendingText && !this.canCopy) return;
+            const copies = new Map();
+            const tabs = this.tabs.map(tab => {
+                if (!tab.placements) return tab;
+                const placements = tab.placements.map(({ newText, ...placement }) => {
+                    if (newText) {
+                        const id = placement.source.slice(5);
+                        copies.set(id, { id, source: 'blank', title: 'Texte' });
+                    }
+                    return placement;
+                });
+                return { ...tab, placements };
+            });
+            return this.save(tabs, [...copies.values()]);
+        },
+        async save(tabs, copies = []) {
             this.saving = true;
             this.error = '';
             try {
