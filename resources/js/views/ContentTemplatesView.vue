@@ -6,7 +6,21 @@
         </header>
 
         <p v-if="editorError" role="alert">{{ editorError }}</p>
-        <button v-if="!editor" type="button" :disabled="saving" @click="editTemplate()">Créer un modèle</button>
+        <button v-if="!editor && !typeEditor" type="button" :disabled="saving" @click="editTemplate()">Créer un modèle</button>
+        <button v-if="!editor && !typeEditor" type="button" :disabled="saving" @click="startType">Créer un type de fiche</button>
+        <form v-if="typeEditor" @submit.prevent="saveType">
+            <fieldset :disabled="saving">
+                <legend>Nouveau type de fiche</legend>
+                <label>Nom <input v-model="typeEditor.name" required maxlength="255" /></label>
+                <label>Description <textarea v-model="typeEditor.description" maxlength="10000" /></label>
+                <label>Portée <select v-model="typeEditor.project_id">
+                    <option value="">Globale</option>
+                    <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+                </select></label>
+                <button type="submit">Créer le type</button>
+                <button type="button" @click="typeEditor = null">Annuler</button>
+            </fieldset>
+        </form>
         <form v-if="editor" @submit.prevent="saveTemplate">
             <fieldset :disabled="saving">
                 <legend>{{ editor.id ? 'Publier une nouvelle version' : 'Créer un modèle' }}</legend>
@@ -15,7 +29,7 @@
                     <label>Description <textarea v-model="editor.description" maxlength="10000" /></label>
                     <label>Type de fiche <select v-model="editor.content_type_id" required :disabled="Boolean(editor.base_version_id)">
                         <option value="" disabled>Choisir un type</option>
-                        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
+                        <option v-for="type in availableTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
                     </select></label>
                     <label>Portée <select v-model="editor.project_id">
                         <option value="">Bibliothèque globale</option>

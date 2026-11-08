@@ -24,10 +24,20 @@ export default {
             }
         }
         const editor = ref(null);
+        const typeEditor = ref(null);
         const editorError = ref('');
         const saving = ref(false);
         const types = ref([]);
         const projects = ref([]);
+        const availableTypes = computed(() => types.value.filter(type => ['system', 'global'].includes(type.scope_type)
+            || (type.scope_type === 'project' && Number(type.project_id) === Number(editor.value?.project_id))));
+
+        watch(() => editor.value?.project_id, () => {
+            if (editor.value && !editor.value.base_version_id && !availableTypes.value.some(type => type.id === editor.value.content_type_id)) {
+                editor.value.content_type_id = '';
+            }
+        });
+
         const fieldTypes = {
             text: 'Texte', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
             reference: 'Référence', json: 'Données structurées', measurement: 'Mesure', coordinates: 'Coordonnées',
@@ -64,6 +74,43 @@ export default {
                         help: field.help_text ?? '', required: Boolean(field.is_required),
                     })),
                 };
+            } catch (error) {
+                editorError.value = error.message;
+            } finally {
+                saving.value = false;
+            }
+        }
+
+        async function startType() {
+            if (saving.value) return;
+            saving.value = true;
+            editorError.value = '';
+            try {
+                projects.value = (await contentRequest('/projects')).data;
+                typeEditor.value = { name: '', description: '', project_id: '' };
+            } catch (error) {
+                editorError.value = error.message;
+            } finally {
+                saving.value = false;
+            }
+        }
+
+        async function saveType() {
+            if (saving.value) return;
+            saving.value = true;
+            editorError.value = '';
+            try {
+                const { data: type } = await contentRequest('/content-types', 'POST', {
+                    ...typeEditor.value, project_id: typeEditor.value.project_id || null,
+                });
+                typeEditor.value = null;
+                saving.value = false;
+                await editTemplate();
+                if (editor.value) {
+                    editor.value.name = type.name;
+                    editor.value.project_id = type.project_id ?? '';
+                    editor.value.content_type_id = type.id;
+                }
             } catch (error) {
                 editorError.value = error.message;
             } finally {
@@ -162,7 +209,7 @@ export default {
         onMounted(loadTemplates);
 
         return {
-            templates, details, loadDetails, editor, editorError, saving, types, projects, fieldTypes, editTemplate, moveField, saveTemplate,
+            templates, details, loadDetails, editor, editorError, saving, availableTypes, projects, typeEditor, startType, saveType, fieldTypes, editTemplate, moveField, saveTemplate,
             scopeFilter,
             statusFilter,
             searchQuery,

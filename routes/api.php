@@ -95,3 +95,4 @@ Route::put('/projects/{project}/narration/{work}/arcs/{arc}', [ProjectNarrativeC
 Route::get('/projects/{project}/narration/{work}/choices', [ProjectNarrativeController::class, 'choices']);
 Route::put('/projects/{project}/narration/{work}/choices', [ProjectNarrativeController::class, 'saveChoice']);
 Route::delete('/projects/{project}/narration/{work}/choices/{choice}', [ProjectNarrativeController::class, 'deleteChoice'])->whereNumber('choice');
+Route::post('/content-types', [ContentTemplateController::class, 'storeType']);

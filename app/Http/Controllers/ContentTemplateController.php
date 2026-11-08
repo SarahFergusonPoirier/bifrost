@@ -10,6 +10,7 @@ use App\Models\TemplateVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ContentTemplateController extends Controller
 {
@@ -86,12 +87,28 @@ class ContentTemplateController extends Controller
         ];
     }
 
+    public function storeType(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id,deleted_at,NULL'],
+        ]);
+        $project = $input['project_id'] ?? null;
+        $type = ContentType::create($input + [
+            'key' => 'custom-'.Str::uuid(),
+            'scope_type' => $project === null ? 'global' : 'project',
+        ]);
+
+        return response()->json($type, 201);
+    }
+
     public function types()
     {
         return ContentType::query()
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'key', 'name', 'description', 'scope_type', 'is_system']);
+            ->get(['id', 'key', 'name', 'description', 'scope_type', 'project_id', 'is_system']);
     }
 
     public function index(Request $request)

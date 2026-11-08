@@ -378,7 +378,8 @@ export default {
                 const { data } = await contentRequest('/content-types');
                 const tagList = await contentRequest('/tags');
                 tags.value = Array.isArray(tagList.data) ? tagList.data : [];
-                types.value = data.filter(type => ['system', 'global'].includes(type.scope_type));
+                types.value = data.filter(type => ['system', 'global'].includes(type.scope_type)
+                    || (type.scope_type === 'project' && String(type.project_id) === props.projectId));
             });
         });
         onUnmounted(() => {

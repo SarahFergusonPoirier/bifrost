@@ -13,6 +13,23 @@ class TemplateUsageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_custom_project_type_is_usable_only_in_its_project(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $type = $this->postJson('/api/content-types', ['name' => 'Créature locale', 'project_id' => $project->id])
+            ->assertCreated()->assertJsonPath('scope_type', 'project')->json('id');
+
+        $input = ['title' => 'Créature', 'content_type_id' => $type];
+        $this->postJson('/api/contents', $input + ['project_id' => $other->id])->assertUnprocessable();
+        $this->postJson('/api/contents', $input + ['project_id' => $project->id])->assertCreated();
+        $this->postJson('/api/content-templates', ['name' => 'Modèle', 'content_type_id' => $type, 'fields' => []])
+            ->assertUnprocessable();
+        $this->postJson('/api/content-templates', [
+            'name' => 'Modèle', 'content_type_id' => $type, 'project_id' => $project->id, 'fields' => [],
+        ])->assertCreated();
+    }
+
     public function test_choice_options_are_versioned_and_validated_for_both_choice_modes(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
