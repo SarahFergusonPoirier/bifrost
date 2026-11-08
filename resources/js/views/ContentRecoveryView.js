@@ -18,6 +18,7 @@ export default {
     setup(props) {
         const folders = ref([]);
         const treeContents = ref([]);
+        const graphsExpanded = ref(true);
         const panel = ref(props.projectId ? 'overview' : 'catalogue');
         const recentContents = computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
             .sort((left, right) => String(right.updated_at ?? '').localeCompare(String(left.updated_at ?? '')))
@@ -412,7 +413,7 @@ export default {
                 });
                 await open(selected.value.public_id);
             }),
-            panel, recentContents,
+            panel, recentContents, graphsExpanded,
             openPanel: next => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et changer de vue ?')) return;
                 selected.value = null;

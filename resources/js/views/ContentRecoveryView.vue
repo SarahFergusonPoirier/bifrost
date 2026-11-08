@@ -19,12 +19,19 @@
                     :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
                     :disabled="busy || saving" @click="openTreeItem({})"><WorkspaceIcon name="catalogue" />Catalogue</button>
-                <details class="workspace-graphs" open>
-                    <summary class="workspace-link"><WorkspaceIcon name="connections" />Graphes</summary>
+                <div class="workspace-graph-row">
+                    <button type="button" class="workspace-link" :aria-current="panel === 'connections' ? 'page' : undefined"
+                        :disabled="busy || saving" @click="openPanel('connections')"><WorkspaceIcon name="connections" />Graphes</button>
+                    <button type="button" class="workspace-link workspace-graph-toggle"
+                        :aria-expanded="graphsExpanded" aria-controls="workspace-graph-children"
+                        aria-label="Sous-menu Graphes" @click="graphsExpanded = !graphsExpanded">
+                        <span aria-hidden="true">{{ graphsExpanded ? '⌄' : '›' }}</span>
+                    </button>
+                </div>
+                <div v-show="graphsExpanded" id="workspace-graph-children">
                     <button type="button" class="workspace-link workspace-link--child"
-                        :aria-current="panel === 'connections' ? 'page' : undefined"
                         :disabled="busy || saving" @click="openPanel('connections')">↳ Connexions</button>
-                </details>
+                </div>
                 <template v-for="[key, label] in [['timeline', 'Chronologies'], ['maps', 'Cartes'], ['narration', 'Narration'], ['ideas', 'Idées'], ['search', 'Recherche']]" :key="key">
                     <button type="button" class="workspace-link" :aria-current="panel === key ? 'page' : undefined"
                         :disabled="busy || saving || key === 'maps' || key === 'search'"
