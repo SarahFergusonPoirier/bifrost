@@ -105,10 +105,10 @@ it('hides only empty fields in the configured placement', () => {
         hiddenFields: [],
         fieldValue: field => values[field.id],
         displayValue: field => String(values[field.id]),
-        placements: [{ ...base, id: 'filtered', icon: 'folder', hide_empty: true }, { ...base, id: 'all' }],
+        placements: [{ ...base, id: 'filtered', icon: 'folder', hide_empty: true }, { ...base, id: 'all', field_order: [2, 1] }],
     } });
     const [filtered, all] = wrapper.findAll('.fiche-block');
     expect(filtered.findAll('dt').map(item => item.text())).toEqual(['Quantité', 'Actif']);
     expect(filtered.find('.fi-rr-folder').exists()).toBe(true);
-    expect(all.findAll('dt').map(item => item.text())).toEqual(['Vide', 'Quantité', 'Actif']);
+    expect(all.findAll('dt').map(item => item.text())).toEqual(['Actif', 'Quantité']);
 });

@@ -41,6 +41,7 @@ export default {
                 icon: 'catalogue',
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({
                     id: field.id,
+                    definitionId: field.field_definition_id,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
                     empty: this.fieldValue?.(field) === '',
@@ -86,12 +87,32 @@ export default {
             return placements.filter(item => !item.hidden && this.bySource.has(item.source))
                 .map(item => {
                     const card = this.bySource.get(item.source);
-                    const fields = item.hide_empty ? card.fields?.filter(field => !field.empty) : card.fields;
+                    const ordered = this.orderedFields(item, card.fields);
+                    const fields = item.hide_empty ? ordered.filter(field => !field.empty) : ordered;
                     return { placement: item, card, fields };
                 });
         },
     },
     methods: {
+        orderedFields(placement, fields = []) {
+            if (!placement.field_order) return fields;
+            const index = new Map(fields.map(field => [field.definitionId, field]));
+            return placement.field_order.map(id => index.get(id)).filter(Boolean);
+        },
+        toggleField(placement, fields, id, visible) {
+            const order = placement.field_order ?? fields.map(field => field.definitionId);
+            placement.field_order = visible ? [...new Set([...order, id])] : order.filter(item => item !== id);
+        },
+        moveField(placement, fields, id, offset) {
+            const order = [...(placement.field_order ?? fields.map(field => field.definitionId))];
+            const visible = this.orderedFields(placement, fields);
+            const neighbor = visible[visible.findIndex(field => field.definitionId === id) + offset];
+            if (!neighbor) return;
+            const index = order.indexOf(id);
+            const next = order.indexOf(neighbor.definitionId);
+            [order[index], order[next]] = [order[next], order[index]];
+            placement.field_order = order;
+        },
         begin() {
             this.draft = this.placements?.map(item => ({ ...item }))
                 ?? this.initialPlacements.map(item => placement(item.source));

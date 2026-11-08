@@ -46,6 +46,24 @@
                         <option v-for="[key, label] in icons" :key="key" :value="key">{{ label }}</option>
                     </select>
                 </label>
+                <details v-if="bySource.get(placement.source)?.fields?.length">
+                    <summary>Champs affichés et ordre</summary>
+                    <template v-for="fields in [bySource.get(placement.source).fields]" :key="placement.source">
+                        <ul>
+                            <li v-for="(field, fieldIndex) in orderedFields(placement, fields)" :key="field.definitionId">
+                                <label><input type="checkbox" checked @change="toggleField(placement, fields, field.definitionId, false)" /> {{ field.label }}</label>
+                                <button type="button" :disabled="fieldIndex === 0" :aria-label="'Monter ' + field.label"
+                                    @click="moveField(placement, fields, field.definitionId, -1)">↑</button>
+                                <button type="button" :disabled="fieldIndex === orderedFields(placement, fields).length - 1" :aria-label="'Descendre ' + field.label"
+                                    @click="moveField(placement, fields, field.definitionId, 1)">↓</button>
+                            </li>
+                            <li v-for="field in fields.filter(item => placement.field_order && !placement.field_order.includes(item.definitionId))" :key="field.definitionId">
+                                <label><input type="checkbox" @change="toggleField(placement, fields, field.definitionId, true)" /> {{ field.label }}</label>
+                            </li>
+                        </ul>
+                        <button v-if="placement.field_order" type="button" @click="placement.field_order = null">Rétablir tous les champs</button>
+                    </template>
+                </details>
                 <label v-if="placement.source.startsWith('section:')">
                     <input v-model="placement.hide_empty" type="checkbox" /> Masquer les champs vides
                 </label>
