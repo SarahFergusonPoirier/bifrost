@@ -1,5 +1,5 @@
 <template>
-    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId, 'project-workspace--catalogue': projectId && panel === 'catalogue' && !trash && !selected, 'project-workspace--overview': projectId && panel === 'overview' }" :workspace="Boolean(projectId)">
+    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId, 'project-workspace--catalogue': projectId && panel === 'catalogue' && !trash, 'project-workspace--overview': projectId && panel === 'overview' }" :workspace="Boolean(projectId)">
         <template #sidebar>
             <header class="workspace-brand">
                 <span class="workspace-brand__mark" aria-hidden="true">
@@ -66,7 +66,7 @@
             </div>
             <button type="button" :aria-expanded="catalogueCreate" @click="catalogueCreate = !catalogueCreate">＋ Nouvelle fiche</button>
         </header>
-        <header v-else class="page-header">
+        <header v-else-if="!selected" class="page-header">
             <nav v-if="projectId" aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › {{ currentProject?.name }}</nav>
             <div class="catalogue-heading">
                 <h1>{{ trash ? (projectId ? 'Corbeille des fiches' : 'Corbeille des projets') : 'Catalogue' }}</h1>
@@ -225,8 +225,28 @@
         </fieldset>
 
         <template v-else>
-            <button type="button" :disabled="busy || saving" @click="close">Retour aux fiches</button>
-            <h2>{{ selected.title }}</h2>
+            <header class="fiche-heading">
+                <div class="fiche-heading__identity">
+                    <WorkspaceIcon :name="universeCategories.find(category => category.id === selected.content_type_id)?.key ?? 'catalogue'" />
+                    <div>
+                        <h1>{{ selected.title }}</h1>
+                        <p>{{ types.find(type => type.id === selected.content_type_id)?.name }}</p>
+                    </div>
+                </div>
+                <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
+            </header>
+            <nav class="fiche-tabs" aria-label="Sections de la fiche">
+                <button type="button" :aria-pressed="ficheTab === 'overview'" @click="ficheTab = 'overview'">
+                    <WorkspaceIcon name="overview" /> Vue d’ensemble
+                </button>
+                <button type="button" :aria-pressed="ficheTab === 'details'" @click="ficheTab = 'details'">
+                    <WorkspaceIcon name="catalogue" /> Informations générales
+                </button>
+            </nav>
+            <FicheOverview v-if="ficheTab === 'overview'" :key="selected.public_id" :summary="draft.summary"
+                :tags="selected.tags" :blocks="draft.blocks" :template-sections="templateSections"
+                :hidden-fields="hiddenFields" :display-value="displayValue" />
+            <div v-show="ficheTab === 'details'">
             <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" />
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
@@ -416,6 +436,7 @@
                     </details>
                 </div>
             </section>
+            </div>
         </template>
     </section>
     </component>

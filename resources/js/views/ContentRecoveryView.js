@@ -1,3 +1,4 @@
+import FicheOverview from '../components/fiche/FicheOverview.vue';
 import ProjectToolbar from '../components/ProjectToolbar.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
@@ -15,7 +16,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -158,6 +159,7 @@ export default {
             }
         });
         const selected = ref(null);
+        const ficheTab = ref('overview');
         const compact = ref(false);
         const hiddenFields = ref([]);
         const showHidden = ref(false);
@@ -359,6 +361,7 @@ export default {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
+            ficheTab.value = 'overview';
             loadDisplay();
             from.value = '';
             to.value = '';
@@ -434,7 +437,7 @@ export default {
         return {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
-            compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
+            ficheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
             sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

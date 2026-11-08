@@ -57,3 +57,17 @@ npx vitest run
 php artisan test
 npm run build
 ```
+
+## Présentation des fiches
+
+Les composants de présentation des fiches se trouvent dans
+`resources/js/components/fiche`. `FicheBlock` définit la structure commune
+des cartes et expose un emplacement pour leurs actions. `FicheText` gère la
+lecture des textes longs à l’intérieur d’une carte. `FicheOverview` projette
+les valeurs du brouillon et du modèle dans ces cartes sans les dupliquer.
+
+L’éditeur, l’enregistrement du brouillon, la récupération et l’historique
+restent gérés par `ContentRecoveryView`. Les styles des cartes et de la
+navigation de fiche réutilisent les variables du thème dans
+`resources/css/components/fiche.css`. La grille actuelle s’adapte à la largeur
+du panneau. Elle ne persiste pas de dimensions ou de placements.
