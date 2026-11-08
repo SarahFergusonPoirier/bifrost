@@ -268,7 +268,10 @@
 
 .workspace-project summary span {
     flex: 1;
-    overflow-wrap: anywhere;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .workspace-project summary::after,
