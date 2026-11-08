@@ -536,3 +536,21 @@
     width: 1rem;
     font-size: 0.85rem;
 }
+
+.catalogue-index .catalogue-categories {
+    margin-top: 0.8rem;
+}
+
+.catalogue-index .catalogue-categories button,
+.catalogue-index .catalogue-tree__item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding-block: 0.35rem;
+    line-height: 1.35;
+}
+
+.catalogue-index .workspace-icon {
+    align-self: center;
+}
