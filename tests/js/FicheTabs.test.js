@@ -31,3 +31,18 @@ it('creates a fresh text source for each template slot and preserves sharing wit
     expect(first).not.toHaveProperty('newText');
     expect(wrapper.emitted('copied')).toHaveLength(1);
 });
+
+it('keeps a visible restored tab and falls back when the active tab is hidden', async () => {
+    const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    const notes = { id: 'notes', title: 'Notes', icon: 'folder', hidden: false };
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [overview, notes] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'notes' } });
+    await flushPromises();
+
+    expect(wrapper.get('button[aria-pressed="true"]').text()).toBe('Notes');
+    expect(wrapper.emitted('select')).toBeUndefined();
+
+    contentRequest.mockResolvedValueOnce({ data: { version: 2, tabs: [overview, { ...notes, hidden: true }] } });
+    await wrapper.vm.load();
+    expect(wrapper.emitted('select')).toEqual([['overview']]);
+});

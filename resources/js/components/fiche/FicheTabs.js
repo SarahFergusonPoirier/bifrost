@@ -29,11 +29,15 @@ export default {
     },
     mounted() {
         if (this.path) this.load();
+        else this.ensureVisibleTab();
     },
     methods: {
         accept(layout) {
             this.layout = layout;
             this.reset();
+            this.ensureVisibleTab();
+        },
+        ensureVisibleTab() {
             if (!this.visibleTabs.some(tab => tab.id === this.active)) {
                 this.$emit('select', this.visibleTabs.find(tab => tab.id === 'overview')?.id ?? this.visibleTabs[0].id);
             }

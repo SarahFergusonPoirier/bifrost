@@ -241,13 +241,13 @@
             <FicheTabs :key="selected.public_id" :active="ficheTab" :can-copy="!dirty && !busy && !saving"
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
                 :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
-                @select="ficheTab = $event" @copied="refreshFiche">
+                @select="selectFicheTab" @copied="refreshFiche">
                 <template #default="{ tab, tabs, persist }">
                     <FicheOverview v-if="tab" :key="selected.public_id + ':' + ficheTab"
                         :summary="draft.summary" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
-                        @open="openPanelContent" @select="ficheTab = $event"
+                        @open="openPanelContent" @select="selectFicheTab"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-references="fieldReferences"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
                 </template>

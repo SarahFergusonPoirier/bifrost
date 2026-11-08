@@ -167,12 +167,16 @@ export default {
         const displayKey = () => 'bifrost:content-display:' + selected.value.public_id;
 
         function loadDisplay() {
+            ficheTab.value = 'overview';
             compact.value = false;
             hiddenFields.value = [];
             showHidden.value = false;
             try {
                 const preference = JSON.parse(localStorage.getItem(displayKey()) ?? '{}');
                 compact.value = preference.compact === true;
+                if (typeof preference.tab === 'string' && /^[a-z0-9-]{1,64}$/.test(preference.tab)) {
+                    ficheTab.value = preference.tab;
+                }
                 hiddenFields.value = Array.isArray(preference.hidden) ? preference.hidden : [];
             } catch {
                 // A missing preference leaves all fields visible.
@@ -181,10 +185,15 @@ export default {
 
         function rememberDisplay() {
             try {
-                localStorage.setItem(displayKey(), JSON.stringify({ compact: compact.value, hidden: hiddenFields.value }));
+                localStorage.setItem(displayKey(), JSON.stringify({ compact: compact.value, hidden: hiddenFields.value, tab: ficheTab.value }));
             } catch {
                 // Display preferences still apply while the fiche is open.
             }
+        }
+
+        function selectFicheTab(id) {
+            ficheTab.value = id;
+            rememberDisplay();
         }
 
         function toggleHidden(id) {
@@ -380,7 +389,6 @@ export default {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
-            ficheTab.value = 'overview';
             loadDisplay();
             from.value = '';
             to.value = '';
@@ -461,7 +469,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences,
             sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
