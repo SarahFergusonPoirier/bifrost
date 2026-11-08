@@ -1,26 +1,52 @@
 <template>
-    <component :is="projectId ? 'AppLayout' : 'div'">
+    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId }" :workspace="Boolean(projectId)">
         <template #sidebar>
-            <RouterLink :to="{ name: 'home' }" class="app-navigation__link">← Quitter le projet</RouterLink>
-            <nav class="app-navigation" aria-label="Arborescence du projet">
-                <strong>{{ currentProject?.name ?? 'Projet' }}</strong>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('overview')">Vue d’ensemble</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTreeItem({})">Racine du projet</button>
-                <button v-for="item in sidebarItems" :key="item.key" class="app-navigation__link"
-                    type="button" :style="{ paddingInlineStart: (item.depth + 1) + 'rem' }"
-                    :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
-                    @dragstart="item.content && beginDrag($event, item)"
-                    @dragover="item.folder && $event.preventDefault()"
-                    @drop.prevent="item.folder && dropInto($event, item)"
-                    @click="openTreeItem(item)">
-                    {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
-                </button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('connections')">Graphes et connexions</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('narration')">Narration</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('ideas')">Idées</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('timeline')">Chronologie</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('settings')">Paramètres du projet</button>
+            <header class="workspace-brand">
+                <span class="workspace-brand__mark" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+                        <path d="M3 26Q20 1 37 26M8 26Q20 9 32 26" stroke="white" stroke-width="2.8" />
+                    </svg>
+                </span>
+                <strong>Bifrost</strong>
+            </header>
+            <details class="workspace-project">
+                <summary><WorkspaceIcon name="project" /><span>{{ currentProject?.name ?? 'Projet' }}</span></summary>
+                <RouterLink :to="{ name: 'home' }" class="workspace-link">← Quitter le projet</RouterLink>
+            </details>
+            <nav class="workspace-nav" aria-label="Arborescence du projet">
+                <p class="workspace-nav__heading">Espace projet</p>
+                <button type="button" class="workspace-link" :aria-current="panel === 'overview' ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
+                <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openTreeItem({})"><WorkspaceIcon name="catalogue" />Catalogue</button>
+                <template v-if="panel === 'catalogue' && !trash">
+                    <button v-for="item in sidebarItems" :key="item.key" class="workspace-link workspace-link--child"
+                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
+                        :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
+                        @dragstart="item.content && beginDrag($event, item)"
+                        @dragover="item.folder && $event.preventDefault()"
+                        @drop.prevent="item.folder && dropInto($event, item)"
+                        @click="openTreeItem(item)">
+                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
+                    </button>
+                </template>
+                <details class="workspace-graphs" open>
+                    <summary class="workspace-link"><WorkspaceIcon name="connections" />Graphes</summary>
+                    <button type="button" class="workspace-link workspace-link--child"
+                        :aria-current="panel === 'connections' ? 'page' : undefined"
+                        :disabled="busy || saving" @click="openPanel('connections')">↳ Connexions</button>
+                </details>
+                <template v-for="[key, label] in [['timeline', 'Chronologies'], ['maps', 'Cartes'], ['narration', 'Narration'], ['ideas', 'Idées'], ['search', 'Recherche']]" :key="key">
+                    <button type="button" class="workspace-link" :aria-current="panel === key ? 'page' : undefined"
+                        :disabled="busy || saving || key === 'maps' || key === 'search'"
+                        :title="key === 'maps' || key === 'search' ? 'Module à venir' : undefined"
+                        @click="openPanel(key)"><WorkspaceIcon :name="key" />{{ label }}</button>
+                </template>
+                <hr />
+                <button type="button" class="workspace-link" :aria-current="panel === 'settings' ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openPanel('settings')"><WorkspaceIcon name="settings" />Paramètres du projet</button>
+                <button type="button" class="workspace-link workspace-link--child" :aria-current="trash ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="panel === 'settings'" />

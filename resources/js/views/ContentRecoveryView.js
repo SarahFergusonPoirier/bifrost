@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
+import WorkspaceIcon from '../components/WorkspaceIcon.vue';
 import ContentAttachments from '../components/ContentAttachments.vue';
 import StructuredField from '../components/StructuredField.vue';
 import AppLayout from '../layouts/AppLayout.vue';
@@ -12,7 +13,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);

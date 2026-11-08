@@ -5,6 +5,7 @@ const preferenceKey = 'bifrost:sidebar-width';
 const themeKey = 'bifrost:theme';
 
 export default {
+    props: { workspace: Boolean },
     data() {
         let stored;
         let theme;
@@ -16,7 +17,7 @@ export default {
         }
 
         return {
-            sidebarWidth: stored >= minWidth && stored <= maxWidth ? stored : defaultWidth,
+            sidebarWidth: stored >= minWidth && stored <= maxWidth ? stored : this.workspace ? 316 : defaultWidth,
             minWidth, maxWidth, resizePointer: null,
             theme: ['light', 'dark'].includes(theme) ? theme : 'system',
             colorPreference: null,
