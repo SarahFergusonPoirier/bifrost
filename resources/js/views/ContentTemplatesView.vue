@@ -81,6 +81,20 @@
                 </fieldset>
                 <button type="button" :disabled="editor.fields.length >= 200"
                     @click="editor.fields.push({ label: '', section: 'Informations', type: 'text', help: '', required: false })">Ajouter un champ</button>
+                <details>
+                    <summary>Bibliothèque des champs d’identité</summary>
+                    <label>Genre
+                        <select v-model="identityGroup">
+                            <option v-for="(_, group) in identityGroups" :key="group" :value="group">{{ group }}</option>
+                        </select>
+                    </label>
+                    <label>Rechercher <input v-model="identityQuery" type="search" /></label>
+                    <ul>
+                        <li v-for="label in identitySuggestions" :key="label">
+                            <button type="button" @click="addIdentityField(label)">{{ label }}</button>
+                        </li>
+                    </ul>
+                </details>
                 <button type="submit">Publier</button>
                 <button type="button" @click="editor = null">Annuler</button>
             </fieldset>

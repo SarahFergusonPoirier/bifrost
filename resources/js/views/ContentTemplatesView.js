@@ -1,3 +1,4 @@
+import { identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getContentTemplate, getContentTemplates } from '../services/contentTemplate';
 
@@ -216,10 +217,24 @@ export default {
             searchTimeout = setTimeout(loadTemplates, 250);
         });
 
+        const identityGroup = ref('Universels');
+        const identityQuery = ref('');
+        const identitySuggestions = computed(() => {
+            const query = identityQuery.value.trim().toLocaleLowerCase('fr');
+            return (identityGroups[identityGroup.value] ?? []).filter(label => label.toLocaleLowerCase('fr').includes(query));
+        });
+
+        function addIdentityField(label) {
+            const field = identityPreset(label);
+            const exists = editor.value.fields.some(item => identityPreset(item.label).label === field.label);
+            if (!exists) editor.value.fields.push(field);
+        }
+
         onMounted(loadTemplates);
 
         return {
             templates, details, loadDetails, editor, editorError, saving, availableTypes, projects, typeEditor, startType, saveType, fieldTypes, editTemplate, moveField, saveTemplate,
+            identityGroups, identityGroup, identityQuery, identitySuggestions, addIdentityField,
             scopeFilter,
             statusFilter,
             searchQuery,
