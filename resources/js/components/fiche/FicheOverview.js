@@ -1,3 +1,4 @@
+import ContentAttachments from '../ContentAttachments.vue';
 import { icons } from './ficheIcons';
 import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
@@ -12,11 +13,12 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlock, FicheText, FicheLinkedData },
+    components: { FicheBlock, FicheText, FicheLinkedData, ContentAttachments },
     props: {
         summary: String,
         active: String,
         linksPath: String,
+        contentId: String,
         linkedTabs: { type: Array, default: () => [] },
         tags: { type: Array, default: () => [] },
         blocks: { type: Array, default: () => [] },
@@ -74,6 +76,7 @@ export default {
                     { source: 'relations', title: 'Relations', icon: 'connections', linked: true },
                     { source: 'timeline', title: 'Chronologie', icon: 'timeline', linked: true },
                 ] : []),
+                ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }] : []),
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),

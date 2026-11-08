@@ -118,6 +118,7 @@
                 <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source"
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
+                <ContentAttachments v-else-if="card.source === 'attachments'" :content-id="contentId" read-only />
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>

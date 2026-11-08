@@ -1,8 +1,11 @@
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
-    props: { contentId: { type: String, required: true } },
+    props: { contentId: { type: String, required: true }, readOnly: Boolean },
     data: () => ({ attachments: [], busy: false, error: '' }),
+    mounted() {
+        if (this.readOnly) this.run(() => {});
+    },
     methods: {
         endpoint() {
             return '/contents/' + encodeURIComponent(this.contentId) + '/attachments';
@@ -16,7 +19,8 @@ export default {
             this.error = '';
             try {
                 await action();
-                this.attachments = (await contentRequest(this.endpoint())).data;
+                const { data } = await contentRequest(this.endpoint());
+                this.attachments = Array.isArray(data) ? data : [];
             } catch (error) {
                 this.error = error.message;
             } finally {
