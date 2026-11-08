@@ -89,3 +89,24 @@ it('removes only the relation after confirmation', async () => {
     expect(wrapper.find('li').exists()).toBe(false);
     confirm.mockRestore();
 });
+
+it('saves directional labels in canonical order from the inverse fiche', async () => {
+    contentRequest.mockReset();
+    const relation = { id: 7, link_id: 7, public_id: 'mentor', title: 'Mentor', type_key: 'mentoring',
+        forward: false, outgoing_label: 'Mentor', incoming_label: 'Élève' };
+    contentRequest.mockResolvedValueOnce({ data: { relations: [relation] } })
+        .mockResolvedValueOnce({ data: {} }).mockResolvedValueOnce({ data: { relations: [relation] } });
+    const wrapper = mount(FicheLinkedData, { props: {
+        path: '/links', connectionsPath: '/connections', kind: 'relations', full: true,
+    } });
+    await flushPromises();
+    await wrapper.findAll('button').find(button => button.text() === 'Modifier le lien').trigger('click');
+    const form = wrapper.get('form');
+    await form.findAll('input')[1].setValue('Guide');
+    await form.trigger('submit');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/connections/7', 'PUT', {
+        type_key: 'mentoring',
+        properties: { role: null, start: null, end: null, note: null, forward_label: 'Élève', inverse_label: 'Guide' },
+    });
+});

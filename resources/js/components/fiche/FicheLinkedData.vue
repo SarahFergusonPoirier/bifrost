@@ -16,6 +16,8 @@
                     <p v-if="relation.note">{{ relation.note }}</p>
                 </template>
                 </slot>
+                <button v-if="kind === 'relations' && full && connectionsPath && relation.link_id" type="button"
+                    :disabled="savingLink" @click="editLink(relation)">Modifier le lien</button>
                 <button v-if="full && connectionsPath && relation.link_id" type="button" :disabled="savingLink"
                     @click="removeLink(relation)">Retirer le lien</button>
             </li>
@@ -43,6 +45,20 @@
                 <input v-model="relationType" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
             </label>
             <button type="submit">Créer la relation</button>
+        </fieldset>
+    </form>
+    <form v-if="editingLink" @submit.prevent="saveLink">
+        <fieldset :disabled="savingLink">
+            <legend>Modifier la relation</legend>
+            <label>Type <input v-model="editingLink.type" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
+            <label>Libellé depuis cette fiche <input v-model="editingLink.outgoing" maxlength="255" /></label>
+            <label>Libellé depuis l’autre fiche <input v-model="editingLink.incoming" maxlength="255" /></label>
+            <label>Rôle <input v-model="editingLink.role" maxlength="255" /></label>
+            <label>Début <input v-model="editingLink.start" maxlength="255" /></label>
+            <label>Fin <input v-model="editingLink.end" maxlength="255" /></label>
+            <label>Note <textarea v-model="editingLink.note" maxlength="10000" /></label>
+            <button type="submit">Enregistrer la relation</button>
+            <button type="button" @click="editingLink = null">Annuler</button>
         </fieldset>
     </form>
     <p v-if="linkError" role="alert">{{ linkError }}</p>

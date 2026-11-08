@@ -6,7 +6,7 @@ const dateOrder = new Intl.Collator('fr', { numeric: true });
 export default {
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all'],
-    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', savingLink: false, linkError: '' }; },
+    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', savingLink: false, linkError: '', editingLink: null }; },
     computed: {
         linkType() {
             return { equipment: 'equipment', capabilities: 'capability' }[this.kind] ?? this.relationType.trim();
@@ -47,6 +47,40 @@ export default {
                     source: this.contentId, target: this.target, type_key: this.linkType,
                 });
                 this.target = '';
+                await this.load();
+            } catch (error) {
+                this.linkError = error.message;
+            } finally {
+                this.savingLink = false;
+            }
+        },
+        editLink(entry) {
+            this.linkError = '';
+            this.editingLink = {
+                id: entry.link_id,
+                type: entry.type_key,
+                forward: entry.forward,
+                outgoing: entry.outgoing_label ?? '',
+                incoming: entry.incoming_label ?? '',
+                role: entry.role ?? '',
+                start: entry.start ?? '',
+                end: entry.end ?? '',
+                note: entry.note ?? '',
+            };
+        },
+        async saveLink() {
+            if (!this.editingLink || this.savingLink) return;
+            const { id, type, forward, outgoing, incoming, ...properties } = this.editingLink;
+            properties.forward_label = forward ? outgoing : incoming;
+            properties.inverse_label = forward ? incoming : outgoing;
+            this.savingLink = true;
+            this.linkError = '';
+            try {
+                await contentRequest(this.connectionsPath + '/' + id, 'PUT', {
+                    type_key: type.trim(),
+                    properties: Object.fromEntries(Object.entries(properties).map(([key, value]) => [key, value.trim() || null])),
+                });
+                this.editingLink = null;
                 await this.load();
             } catch (error) {
                 this.linkError = error.message;
