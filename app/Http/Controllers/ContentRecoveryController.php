@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Content;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\TemplateVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class ContentRecoveryController extends Controller
             'folder_id' => ['sometimes', 'required', 'integer', 'min:0'],
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'type' => ['sometimes', 'integer', 'min:1'],
+            'tag' => ['sometimes', 'integer', 'min:1'],
             'status' => ['sometimes', 'in:draft,in_progress,completed,abandoned'],
         ]);
         $request->validate(['project_id' => ['required_with:folder_id']]);
@@ -28,6 +30,7 @@ class ContentRecoveryController extends Controller
         return response()->json(Content::query()
             ->when(isset($validated['project_id']), fn ($query) => $query->where('project_id', $validated['project_id']))
             ->when(isset($validated['type']), fn ($query) => $query->where('content_type_id', $validated['type']))
+            ->when(isset($validated['tag']), fn ($query) => $query->whereHas('tags', fn ($tags) => $tags->whereKey($validated['tag'])))
             ->when(isset($validated['status']), fn ($query) => $query->where('work_status_key', $validated['status']))
             ->when($search !== null, function ($query) use ($search): void {
                 $pattern = '%'.$search.'%';
@@ -127,6 +130,8 @@ class ContentRecoveryController extends Controller
             'summary' => ['present', 'nullable', 'string'],
             'work_status_key' => ['sometimes', 'in:draft,in_progress,completed,abandoned'],
             'version' => ['sometimes', 'required', 'regex:/^[a-f0-9]{64}$/'],
+            'tag_ids' => ['sometimes', 'array', 'list', 'max:100'],
+            'tag_ids.*' => ['integer', 'distinct', 'exists:tags,id'],
             'blocks' => ['sometimes', 'array', 'list'],
             'blocks.*' => ['array:public_id,block_type,title,body'],
             'blocks.*.public_id' => ['sometimes', 'required', 'uuid', 'distinct:ignore_case'],
@@ -149,6 +154,10 @@ class ContentRecoveryController extends Controller
             $before = $this->snapshotData($record, $record->getAttributes());
             abort_if(isset($validated['version']) && $validated['version'] !== $this->version($before), 409, 'Ce contenu a changé depuis son ouverture.');
             $record->update(Arr::only($validated, ['title', 'summary', 'work_status_key']));
+
+            if (array_key_exists('tag_ids', $validated)) {
+                $record->tags()->sync($validated['tag_ids']);
+            }
 
             if (array_key_exists('blocks', $validated)) {
                 $this->saveBlocks($record, $validated['blocks']);
@@ -304,6 +313,10 @@ class ContentRecoveryController extends Controller
             'work_status_key' => $snapshot['work_status_key'] ?? $content->work_status_key,
         ]);
 
+        if (array_key_exists('tag_ids', $snapshot)) {
+            $content->tags()->sync(Tag::whereKey($snapshot['tag_ids'])->pluck('id')->all());
+        }
+
         // Older revisions only recorded title and summary.
         if (array_key_exists('blocks', $snapshot)) {
             $blocks = $snapshot['blocks'];
@@ -337,6 +350,7 @@ class ContentRecoveryController extends Controller
             'title' => $attributes['title'],
             'summary' => $attributes['summary'] ?? null,
             'work_status_key' => $attributes['work_status_key'],
+            'tag_ids' => $content->tags()->orderBy('tags.id')->pluck('tags.id')->all(),
             'blocks' => $content->blocks()->reorder()->orderBy('position')->orderBy('id')->get([
                 'public_id', 'block_type', 'title', 'body', 'position', 'created_at',
             ])->map(fn ($block): array => $block->getAttributes())->all(),
@@ -349,7 +363,7 @@ class ContentRecoveryController extends Controller
 
     private function contentResponse(Content $content): JsonResponse
     {
-        $content->load('blocks', 'fieldValues', 'templateAssignment.templateVersion.fields.fieldDefinition');
+        $content->load('blocks', 'fieldValues', 'tags', 'templateAssignment.templateVersion.fields.fieldDefinition');
         $origin = DB::table('project_idea_conversions')->where('content_id', $content->id)
             ->join('project_ideas', 'project_ideas.id', '=', 'project_idea_conversions.idea_id')
             ->first(['project_ideas.id', 'project_ideas.title', 'project_ideas.archived_at']);

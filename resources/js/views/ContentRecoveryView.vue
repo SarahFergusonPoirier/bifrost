@@ -129,6 +129,10 @@
                         <option value="in_progress">En cours</option><option value="completed">Terminé</option>
                         <option value="abandoned">Abandonné</option>
                     </select></label>
+                    <label>Étiquette <select v-model="catalogueTag">
+                        <option value="">Toutes</option>
+                        <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                    </select></label>
                     <label><input v-model="searchWholeProject" type="checkbox" /> Chercher dans tout le projet</label>
                     <button type="submit">Appliquer les filtres</button>
                 </fieldset>
@@ -191,6 +195,7 @@
             </div>
             <section v-if="compact" aria-label="Lecture compacte">
                 <p v-if="draft.summary">{{ draft.summary }}</p>
+                <p v-if="selected.tags?.length">{{ selected.tags.map(tag => tag.name).join(' · ') }}</p>
                 <label v-if="templateSections.size"><input v-model="showHidden" type="checkbox" /> Afficher les champs masqués</label>
                 <details v-for="[section, fields] in templateSections" :key="section" open>
                     <summary>{{ section }}</summary>
@@ -221,6 +226,16 @@
                         </select>
                     </label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
+                    <fieldset v-if="draft.tag_ids">
+                        <legend>Étiquettes</legend>
+                        <label>Étiquettes associées
+                            <select v-model="draft.tag_ids" multiple>
+                                <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                            </select>
+                        </label>
+                        <label>Nouvelle étiquette <input v-model="newTag" maxlength="255" @keydown.enter.prevent="addTag" /></label>
+                        <button type="button" :disabled="!newTag.trim()" @click="addTag">Créer et associer</button>
+                    </fieldset>
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ section }}</summary>
                         <div v-for="field in fields" :key="field.id">

@@ -66,6 +66,9 @@ export default {
         const catalogueSearch = ref('');
         const catalogueType = ref('');
         const catalogueStatus = ref('');
+        const catalogueTag = ref('');
+        const tags = ref([]);
+        const newTag = ref('');
         const searchWholeProject = ref(false);
         const appliedCatalogueFilters = ref({});
         const trash = ref(!props.projectId);
@@ -220,6 +223,7 @@ export default {
             const editable = {
                 title: data.title,
                 summary: data.summary,
+                ...(data.tags ? { tag_ids: data.tags.map(tag => tag.id) } : {}),
                 ...(data.work_status_key ? { work_status_key: data.work_status_key } : {}),
                 blocks: data.blocks.map(({ public_id, block_type, title, body }) => ({
                     public_id, block_type, title, body,
@@ -256,7 +260,7 @@ export default {
                 if (!trash.value) {
                     const filters = appliedCatalogueFilters.value;
                     if (!filters.wholeProject) params.set('folder_id', folderId.value);
-                    for (const key of ['search', 'type', 'status']) {
+                    for (const key of ['search', 'type', 'status', 'tag']) {
                         if (filters[key]) params.set(key, filters[key]);
                     }
                 }
@@ -351,6 +355,8 @@ export default {
                 if (!props.projectId) return;
                 projects.value = (await contentRequest('/projects')).data;
                 const { data } = await contentRequest('/content-types');
+                const tagList = await contentRequest('/tags');
+                tags.value = Array.isArray(tagList.data) ? tagList.data : [];
                 types.value = data.filter(type => ['system', 'global'].includes(type.scope_type));
             });
         });
@@ -462,11 +468,18 @@ export default {
                 await contentRequest(folderPath() + '/' + id + path(), 'DELETE');
                 await loadList(listing.value?.current_page);
             }),
-            catalogueSearch, catalogueType, catalogueStatus, searchWholeProject,
+            catalogueSearch, catalogueType, catalogueStatus, catalogueTag, tags, newTag, searchWholeProject,
+            addTag: () => run(async () => {
+                if (!newTag.value.trim()) return;
+                const { data } = await contentRequest('/tags', 'POST', { name: newTag.value.trim() });
+                if (!tags.value.some(tag => tag.id === data.id)) tags.value.push(data);
+                if (!draft.value.tag_ids.includes(data.id)) draft.value.tag_ids.push(data.id);
+                newTag.value = '';
+            }),
             searchCatalogue: () => run(async () => {
                 appliedCatalogueFilters.value = {
                     search: catalogueSearch.value.trim(), type: catalogueType.value, status: catalogueStatus.value,
-                    wholeProject: searchWholeProject.value,
+                    tag: catalogueTag.value, wholeProject: searchWholeProject.value,
                 };
                 await loadList();
             }),

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Content;
 use App\Models\ContentType;
 use App\Models\FieldDefinition;
+use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -176,6 +177,21 @@ class ContentRecoveryTest extends TestCase
             'field_values' => [['field_definition_id' => $field->id, 'value_json' => ['precision' => 'invalid']]],
         ])->assertUnprocessable();
         $this->assertSame($date, $content->fieldValues()->sole()->value_json);
+    }
+
+    public function test_tags_are_shared_with_catalogue_and_restored_from_revision(): void
+    {
+        $content = $this->content();
+        $tag = Tag::create(['name' => 'Recherche']);
+        $url = '/api/contents/'.$content->public_id;
+        $data = ['title' => 'Original', 'summary' => null];
+        $this->patchJson($url, $data + ['tag_ids' => [$tag->id]])
+            ->assertOk()->assertJsonPath('tags.0.name', 'Recherche');
+        $revision = $this->postJson("$url/snapshots", ['label' => 'Avec étiquette'])->assertCreated()->json('id');
+        $this->patchJson($url, $data + ['tag_ids' => []])->assertOk()->assertJsonCount(0, 'tags');
+        $this->getJson("/api/contents?tag={$tag->id}")->assertOk()->assertJsonCount(0, 'data');
+        $this->postJson("$url/revisions/$revision/restore")->assertOk();
+        $this->getJson("/api/contents?tag={$tag->id}")->assertOk()->assertJsonPath('data.0.public_id', $content->public_id);
     }
 
     private function content(): Content
