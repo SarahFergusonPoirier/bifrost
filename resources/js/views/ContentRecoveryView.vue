@@ -23,7 +23,7 @@
                     :disabled="busy || saving" @click="openPanel('graphs')"><WorkspaceIcon name="connections" />Graphes</button>
                 <button v-if="panel === 'graphs' || panel === 'connections'" type="button" class="workspace-link workspace-link--child"
                     :aria-current="panel === 'connections' ? 'page' : undefined"
-                    :disabled="busy || saving" @click="openPanel('connections')">↳ Connexions</button>
+                    :disabled="busy || saving" @click="openPanel('connections')"><WorkspaceIcon name="folder" />Connexions</button>
                 <template v-for="[key, label] in [['timeline', 'Chronologies'], ['maps', 'Cartes'], ['narration', 'Narration'], ['ideas', 'Idées'], ['search', 'Recherche']]" :key="key">
                     <button type="button" class="workspace-link" :aria-current="panel === key ? 'page' : undefined"
                         :disabled="busy || saving || key === 'maps' || key === 'search'"
@@ -31,11 +31,11 @@
                         @click="openPanel(key)"><WorkspaceIcon :name="key" />{{ label }}</button>
                 </template>
                 <hr />
-                <RouterLink :to="{ name: 'home' }" class="workspace-link">← Quitter le projet</RouterLink>
+                <RouterLink :to="{ name: 'home' }" class="workspace-link"><WorkspaceIcon name="exit" />Quitter le projet</RouterLink>
                 <button type="button" class="workspace-link" :aria-current="panel === 'settings' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('settings')"><WorkspaceIcon name="settings" />Paramètres du projet</button>
                 <button type="button" class="workspace-link workspace-link--child" :aria-current="trash ? 'page' : undefined"
-                    :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
+                    :disabled="busy || saving" @click="openProjectTrash"><WorkspaceIcon name="trash" />Corbeille des fiches</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="panel === 'settings'" />

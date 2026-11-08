@@ -15,7 +15,7 @@
                     class="app-navigation__link"
                     exact-active-class="app-navigation__link--active"
                 >
-                    <span class="app-navigation__icon" aria-hidden="true">⌂</span>
+                    <i class="app-navigation__icon fi-rr-home" aria-hidden="true"></i>
                     <span>Accueil</span>
                 </RouterLink>
 
@@ -24,7 +24,7 @@
                     class="app-navigation__link"
                     active-class="app-navigation__link--active"
                 >
-                    <span class="app-navigation__icon" aria-hidden="true">▦</span>
+                    <i class="app-navigation__icon fi-rr-layers" aria-hidden="true"></i>
                     <span>Projets</span>
                 </RouterLink>
 
@@ -33,13 +33,13 @@
                     class="app-navigation__link"
                     active-class="app-navigation__link--active"
                 >
-                    <span class="app-navigation__icon" aria-hidden="true">▧</span>
+                    <i class="app-navigation__icon fi-rr-book-alt" aria-hidden="true"></i>
                     <span>Modèles</span>
                 </RouterLink>
 
             <RouterLink :to="{ name: 'contents' }" class="app-navigation__link"
                     active-class="app-navigation__link--active">
-                    <span class="app-navigation__icon" aria-hidden="true">▤</span>
+                    <i class="app-navigation__icon fi-rr-trash" aria-hidden="true"></i>
                     <span>Corbeille des projets</span>
                 </RouterLink>
 
@@ -48,7 +48,7 @@
                     aria-disabled="true"
                     title="Les archives seront disponibles ultérieurement."
                 >
-                    <span class="app-navigation__icon" aria-hidden="true">▤</span>
+                    <i class="app-navigation__icon fi-rr-archive" aria-hidden="true"></i>
                     <span>Archives</span>
                     <span class="app-navigation__soon">Bientôt</span>
                 </span>
@@ -58,7 +58,7 @@
                     aria-disabled="true"
                     title="Les paramètres seront disponibles ultérieurement."
                 >
-                    <span class="app-navigation__icon" aria-hidden="true">⚙</span>
+                    <i class="app-navigation__icon fi-rr-settings" aria-hidden="true"></i>
                     <span>Paramètres</span>
                 </span>
             </nav>
@@ -71,6 +71,7 @@
                     <option value="dark">Sombre</option>
                 </select>
             </label>
+            <small class="workspace-icon-credit">UIcons par <a href="https://www.flaticon.com/uicons">Flaticon</a></small>
         </aside>
 
         <div class="app-sidebar-resize" role="separator" tabindex="0" aria-orientation="vertical"

@@ -373,3 +373,16 @@
     text-align: start;
     overflow-wrap: anywhere;
 }
+
+.workspace-icon {
+    display: inline-grid;
+    width: 1.5rem;
+    flex: 0 0 1.5rem;
+    place-items: center;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.workspace-icon-credit {
+    color: var(--color-text-muted);
+}
