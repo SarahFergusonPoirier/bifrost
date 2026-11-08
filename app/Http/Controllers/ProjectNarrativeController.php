@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Content;
 use App\Models\ContentType;
 use App\Models\Project;
+use App\NarrativeScene;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,17 +40,14 @@ class ProjectNarrativeController extends Controller
         }, attempts: 3);
     }
 
-    public function storeScene(Request $request, Project $project, string $work): JsonResponse
+    public function storeScene(Request $request, Project $project, string $work, NarrativeScene $scenes): JsonResponse
     {
         $input = $request->validate(['title' => ['required', 'string', 'max:255']]);
 
-        return DB::transaction(function () use ($project, $work, $input): JsonResponse {
+        return DB::transaction(function () use ($project, $work, $input, $scenes): JsonResponse {
             $this->lockProject($project);
             $record = $this->work($project, $work);
-            $scene = $this->createContent($project, 'scene', 'Scène', $input['title']);
-            $placements = DB::table('project_narrative_scenes');
-            $position = (int) $placements->where('work_id', $record->id)->max('position') + 1;
-            $placements->insert(['work_id' => $record->id, 'scene_id' => $scene->id, 'position' => $position]);
+            $scene = $scenes->append($project, $record, $input['title']);
 
             return response()->json($scene, 201);
         }, attempts: 3);

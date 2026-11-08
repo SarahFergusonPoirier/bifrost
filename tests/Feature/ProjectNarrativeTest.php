@@ -59,5 +59,9 @@ class ProjectNarrativeTest extends TestCase
             ->assertJsonPath('0.scenes.1.public_id', $first);
         $this->assertDatabaseCount('contents', 3);
         $this->assertDatabaseCount('project_narrative_scenes', 2);
+        $this->assertDatabaseCount('content_templates', 1);
+        $this->getJson("/api/contents/$second")->assertOk()
+            ->assertJsonCount(7, 'template_assignment.template_version.fields')
+            ->assertJsonPath('template_assignment.template_version.fields.3.field_definition.options_data.format', 'temporal');
     }
 }

@@ -53,7 +53,8 @@ class ProjectIdeaTest extends TestCase
         $this->getJson("/api/projects/{$project->id}/narration")->assertOk()->assertJsonCount(1, '0.scenes')
             ->assertJsonPath('0.scenes.0.public_id', $scene);
         $this->getJson("/api/contents/$scene")->assertOk()->assertJsonPath('origin_idea.id', $idea)
-            ->assertJsonPath('blocks.0.body', 'Le bateau quitte le port.');
+            ->assertJsonPath('blocks.0.body', 'Le bateau quitte le port.')
+            ->assertJsonCount(7, 'template_assignment.template_version.fields');
         $this->getJson($url)->assertOk()->assertJsonPath('data.0.conversions.0.public_id', $scene);
     }
 

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ContentType;
 use App\Models\Project;
+use App\NarrativeScene;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -94,7 +94,7 @@ class ProjectIdeaController extends Controller
         }, attempts: 3);
     }
 
-    public function convert(Request $request, Project $project, int $idea): JsonResponse
+    public function convert(Request $request, Project $project, int $idea, NarrativeScene $scenes): JsonResponse
     {
         $input = $request->validate([
             'request_id' => ['required', 'uuid'],
@@ -103,7 +103,7 @@ class ProjectIdeaController extends Controller
             'work' => ['nullable', 'required_without:content_type_id', 'uuid'],
         ]);
 
-        return DB::transaction(function () use ($project, $idea, $input): JsonResponse {
+        return DB::transaction(function () use ($project, $idea, $input, $scenes): JsonResponse {
             Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
             $record = $this->ideas($project)->where('id', $idea)->first();
             abort_if($record === null, 404);
@@ -117,17 +117,10 @@ class ProjectIdeaController extends Controller
 
             $work = isset($input['work']) ? $project->contents()->where('public_id', $input['work'])
                 ->whereHas('contentType', fn ($query) => $query->where('key', 'oeuvre'))->firstOrFail() : null;
-            $type = $work === null ? $input['content_type_id'] : ContentType::firstOrCreate(
-                ['key' => 'scene', 'scope_type' => 'system'], ['name' => 'Scène', 'is_system' => true],
-            )->id;
-            $content = $project->contents()->create(['title' => $input['title'], 'content_type_id' => $type] + [
-                'scope_type' => 'project', 'work_status_key' => 'draft',
-            ]);
-            if ($work !== null) {
-                $placements = DB::table('project_narrative_scenes');
-                $position = (int) $placements->where('work_id', $work->id)->max('position') + 1;
-                $placements->insert(['work_id' => $work->id, 'scene_id' => $content->id, 'position' => $position]);
-            }
+            $content = $work !== null ? $scenes->append($project, $work, $input['title'])
+                : $project->contents()->create(Arr::only($input, ['title', 'content_type_id']) + [
+                    'scope_type' => 'project', 'work_status_key' => 'draft',
+                ]);
 
             $content->blocks()->create(['body' => $record->body]);
             DB::table('project_idea_conversions')->insert($conversion + ['content_id' => $content->id]);
