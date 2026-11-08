@@ -5,7 +5,7 @@ export default {
     emits: ['open-content'],
     data: () => ({
         page: null, title: '', body: '', archive: false, view: 'kanban', query: '', busy: false, error: '',
-        editing: null, conversion: null, columnFilter: '', columnDraft: null,
+        editing: null, conversion: null, works: [], columnFilter: '', columnDraft: null,
         columns: [],
     }),
     computed: {
@@ -78,11 +78,15 @@ export default {
             });
         },
         beginConversion(idea) {
-            this.conversion = { id: idea.id, title: idea.title ?? '', content_type_id: '', request_id: crypto.randomUUID() };
+            return this.run(async () => {
+                this.works = (await contentRequest('/projects/' + this.projectId + '/narration')).data;
+                this.conversion = { id: idea.id, title: idea.title ?? '', target: 'content', work: '', content_type_id: '', request_id: crypto.randomUUID() };
+            });
         },
         convert() {
             return this.run(async () => {
-                const { id, ...payload } = this.conversion;
+                const { id, title, request_id, target, work, content_type_id } = this.conversion;
+                const payload = { title, request_id, ...(target === 'scene' ? { work } : { content_type_id }) };
                 await contentRequest(this.endpoint() + '/' + id + '/convert', 'POST', payload);
                 this.conversion = null;
                 await this.fetch(this.page?.current_page);

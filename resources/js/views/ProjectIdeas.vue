@@ -50,7 +50,7 @@
                 </label>
                 <button type="button" :disabled="busy" @click="edit(idea)">Modifier</button>
                 <button type="button" :disabled="busy" @click="change(idea.id, { archived: !archive })">{{ archive ? 'Restaurer' : 'Archiver' }}</button>
-                <button v-if="types.length" type="button" :disabled="busy" @click="beginConversion(idea)">Convertir en fiche brouillon</button>
+                <button type="button" :disabled="busy" @click="beginConversion(idea)">Convertir l’idée</button>
                 <ul v-if="idea.conversions.length">
                     <li v-for="content in idea.conversions" :key="content.public_id">
                         <button type="button" @click="$emit('open-content', content.public_id)">{{ content.title }}</button>
@@ -72,7 +72,15 @@
                     <fieldset :disabled="busy">
                         <legend>Créer une fiche à partir de l’idée</legend>
                         <label>Titre de la fiche <input v-model="conversion.title" required maxlength="255" /></label>
-                        <label>Type de fiche <select v-model="conversion.content_type_id" required>
+                        <label>Destination <select v-model="conversion.target">
+                            <option value="content">Fiche du catalogue</option>
+                            <option value="scene" :disabled="!works.length">Scène d’une œuvre</option>
+                        </select></label>
+                        <label v-if="conversion.target === 'scene'">Œuvre <select v-model="conversion.work" required>
+                            <option value="" disabled>Choisir une œuvre</option>
+                            <option v-for="work in works" :key="work.public_id" :value="work.public_id">{{ work.title }}</option>
+                        </select></label>
+                        <label v-else>Type de fiche <select v-model="conversion.content_type_id" required>
                             <option value="" disabled>Choisir un type</option>
                             <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
                         </select></label>

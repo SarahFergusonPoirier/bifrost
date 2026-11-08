@@ -37,6 +37,26 @@ class ProjectIdeaTest extends TestCase
         $this->getJson("/api/projects/{$other->id}/ideas")->assertOk()->assertJsonPath('columns.0.key', 'new');
     }
 
+    public function test_idea_can_be_converted_to_a_scene_only_in_its_project(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $url = "/api/projects/{$project->id}/ideas";
+        $idea = $this->postJson($url, ['title' => 'Le départ', 'body' => 'Le bateau quitte le port.'])->assertCreated()->json('id');
+        $work = $this->postJson("/api/projects/{$project->id}/narration", ['title' => 'Roman'])->assertCreated()->json('public_id');
+        $outside = $this->postJson("/api/projects/{$other->id}/narration", ['title' => 'Autre roman'])->assertCreated()->json('public_id');
+        $input = ['title' => 'Le départ', 'request_id' => (string) Str::uuid()];
+        $this->postJson("$url/$idea/convert", $input + ['work' => $outside])->assertNotFound();
+
+        $scene = $this->postJson("$url/$idea/convert", $input + ['work' => $work])->assertCreated()->json('public_id');
+        $this->postJson("$url/$idea/convert", $input + ['work' => $work])->assertOk()->assertJsonPath('public_id', $scene);
+        $this->getJson("/api/projects/{$project->id}/narration")->assertOk()->assertJsonCount(1, '0.scenes')
+            ->assertJsonPath('0.scenes.0.public_id', $scene);
+        $this->getJson("/api/contents/$scene")->assertOk()->assertJsonPath('origin_idea.id', $idea)
+            ->assertJsonPath('blocks.0.body', 'Le bateau quitte le port.');
+        $this->getJson($url)->assertOk()->assertJsonPath('data.0.conversions.0.public_id', $scene);
+    }
+
     public function test_capture_is_separate_from_catalogue_and_conversion_preserves_provenance(): void
     {
         $project = Project::create(['name' => 'Projet']);

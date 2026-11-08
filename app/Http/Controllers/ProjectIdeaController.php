@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContentType;
 use App\Models\Project;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -98,7 +99,8 @@ class ProjectIdeaController extends Controller
         $input = $request->validate([
             'request_id' => ['required', 'uuid'],
             'title' => ['required', 'string', 'max:255'],
-            'content_type_id' => ['required', 'integer', 'exists:content_types,id,is_active,1'],
+            'content_type_id' => ['nullable', 'required_without:work', 'prohibits:work', 'integer', 'exists:content_types,id,is_active,1'],
+            'work' => ['nullable', 'required_without:content_type_id', 'uuid'],
         ]);
 
         return DB::transaction(function () use ($project, $idea, $input): JsonResponse {
@@ -113,9 +115,20 @@ class ProjectIdeaController extends Controller
                 return response()->json(['public_id' => $content->public_id]);
             }
 
-            $content = $project->contents()->create(Arr::only($input, ['title', 'content_type_id']) + [
+            $work = isset($input['work']) ? $project->contents()->where('public_id', $input['work'])
+                ->whereHas('contentType', fn ($query) => $query->where('key', 'oeuvre'))->firstOrFail() : null;
+            $type = $work === null ? $input['content_type_id'] : ContentType::firstOrCreate(
+                ['key' => 'scene', 'scope_type' => 'system'], ['name' => 'Scène', 'is_system' => true],
+            )->id;
+            $content = $project->contents()->create(['title' => $input['title'], 'content_type_id' => $type] + [
                 'scope_type' => 'project', 'work_status_key' => 'draft',
             ]);
+            if ($work !== null) {
+                $placements = DB::table('project_narrative_scenes');
+                $position = (int) $placements->where('work_id', $work->id)->max('position') + 1;
+                $placements->insert(['work_id' => $work->id, 'scene_id' => $content->id, 'position' => $position]);
+            }
+
             $content->blocks()->create(['body' => $record->body]);
             DB::table('project_idea_conversions')->insert($conversion + ['content_id' => $content->id]);
 
