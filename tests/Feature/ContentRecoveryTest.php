@@ -304,6 +304,12 @@ class ContentRecoveryTest extends TestCase
         $svg = UploadedFile::fake()->createWithContent('image.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
         $svgId = $this->post($url, ['file' => $svg], ['Accept' => 'application/json'])->assertCreated()->json('public_id');
         $this->get("$url/$svgId/preview")->assertNotFound();
+        $legacy = $content->resources()->where('public_id', $id)->firstOrFail();
+        $legacy->update(['metadata' => ['size' => strlen($png)]]);
+        $this->getJson("$url?images=1")->assertOk()->assertJsonCount(1)
+            ->assertJsonPath('0.public_id', $id)->assertJsonPath('0.metadata.image_mime', 'image/png')
+            ->assertJsonMissingPath('0.location');
+        $this->assertArrayNotHasKey('image_mime', $legacy->fresh()->metadata);
     }
 
     private function content(): Content

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use League\Flysystem\UnableToRetrieveMetadata;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -16,13 +17,26 @@ class ContentAttachmentController extends Controller
 {
     private const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-    public function index(string $content): JsonResponse
+    public function index(Request $request, string $content): JsonResponse
     {
         $attachments = $this->content($content)->resources()->where('storage_mode', 'imported')
             ->where('location', 'like', 'content-attachments/%')
-            ->orderBy('original_name')->get(['public_id', 'original_name', 'metadata']);
+            ->orderBy('original_name')->get(['public_id', 'original_name', 'metadata', 'location']);
 
-        return response()->json($attachments->makeHidden('pivot'));
+        if ($request->boolean('images')) {
+            $attachments = $attachments->filter(function (Resource $attachment): bool {
+                $mime = $attachment->metadata['image_mime'] ?? $this->imageMime($attachment);
+                if (! in_array($mime, self::IMAGE_TYPES, true)) {
+                    return false;
+                }
+
+                $attachment->metadata = ['image_mime' => $mime] + ($attachment->metadata ?? []);
+
+                return true;
+            })->values();
+        }
+
+        return response()->json($attachments->makeHidden(['pivot', 'location']));
     }
 
     public function store(Request $request, string $content): JsonResponse
@@ -81,12 +95,10 @@ class ContentAttachmentController extends Controller
     public function preview(string $content, string $attachment): StreamedResponse
     {
         $resource = $this->attachment($this->content($content), $attachment);
-        $disk = Storage::disk('local');
-        abort_unless($disk->exists($resource->location), 404);
-        $mime = $disk->mimeType($resource->location);
-        abort_unless(in_array($mime, self::IMAGE_TYPES, true), 404);
+        $mime = $this->imageMime($resource);
+        abort_if($mime === null, 404);
 
-        return $disk->response($resource->location, $resource->original_name, [
+        return Storage::disk('local')->response($resource->location, $resource->original_name, [
             'Content-Type' => $mime, 'X-Content-Type-Options' => 'nosniff',
         ]);
     }
@@ -97,6 +109,21 @@ class ContentAttachmentController extends Controller
         $record->resources()->detach($this->attachment($record, $attachment));
 
         return response()->json(null, 204);
+    }
+
+    private function imageMime(Resource $resource): ?string
+    {
+        if (! preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $resource->location)) {
+            return null;
+        }
+
+        try {
+            $mime = Storage::disk('local')->mimeType($resource->location);
+        } catch (UnableToRetrieveMetadata) {
+            return null;
+        }
+
+        return in_array($mime, self::IMAGE_TYPES, true) ? $mime : null;
     }
 
     private function content(string $publicId): Content

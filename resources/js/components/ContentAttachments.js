@@ -24,7 +24,7 @@ export default {
             this.error = '';
             try {
                 await action();
-                const { data } = await contentRequest(this.endpoint());
+                const { data } = await contentRequest(this.endpoint() + (this.gallery ? '?images=1' : ''));
                 this.attachments = Array.isArray(data) ? data : [];
             } catch (error) {
                 this.error = error.message;
