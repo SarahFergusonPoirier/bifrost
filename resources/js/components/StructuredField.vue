@@ -47,11 +47,19 @@
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <label>Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
+                <label v-if="format === 'equipment' && contentId">Image jointe
+                    <select :value="entry.image ?? ''" @focus="loadImages" @change="editKeyword(index, 'image', $event.target.value)">
+                        <option value="">Aucune image</option>
+                        <option v-if="entry.image && !images.some(image => image.public_id === entry.image)" :value="entry.image">Image enregistrée</option>
+                        <option v-for="image in images" :key="image.public_id" :value="image.public_id">{{ image.original_name }}</option>
+                    </select>
+                </label>
                 <button type="button" :disabled="index === 0" @click="moveKeyword(index, -1)">Monter</button>
                 <button type="button" :disabled="index === value.length - 1" @click="moveKeyword(index, 1)">Descendre</button>
                 <button type="button" @click="setKeywords(value.filter((item, i) => i !== index))">Retirer</button>
             </li>
         </ol>
+        <p v-if="imageError" role="alert">{{ imageError }}</p>
         <label>{{ format === 'equipment' ? 'Nouvel équipement' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
         <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
     </div>

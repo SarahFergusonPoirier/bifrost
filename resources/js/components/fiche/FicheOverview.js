@@ -93,6 +93,9 @@ export default {
                         id: 'local-' + field.field_definition_id + '-' + index,
                         title: entry.label,
                         note: entry.description,
+                        image: entry.image && this.contentId
+                            ? '/api/contents/' + encodeURIComponent(this.contentId) + '/attachments/' + encodeURIComponent(entry.image) + '/preview'
+                            : null,
                     }));
                 }));
         },

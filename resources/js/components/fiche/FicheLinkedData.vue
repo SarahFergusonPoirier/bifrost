@@ -4,6 +4,8 @@
     <template v-else-if="kind !== 'timeline'">
         <ul v-if="items.length" class="fiche-relations" :class="{ 'fiche-relations--cards': view === 'cards' }">
             <li v-for="relation in items.slice(0, limit)" :key="relation.id">
+                <img v-if="view === 'cards' && relation.image" class="fiche-equipment-image"
+                    :src="relation.image" alt="" loading="lazy" @error="$event.target.hidden = true" />
                 <button v-if="relation.public_id" type="button" @click="$emit('open', relation.public_id)">{{ relation.title }}</button>
                 <strong v-else>{{ relation.title }}</strong>
                 <span v-if="relation.label" class="fiche-relation-label">{{ relation.label }}</span>

@@ -1,18 +1,31 @@
+import { contentRequest } from '../services/contentRecovery';
+
 export default {
     props: {
         format: { type: String, required: true },
         value: { type: [Object, Array], default: null },
         levels: { type: Number, default: 5 },
+        contentId: String,
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
-    data: () => ({ keyword: '' }),
+    data: () => ({ keyword: '', images: [], imageError: '' }),
     methods: {
         update(key, value) {
             const next = { ...this.value };
             if (value === '') delete next[key];
             else next[key] = value;
             this.$emit('change', Object.keys(next).length ? next : '');
+        },
+        async loadImages() {
+            if (!this.contentId) return;
+            this.imageError = '';
+            try {
+                const { data } = await contentRequest('/contents/' + encodeURIComponent(this.contentId) + '/attachments?images=1');
+                this.images = data;
+            } catch (error) {
+                this.imageError = error.message;
+            }
         },
         setKeywords(entries) {
             this.$emit('change', entries.length ? entries : '');

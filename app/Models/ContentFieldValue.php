@@ -113,9 +113,10 @@ class ContentFieldValue extends Model
             ],
             'keywords', 'equipment' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
-                'value_json.*' => ['required', 'array:label,description'],
+                'value_json.*' => ['required', 'array:label,description'.($format === 'equipment' ? ',image' : '')],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
+                'value_json.*.image' => ['nullable', 'uuid'],
             ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],
@@ -150,6 +151,16 @@ class ContentFieldValue extends Model
         };
 
         Validator::make(['value_json' => $this->value_json], $rules)->validate();
+
+        if ($format === 'equipment') {
+            $ids = collect($this->value_json)->pluck('image')->filter()->unique();
+            $previous = collect($this->getOriginal('value_json') ?? [])->pluck('image')->filter();
+            $added = $ids->diff($previous);
+            if ($added->isNotEmpty() && $content->resources()->where('storage_mode', 'imported')
+                ->where('location', 'like', 'content-attachments/%')->whereIn('public_id', $added)->count() !== $added->count()) {
+                throw ValidationException::withMessages(['value_json' => 'Une image ne fait pas partie des pièces jointes de la fiche.']);
+            }
+        }
 
         if ($format === 'references') {
             $original = $this->getOriginal('value_json') ?? [];

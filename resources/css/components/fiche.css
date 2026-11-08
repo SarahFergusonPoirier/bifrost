@@ -228,3 +228,10 @@
     max-height: 28rem;
     object-fit: contain;
 }
+
+.fiche-equipment-image {
+    width: 100%;
+    max-height: 10rem;
+    object-fit: contain;
+    border-radius: var(--radius-control);
+}
