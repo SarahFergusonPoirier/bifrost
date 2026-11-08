@@ -60,6 +60,16 @@
                             </select>
                         </label>
                     </template>
+                    <label v-if="field.type === 'choice'">Affichage du choix
+                        <select v-model="field.badgeColor">
+                            <option value="">Texte</option>
+                            <option value="accent">Badge violet</option>
+                            <option value="blue">Badge bleu</option>
+                            <option value="green">Badge vert</option>
+                            <option value="amber">Badge ambre</option>
+                            <option value="red">Badge rouge</option>
+                        </select>
+                    </label>
                     <label v-if="['choice', 'multiple_choice'].includes(field.type)">
                         Options (une par ligne) <textarea v-model="field.choicesText" maxlength="10000" />
                     </label>

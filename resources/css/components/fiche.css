@@ -200,3 +200,16 @@
 .fiche-scale > .fiche-scale__filled {
     background: var(--workspace-accent);
 }
+
+.fiche-choice-badge {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid color-mix(in srgb, var(--fiche-badge-color, var(--workspace-accent)) 60%, var(--color-border));
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--fiche-badge-color, var(--workspace-accent)) 18%, var(--color-surface));
+}
+
+.fiche-choice-badge[data-color="blue"] { --fiche-badge-color: #3b82f6; }
+.fiche-choice-badge[data-color="green"] { --fiche-badge-color: #15803d; }
+.fiche-choice-badge[data-color="amber"] { --fiche-badge-color: #b45309; }
+.fiche-choice-badge[data-color="red"] { --fiche-badge-color: #dc2626; }

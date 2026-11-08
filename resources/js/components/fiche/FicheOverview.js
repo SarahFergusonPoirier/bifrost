@@ -47,6 +47,8 @@ export default {
                     value: this.displayValue(field),
                     empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
+                    badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)
+                        ? field.display_options?.badge_color : null,
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
                         ? {

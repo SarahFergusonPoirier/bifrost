@@ -71,7 +71,7 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
@@ -82,6 +82,7 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.level_descriptions' => ['sometimes', 'array', 'list', 'max:20'],
             'fields.*.level_descriptions.*' => ['nullable', 'string', 'max:255'],
             'fields.*.scale_display' => ['sometimes', 'in:segments,number,both'],
+            'fields.*.badge_color' => ['sometimes', 'nullable', 'in:accent,blue,green,amber,red'],
             'fields.*.choices' => ['sometimes', 'array', 'list', 'max:100'],
             'fields.*.choices.*' => ['required', 'string', 'max:255'],
         ])['fields'];
@@ -124,6 +125,10 @@ class ContentTemplateAuthoringController extends Controller
                 if (isset($field['scale_display'])) {
                     $display['scale_display'] = $field['scale_display'];
                 }
+            }
+
+            if ($definition->value_type === 'choice' && array_key_exists('badge_color', $field)) {
+                $display['badge_color'] = $field['badge_color'];
             }
 
             $version->fields()->create([
