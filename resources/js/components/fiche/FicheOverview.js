@@ -46,6 +46,9 @@ export default {
                     value: this.displayValue(field),
                     empty: this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
+                    scale: field.format === 'scale' && this.fieldValue?.(field)?.level
+                        ? { level: this.fieldValue(field).level, levels: field.field_definition.options_data?.levels ?? 5 }
+                        : null,
                 })),
             }));
             const texts = this.blocks.filter(block => block.public_id && typeof block.body === 'string').map(block => ({

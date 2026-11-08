@@ -2,6 +2,7 @@ export default {
     props: {
         format: { type: String, required: true },
         value: { type: [Object, Array], default: null },
+        levels: { type: Number, default: 5 },
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],

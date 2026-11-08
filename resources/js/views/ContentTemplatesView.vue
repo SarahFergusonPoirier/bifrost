@@ -44,6 +44,10 @@
                         <option v-if="!fieldTypes[field.type]" :value="field.type">{{ field.type }}</option>
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
+                    <label v-if="field.type === 'scale'">Nombre de niveaux
+                        <input type="number" min="2" max="20" :disabled="Boolean(field.id)" :value="field.levels ?? 5"
+                            @input="field.levels = $event.target.valueAsNumber" />
+                    </label>
                     <label v-if="['choice', 'multiple_choice'].includes(field.type)">
                         Options (une par ligne) <textarea v-model="field.choicesText" maxlength="10000" />
                     </label>

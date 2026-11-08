@@ -98,6 +98,10 @@ class ContentFieldValue extends Model
     {
         $format = $definition->options_data['format'] ?? null;
         $rules = match ($format) {
+            'scale' => [
+                'value_json' => ['array:level', 'required'],
+                'value_json.level' => ['required', 'integer', 'between:1,'.($definition->options_data['levels'] ?? 5)],
+            ],
             'measurement' => [
                 'value_json' => ['array:amount,unit', 'min:1'],
                 'value_json.amount' => ['sometimes', 'numeric'],

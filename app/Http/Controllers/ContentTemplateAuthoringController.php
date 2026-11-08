@@ -71,13 +71,14 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
-            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice'],
+            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
             'fields.*.choices' => ['sometimes', 'array', 'list', 'max:100'],
             'fields.*.choices.*' => ['required', 'string', 'max:255'],
         ])['fields'];
@@ -95,12 +96,15 @@ class ContentTemplateAuthoringController extends Controller
             if (isset($field['id']) && ! $original?->fieldDefinition) {
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
-            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice'], true);
+            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale'], true);
             $definition = $original?->fieldDefinition ?? FieldDefinition::create([
                 'key' => 'custom-'.Str::uuid(),
                 'label' => $field['label'],
                 'value_type' => $structured ? 'json' : $field['type'],
-                'options_data' => $structured ? ['format' => $field['type']] : null,
+                'options_data' => $structured ? [
+                    'format' => $field['type'],
+                    ...($field['type'] === 'scale' ? ['levels' => (int) ($field['levels'] ?? 5)] : []),
+                ] : null,
                 'scope_type' => $template->scope_type,
                 'project_id' => $template->project_id,
                 'universe_id' => $template->universe_id,

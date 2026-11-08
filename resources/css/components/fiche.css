@@ -182,3 +182,21 @@
     border-radius: var(--radius-card);
     background: var(--color-surface-muted);
 }
+
+.fiche-scale {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.fiche-scale > span {
+    width: 0.65rem;
+    height: 0.45rem;
+    border-radius: var(--radius-small);
+    background: var(--color-border);
+}
+
+.fiche-scale > .fiche-scale__filled {
+    background: var(--workspace-accent);
+}

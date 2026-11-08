@@ -132,6 +132,12 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
+                            <div v-else-if="field.scale" class="fiche-scale" role="meter"
+                                :aria-label="field.label" aria-valuemin="1" :aria-valuemax="field.scale.levels" :aria-valuenow="field.scale.level">
+                                <span v-for="level in field.scale.levels" :key="level" aria-hidden="true"
+                                    :class="{ 'fiche-scale__filled': level <= field.scale.level }" />
+                                <small aria-hidden="true">{{ field.value }}</small>
+                            </div>
                             <template v-else>{{ field.value }}</template>
                         </dd>
                     </div>

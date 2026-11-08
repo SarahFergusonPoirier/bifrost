@@ -34,6 +34,13 @@
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
         </template>
     </div>
+    <label v-else-if="format === 'scale'">
+        Niveau
+        <select :value="value?.level ?? ''" @change="update('level', $event.target.value === '' ? '' : Number($event.target.value))">
+            <option value="">Non renseigné</option>
+            <option v-for="level in levels" :key="level" :value="level">{{ level }} / {{ levels }}</option>
+        </select>
+    </label>
     <label v-else-if="format === 'references'">
         Fiches liées
         <select multiple :value="value ?? []" @change="updateReferences">
