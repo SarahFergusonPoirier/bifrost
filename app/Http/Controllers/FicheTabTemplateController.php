@@ -44,7 +44,7 @@ class FicheTabTemplateController extends Controller
                 $textSlots[$source] ??= 'blank:'.count($textSlots);
                 $placement['source'] = $textSlots[$source];
             }
-            unset($placement['id']);
+            unset($placement['id'], $placement['media_image']);
 
             return $placement;
         }, $tab['placements'] ?? []);

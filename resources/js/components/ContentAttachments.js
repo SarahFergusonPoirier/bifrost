@@ -1,9 +1,15 @@
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
-    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean },
+    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean },
+    emits: ['select-image'],
     data: () => ({ attachments: [], alt: '', caption: '', busy: false, error: '' }),
     computed: {
+        displayedImages() {
+            if (!this.single) return this.images;
+            if (!this.imageId) return this.images.slice(0, 1);
+            return this.images.filter(item => item.public_id === this.imageId);
+        },
         images() {
             return this.attachments.filter(item => item.metadata?.image_mime);
         },

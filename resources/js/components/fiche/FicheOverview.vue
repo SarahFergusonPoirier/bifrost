@@ -77,6 +77,12 @@
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
                         @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
                 </label>
+                <label v-if="placement.source === 'gallery'">Présentation des images
+                    <select :value="placement.media_mode ?? 'gallery'" @change="placement.media_mode = $event.target.value">
+                        <option value="gallery">Galerie</option>
+                        <option value="single">Image unique</option>
+                    </select>
+                </label>
                 <label v-if="placement.source === 'relations'">Présentation des relations
                     <select :value="placement.view ?? 'list'" @change="placement.view = $event.target.value">
                         <option value="list">Liste compacte</option>
@@ -118,7 +124,9 @@
                 <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source"
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
-                <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :content-id="contentId" :gallery="card.source === 'gallery'" read-only />
+                <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image"
+                    :select-image="editing && placement.media_mode === 'single'"
+                    @select-image="placement.media_image = $event" read-only />
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>

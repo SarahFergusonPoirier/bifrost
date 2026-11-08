@@ -10,8 +10,15 @@
         </form>
         <p v-if="readOnly && busy" role="status">Chargement…</p>
         <template v-if="gallery">
-            <div v-if="images.length" class="fiche-gallery">
-                <figure v-for="image in images" :key="image.public_id">
+            <label v-if="selectImage && images.length">Image affichée
+                <select :value="imageId ?? ''" @change="$emit('select-image', $event.target.value || null)">
+                    <option value="">Première image disponible</option>
+                    <option v-if="imageId && !images.some(item => item.public_id === imageId)" :value="imageId">Image indisponible</option>
+                    <option v-for="image in images" :key="image.public_id" :value="image.public_id">{{ image.original_name }}</option>
+                </select>
+            </label>
+            <div v-if="displayedImages.length" class="fiche-gallery" :class="{ 'fiche-gallery--single': single }">
+                <figure v-for="image in displayedImages" :key="image.public_id">
                     <a :href="download(image.public_id)">
                         <img :src="download(image.public_id) + '/preview'" :alt="image.metadata.alt ?? image.original_name" loading="lazy" />
                     </a>
