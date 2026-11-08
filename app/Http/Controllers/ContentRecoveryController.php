@@ -85,8 +85,15 @@ class ContentRecoveryController extends Controller
                 DB::table('content_collection_memberships')->insert(['content_id' => $content->id, 'folder_id' => $folder]);
             }
 
-            if (isset($validated['template_version_id'])) {
-                $version = TemplateVersion::findOrFail($validated['template_version_id']);
+            $version = isset($validated['template_version_id'])
+                ? TemplateVersion::findOrFail($validated['template_version_id'])
+                : TemplateVersion::query()->whereNotNull('published_at')->whereHas('template', fn ($query) => $query
+                    ->where('is_system', true)->where('is_active', true)->where('scope_type', 'global')
+                    ->where('content_type_id', $content->content_type_id)
+                    ->whereHas('contentType', fn ($type) => $type->where('key', 'personnage')))
+                    ->orderByDesc('version_number')->first();
+
+            if ($version) {
                 if (! $version->template?->is_active) {
                     throw ValidationException::withMessages(['template_version_id' => 'Ce modèle est indisponible.']);
                 }

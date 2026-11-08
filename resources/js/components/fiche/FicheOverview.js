@@ -17,6 +17,7 @@ export default {
     components: { FicheBlock, FicheText, FicheScale, FicheLinkedData, ContentAttachments },
     props: {
         summary: String,
+        fullName: String,
         active: String,
         linksPath: String,
         contentId: String,
@@ -41,6 +42,7 @@ export default {
         cards() {
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
                 source: 'section:' + title,
+                fullName: title === 'Identité' ? this.fullName : null,
                 title,
                 icon: 'catalogue',
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({

@@ -153,7 +153,11 @@
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
                 </ul>
-                <dl v-else-if="fields?.length" class="fiche-fields" :style="{ '--fiche-field-columns': placement.field_columns ?? 1 }">
+                <dl v-else-if="fields?.length || card.fullName" class="fiche-fields" :style="{ '--fiche-field-columns': placement.field_columns ?? 1 }">
+                    <div v-if="card.fullName">
+                        <dt>Nom complet</dt>
+                        <dd>{{ card.fullName }}</dd>
+                    </div>
                     <div v-for="field in fields" :key="field.id">
                         <dt>{{ field.label }}</dt>
                         <dd>
