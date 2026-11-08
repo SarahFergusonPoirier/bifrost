@@ -2,11 +2,15 @@
     <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Réessayer</button></p>
     <p v-else-if="!data" role="status">Chargement…</p>
     <template v-else-if="kind === 'relations'">
-        <ul v-if="data.relations.length">
+        <ul v-if="data.relations.length" class="fiche-relations" :class="{ 'fiche-relations--cards': view === 'cards' }">
             <li v-for="relation in data.relations.slice(0, limit)" :key="relation.id">
                 <button type="button" @click="$emit('open', relation.public_id)">{{ relation.title }}</button>
-                <span> · {{ relation.label }}</span>
-                <p v-if="relation.note">{{ relation.note }}</p>
+                <span class="fiche-relation-label">{{ relation.label }}</span>
+                <template v-if="view === 'cards'">
+                    <p v-if="relation.role">{{ relation.role }}</p>
+                    <p v-if="relation.start || relation.end">{{ [relation.start, relation.end].filter(Boolean).join(' – ') }}</p>
+                    <p v-if="relation.note">{{ relation.note }}</p>
+                </template>
             </li>
         </ul>
         <p v-else>Aucune relation liée à cette fiche.</p>

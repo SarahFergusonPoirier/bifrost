@@ -4,7 +4,7 @@ const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
 const dateOrder = new Intl.Collator('fr', { numeric: true });
 
 export default {
-    props: { path: { type: String, required: true }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String },
+    props: { path: { type: String, required: true }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String },
     emits: ['open', 'show-all'],
     data: () => ({ data: null, error: '', expanded: false, previewSize: 4 }),
     computed: {

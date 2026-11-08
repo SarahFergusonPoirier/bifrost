@@ -37,3 +37,16 @@ it('sorts timeline entries by date or importance and keeps approximate dates lab
     await wrapper.setProps({ sort: 'importance' });
     expect(entries()[0]).toBe('Vers 2000 · Rencontre');
 });
+
+it('shows the additional relation details in cards', async () => {
+    contentRequest.mockResolvedValue({ data: { relations: [
+        { id: 1, title: 'Élia', label: 'Élève', public_id: 'elia', note: 'Première rencontre', start: '2010' },
+    ] } });
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'relations' } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Élève');
+    expect(wrapper.text()).not.toContain('Première rencontre');
+    await wrapper.setProps({ view: 'cards' });
+    expect(wrapper.get('.fiche-relations--cards').text()).toContain('Première rencontre');
+    expect(wrapper.text()).toContain('2010');
+});
