@@ -57,7 +57,7 @@ export default {
                         ? field.display_options?.badge_color : null,
                     url: field.format === 'external_link' ? this.safeExternalUrl(this.fieldValue?.(field)?.url) : null,
                     levelMode: field.display_options?.repeatable_level_mode,
-                    entries: field.format === 'repeatable' ? this.fieldValue?.(field) : null,
+                    entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
                         ? {

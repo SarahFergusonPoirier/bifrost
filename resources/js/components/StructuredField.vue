@@ -40,12 +40,12 @@
         <label>Libellé <input maxlength="255" :disabled="!value?.url" :value="value?.label ?? ''"
             @change="update('label', $event.target.value.trim())" /></label>
     </div>
-    <div v-else-if="['keywords', 'equipment', 'capabilities', 'repeatable'].includes(format)">
+    <div v-else-if="['keywords', 'equipment', 'capabilities', 'repeatable', 'bullets'].includes(format)">
         <ol v-if="value?.length">
             <li v-for="(entry, index) in value" :key="index">
-                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : format === 'repeatable' ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
+                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : ['repeatable', 'bullets'].includes(format) ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
-                <label>Description <input :value="entry.description ?? ''" maxlength="1000"
+                <label v-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
                     <label>Période <input :value="entry.period ?? ''" maxlength="255"
@@ -84,7 +84,7 @@
             </li>
         </ol>
         <p v-if="imageError" role="alert">{{ imageError }}</p>
-        <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : format === 'repeatable' ? 'Nouvelle entrée' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
+        <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : ['repeatable', 'bullets'].includes(format) ? 'Nouvelle entrée' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
         <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
     </div>
     <label v-else-if="format === 'scale'">

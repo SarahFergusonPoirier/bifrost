@@ -179,7 +179,7 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
-                            <ul v-else-if="field.entries?.length">
+                            <ul v-else-if="field.entries?.length" class="fiche-entry-list">
                                 <li v-for="(entry, index) in field.entries" :key="index">
                                     <strong>{{ entry.label }}</strong>
                                     <span v-if="entry.period"> · {{ entry.period }}</span>

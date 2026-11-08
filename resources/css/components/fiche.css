@@ -235,3 +235,9 @@
     object-fit: contain;
     border-radius: var(--radius-control);
 }
+
+.fiche-entry-list {
+    margin: 0;
+    padding-inline-start: var(--space-5);
+    list-style: disc;
+}

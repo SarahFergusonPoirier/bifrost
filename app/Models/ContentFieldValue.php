@@ -111,10 +111,10 @@ class ContentFieldValue extends Model
                 'value_json.url' => ['required', 'string', 'max:2048', 'url:http,https'],
                 'value_json.label' => ['nullable', 'string', 'max:255'],
             ],
-            'keywords', 'equipment', 'capabilities', 'repeatable' => [
+            'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
-                'value_json.*' => ['required', 'array:label,description'.(match ($format) {
-                    'equipment' => ',image', 'capabilities' => ',category,mastery', 'repeatable' => ',period,level,rank', default => ''
+                'value_json.*' => ['required', 'array:label'.(match ($format) {
+                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',description,period,level,rank', 'bullets' => '', default => ',description'
                 })],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
