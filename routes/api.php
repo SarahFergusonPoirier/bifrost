@@ -86,3 +86,4 @@ Route::post('/contents/{content}/template-versions/{version}/apply', [ContentTem
 
 Route::post('/content-templates', [ContentTemplateAuthoringController::class, 'store']);
 Route::post('/content-templates/{template}/versions', [ContentTemplateAuthoringController::class, 'publishVersion'])->whereNumber('template');
+Route::put('/projects/{project}/connections/{relation}', [ProjectConnectionController::class, 'update'])->whereNumber('relation');

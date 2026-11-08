@@ -6,7 +6,7 @@ export default {
     props: { projectId: { type: String, required: true } },
     emits: ['open-content'],
     data: () => ({
-        nodes: [], edges: [], selection: null, target: '', type: '', filters: emptyFilters(), folders: [], memberships: [], views: [], viewName: '', busy: false, error: '', drag: null,
+        nodes: [], edges: [], selection: null, target: '', type: '', filters: emptyFilters(), folders: [], memberships: [], views: [], viewName: '', editing: null, busy: false, error: '', drag: null,
     }),
     computed: {
         types() {
@@ -107,7 +107,29 @@ export default {
         resetFilters() {
             this.filters = emptyFilters();
         },
+        edit(edge) {
+            const keys = ['forward_label', 'inverse_label', 'role', 'start', 'end', 'note'];
+            this.editing = {
+                id: edge.id, type_key: edge.type_key,
+                properties: Object.fromEntries(keys.map(key => [key, edge.properties_data?.[key] ?? ''])),
+            };
+        },
+        saveRelation() {
+            return this.run(async () => {
+                const { id, type_key, properties } = this.editing;
+                await contentRequest('/projects/' + this.projectId + '/connections/' + id, 'PUT', {
+                    type_key, properties: Object.fromEntries(Object.entries(properties).map(([key, value]) => [key, value || null])),
+                });
+                this.editing = null;
+                await this.load();
+            });
+        },
+        relationLabel(edge) {
+            const outgoing = edge.source_content_id === this.selection.id;
+            return (outgoing ? edge.properties_data?.forward_label : edge.properties_data?.inverse_label) ?? edge.type_key;
+        },
         select(node) {
+            this.editing = null;
             this.selection = node;
             this.target = '';
         },
@@ -161,6 +183,7 @@ export default {
             if (!window.confirm('Supprimer cette relation ?')) return;
             return this.run(async () => {
                 await contentRequest('/projects/' + this.projectId + '/connections/' + edge.id, 'DELETE');
+                if (this.editing?.id === edge.id) this.editing = null;
                 await this.load();
             });
         },

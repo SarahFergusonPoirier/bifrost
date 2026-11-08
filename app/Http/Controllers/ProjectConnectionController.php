@@ -85,10 +85,45 @@ class ProjectConnectionController extends Controller
         }, attempts: 3);
     }
 
-    public function destroy(Project $project, int $relation): JsonResponse
+    public function update(Request $request, Project $project, int $relation): JsonResponse
+    {
+        $input = $request->validate([
+            'type_key' => ['required', 'alpha_dash:ascii', 'max:80'],
+            'properties' => ['present', 'array:forward_label,inverse_label,role,start,end,note'],
+            'properties.forward_label' => ['nullable', 'string', 'max:255'],
+            'properties.inverse_label' => ['nullable', 'string', 'max:255'],
+            'properties.role' => ['nullable', 'string', 'max:255'],
+            'properties.start' => ['nullable', 'string', 'max:255'],
+            'properties.end' => ['nullable', 'string', 'max:255'],
+            'properties.note' => ['nullable', 'string', 'max:10000'],
+        ]);
+
+        return DB::transaction(function () use ($project, $relation, $input): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $edge = $this->projectRelation($project, $relation);
+            $duplicate = ContentRelation::where('source_content_id', $edge->source_content_id)
+                ->where('target_content_id', $edge->target_content_id)
+                ->where('type_key', $input['type_key'])->whereKeyNot($edge->id)->exists();
+            abort_if($duplicate, 409, 'Une relation de ce type existe déjà entre ces fiches dans ce sens.');
+
+            $properties = array_filter(array_replace($edge->properties_data ?? [], $input['properties']),
+                fn ($value) => $value !== null);
+            $edge->update(['type_key' => $input['type_key'], 'properties_data' => $properties]);
+
+            return response()->json($edge);
+        }, attempts: 3);
+    }
+
+    private function projectRelation(Project $project, int $relation): ContentRelation
     {
         $scope = fn ($query) => $query->where('project_id', $project->id);
-        ContentRelation::whereHas('source', $scope)->whereHas('target', $scope)->findOrFail($relation)->delete();
+
+        return ContentRelation::whereHas('source', $scope)->whereHas('target', $scope)->findOrFail($relation);
+    }
+
+    public function destroy(Project $project, int $relation): JsonResponse
+    {
+        $this->projectRelation($project, $relation)->delete();
 
         return response()->json(null, 204);
     }

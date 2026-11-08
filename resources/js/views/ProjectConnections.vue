@@ -81,9 +81,27 @@
             <p v-if="!connections.length">Cette fiche est isolée.</p>
             <ul>
                 <li v-for="edge in connections" :key="edge.id">
-                    {{ edge.source_content_id === selection.id ? '→' : '←' }} {{ edge.type_key }}
+                    {{ edge.source_content_id === selection.id ? '→' : '←' }} {{ relationLabel(edge) }}
                     <button type="button" @click="select(peer(edge))">{{ peer(edge)?.title }}</button>
+                    <span v-if="edge.properties_data?.role"> · {{ edge.properties_data.role }}</span>
+                    <span v-if="edge.properties_data?.start || edge.properties_data?.end"> · {{ [edge.properties_data.start, edge.properties_data.end].filter(Boolean).join(' – ') }}</span>
+                    <p v-if="edge.properties_data?.note">{{ edge.properties_data.note }}</p>
+                    <button type="button" :disabled="busy" @click="edit(edge)">Modifier</button>
                     <button type="button" :disabled="busy" @click="remove(edge)">Retirer</button>
+                    <form v-if="editing?.id === edge.id" @submit.prevent="saveRelation">
+                        <fieldset :disabled="busy">
+                            <legend>Modifier la relation</legend>
+                            <label>Type <input v-model="editing.type_key" required maxlength="80" pattern="[A-Za-z0-9_\-]+" /></label>
+                            <label>Libellé aller <input v-model="editing.properties.forward_label" maxlength="255" /></label>
+                            <label>Libellé inverse <input v-model="editing.properties.inverse_label" maxlength="255" /></label>
+                            <label>Rôle <input v-model="editing.properties.role" maxlength="255" /></label>
+                            <label>Début <input v-model="editing.properties.start" maxlength="255" /></label>
+                            <label>Fin <input v-model="editing.properties.end" maxlength="255" /></label>
+                            <label>Note <textarea v-model="editing.properties.note" maxlength="10000" /></label>
+                            <button type="submit">Enregistrer</button>
+                            <button type="button" @click="editing = null">Annuler</button>
+                        </fieldset>
+                    </form>
                 </li>
             </ul>
             <form @submit.prevent="add">
