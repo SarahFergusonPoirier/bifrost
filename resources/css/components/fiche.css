@@ -135,3 +135,9 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+.fiche-resize {
+    cursor: nwse-resize;
+    touch-action: none;
+    user-select: none;
+}

@@ -33,9 +33,16 @@
         <button type="submit" :disabled="!persist">Enregistrer les blocs</button>
         <button type="button" @click="editing = false">Annuler</button>
     </form>
-    <div class="fiche-grid">
+    <div ref="grid" class="fiche-grid">
         <FicheBlock v-for="{ card, placement } in displayed" :key="placement.id" :title="card.title"
             :icon="card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
+            <template #actions>
+                <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
+                    :aria-label="'Redimensionner ' + card.title + ' avec les flèches'"
+                    @pointerdown="startResize($event, placement)" @pointermove="resize"
+                    @pointerup="finishResize" @pointercancel="cancelResize" @lostpointercapture="finishResize"
+                    @keydown="resizeWithKeyboard($event, placement)">↘</button>
+            </template>
             <template v-if="!placement.collapsed">
                 <FicheText v-if="card.text" :text="card.text" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
