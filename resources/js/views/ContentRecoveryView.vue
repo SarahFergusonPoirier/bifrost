@@ -137,7 +137,7 @@
                 <h2 id="folder-heading" class="catalogue-collections-heading"><WorkspaceIcon name="folder" /> Collections <button type="button" class="catalogue-collection-add" :aria-expanded="catalogueFolder" aria-label="Nouvelle collection" @click="catalogueFolder = !catalogueFolder"><WorkspaceIcon name="plus" /></button></h2>
                 <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">
                     <button v-for="item in sidebarItems" :key="item.key" class="catalogue-tree__item"
-                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
+                        type="button" :style="{ paddingInlineStart: (0.45 + item.depth * 0.7) + 'rem' }"
                         :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
                         @dragstart="item.content && beginDrag($event, item)"
                         @dragover="item.folder && $event.preventDefault()"
