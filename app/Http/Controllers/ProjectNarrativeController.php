@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use App\Models\ContentRelation;
 use App\Models\ContentType;
 use App\Models\Project;
 use App\NarrativeScene;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -82,6 +84,79 @@ class ProjectNarrativeController extends Controller
 
             return response()->json(null, 204);
         }, attempts: 3);
+    }
+
+    public function arcs(Project $project, string $work): JsonResponse
+    {
+        $record = $this->work($project, $work);
+        $sceneIds = DB::table('project_narrative_scenes')->where('work_id', $record->id)->pluck('scene_id');
+        $arcs = $this->workArcs($project, $record)
+            ->with(['outgoingRelations' => fn ($query) => $query->where('type_key', 'arc_scene')
+                ->whereIn('target_content_id', $sceneIds)->with('target:id,public_id,work_status_key')])
+            ->orderBy('title')->get();
+
+        return response()->json($arcs->map(function (Content $arc): array {
+            $scenes = $arc->outgoingRelations->pluck('target')->filter();
+
+            return [
+                'public_id' => $arc->public_id,
+                'title' => $arc->title,
+                'summary' => $arc->summary,
+                'scenes' => $scenes->pluck('public_id')->values(),
+                'completed' => $scenes->where('work_status_key', 'completed')->count(),
+            ];
+        }));
+    }
+
+    public function storeArc(Request $request, Project $project, string $work): JsonResponse
+    {
+        $input = $request->validate(['title' => ['required', 'string', 'max:255']]);
+
+        return DB::transaction(function () use ($project, $work, $input): JsonResponse {
+            $this->lockProject($project);
+            $record = $this->work($project, $work);
+            $arc = $this->createContent($project, 'arc-narratif', 'Arc narratif', $input['title']);
+            $record->outgoingRelations()->create(['target_content_id' => $arc->id, 'type_key' => 'narrative_arc']);
+
+            return response()->json(['public_id' => $arc->public_id], 201);
+        }, attempts: 3);
+    }
+
+    public function updateArc(Request $request, Project $project, string $work, string $arc): JsonResponse
+    {
+        $input = $request->validate([
+            'scenes' => ['present', 'array', 'list'],
+            'scenes.*' => ['required', 'uuid', 'distinct:ignore_case'],
+        ]);
+
+        return DB::transaction(function () use ($project, $work, $arc, $input): JsonResponse {
+            $this->lockProject($project);
+            $record = $this->work($project, $work);
+            $entry = $this->workArcs($project, $record)->where('public_id', $arc)->firstOrFail();
+            $ids = $project->contents()->join('project_narrative_scenes', 'scene_id', '=', 'contents.id')
+                ->where('work_id', $record->id)->whereIn('public_id', $input['scenes'])->pluck('contents.id');
+
+            if ($ids->count() !== count($input['scenes'])) {
+                throw ValidationException::withMessages(['scenes' => 'Choisis uniquement des scènes actives de cette œuvre.']);
+            }
+
+            $activeIds = $project->contents()->join('project_narrative_scenes', 'scene_id', '=', 'contents.id')
+                ->where('work_id', $record->id)->pluck('contents.id');
+            $entry->outgoingRelations()->where('type_key', 'arc_scene')
+                ->whereIn('target_content_id', $activeIds)->whereNotIn('target_content_id', $ids)->delete();
+
+            foreach ($ids as $id) {
+                ContentRelation::firstOrCreate(['source_content_id' => $entry->id, 'target_content_id' => $id, 'type_key' => 'arc_scene']);
+            }
+
+            return response()->json(null, 204);
+        }, attempts: 3);
+    }
+
+    private function workArcs(Project $project, Content $work): HasMany
+    {
+        return $project->contents()->whereHas('contentType', fn ($query) => $query->where('key', 'arc-narratif'))
+            ->whereHas('incomingRelations', fn ($query) => $query->where('source_content_id', $work->id)->where('type_key', 'narrative_arc'));
     }
 
     public function export(Request $request, Project $project, string $work): Response

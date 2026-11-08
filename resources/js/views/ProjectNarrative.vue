@@ -9,7 +9,7 @@
 
         <template v-if="work">
             <label>Œuvre
-                <select v-model="workId" :disabled="busy">
+                <select v-model="workId" :disabled="busy" @change="showArcs">
                     <option v-for="item in works" :key="item.public_id" :value="item.public_id">{{ item.title }}</option>
                 </select>
             </label>
@@ -25,14 +25,36 @@
                 <button type="submit" :disabled="busy">Ajouter une scène</button>
             </form>
             <label>Vue
-                <select v-model="view">
+                <select v-model="view" :disabled="busy" @change="showArcs">
                     <option value="structure">Ordre du récit</option>
                     <option value="status">Par statut</option>
                     <option value="cards">Cartes de scènes</option>
+                    <option value="arcs">Arcs narratifs</option>
                     <option value="dates">Dates dans l’univers</option>
                 </select>
             </label>
-            <template v-if="view === 'dates'">
+            <section v-if="view === 'arcs'">
+                <h2>Arcs narratifs</h2>
+                <form @submit.prevent="createArc">
+                    <label>Titre de l’arc <input v-model="arcTitle" required maxlength="255" :disabled="busy" /></label>
+                    <button type="submit" :disabled="busy">Créer un arc</button>
+                </form>
+                <p v-if="!arcs.length">Aucun arc.</p>
+                <article v-for="arc in arcs" :key="arc.public_id">
+                    <h3>{{ arc.title }}</h3>
+                    <p v-if="arc.summary">{{ arc.summary }}</p>
+                    <button type="button" @click="$emit('open-content', arc.public_id)">Ouvrir l’arc</button>
+                    <p>{{ arc.completed }} / {{ arc.scenes.length }} scènes terminées</p>
+                    <progress v-if="arc.scenes.length" :value="arc.completed" :max="arc.scenes.length" :aria-label="'Progression de ' + arc.title" />
+                    <label>Scènes associées
+                        <select multiple :disabled="busy" @change="saveArc(arc, $event)">
+                            <option v-for="scene in work.scenes" :key="scene.public_id" :value="scene.public_id"
+                                :selected="arc.scenes.includes(scene.public_id)">{{ scene.title }}</option>
+                        </select>
+                    </label>
+                </article>
+            </section>
+            <template v-else-if="view === 'dates'">
                 <p v-if="!datedGroups.length">Aucune scène.</p>
                 <section v-for="[calendar, scenes] in datedGroups" :key="calendar">
                     <h2>{{ calendar }}</h2>

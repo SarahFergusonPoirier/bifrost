@@ -11,6 +11,26 @@ class ProjectNarrativeTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_arcs_share_scene_identity_and_progress_within_their_work(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $url = "/api/projects/{$project->id}/narration";
+        $work = $this->postJson($url, ['title' => 'Roman'])->assertCreated()->json('public_id');
+        $other = $this->postJson($url, ['title' => 'Autre'])->assertCreated()->json('public_id');
+        $scene = $this->postJson("$url/$work/scenes", ['title' => 'Scène'])->assertCreated()->json('public_id');
+        $foreign = $this->postJson("$url/$other/scenes", ['title' => 'Autre scène'])->assertCreated()->json('public_id');
+        $first = $this->postJson("$url/$work/arcs", ['title' => 'A'])->assertCreated()->json('public_id');
+        $second = $this->postJson("$url/$work/arcs", ['title' => 'B'])->assertCreated()->json('public_id');
+
+        $this->putJson("$url/$work/arcs/$first", ['scenes' => [$foreign]])->assertUnprocessable();
+        $this->putJson("$url/$work/arcs/$first", ['scenes' => [$scene]])->assertNoContent();
+        $this->putJson("$url/$work/arcs/$second", ['scenes' => [$scene]])->assertNoContent();
+        $this->patchJson("/api/contents/$scene", ['title' => 'Scène', 'summary' => null, 'work_status_key' => 'completed'])->assertOk();
+        $this->getJson("$url/$work/arcs")->assertOk()->assertJsonCount(2)
+            ->assertJsonPath('0.scenes.0', $scene)->assertJsonPath('1.scenes.0', $scene)
+            ->assertJsonPath('0.completed', 1)->assertJsonPath('1.completed', 1);
+    }
+
     public function test_narrative_date_is_read_from_the_scene_field(): void
     {
         $project = Project::create(['name' => 'Projet']);

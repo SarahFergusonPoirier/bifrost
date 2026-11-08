@@ -87,3 +87,7 @@ Route::post('/contents/{content}/template-versions/{version}/apply', [ContentTem
 Route::post('/content-templates', [ContentTemplateAuthoringController::class, 'store']);
 Route::post('/content-templates/{template}/versions', [ContentTemplateAuthoringController::class, 'publishVersion'])->whereNumber('template');
 Route::put('/projects/{project}/connections/{relation}', [ProjectConnectionController::class, 'update'])->whereNumber('relation');
+
+Route::get('/projects/{project}/narration/{work}/arcs', [ProjectNarrativeController::class, 'arcs']);
+Route::post('/projects/{project}/narration/{work}/arcs', [ProjectNarrativeController::class, 'storeArc']);
+Route::put('/projects/{project}/narration/{work}/arcs/{arc}', [ProjectNarrativeController::class, 'updateArc']);

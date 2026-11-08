@@ -4,7 +4,7 @@ export default {
     props: { projectId: { type: String, required: true } },
     emits: ['open-content'],
     data: () => ({
-        works: [], includeNotes: false, workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
+        works: [], arcs: [], arcTitle: '', includeNotes: false, workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
         statuses: { draft: 'Brouillon', in_progress: 'En cours', completed: 'Terminée', abandoned: 'Abandonnée' },
     }),
     computed: {
@@ -59,6 +59,32 @@ export default {
         async load() {
             this.works = (await contentRequest(this.endpoint())).data;
             if (!this.work) this.workId = this.works[0]?.public_id ?? '';
+            if (this.view === 'arcs') await this.fetchArcs();
+        },
+        async fetchArcs() {
+            this.arcs = this.workId
+                ? (await contentRequest(this.endpoint() + '/' + this.workId + '/arcs')).data
+                : [];
+        },
+        showArcs() {
+            if (this.view === 'arcs') return this.run(() => this.fetchArcs());
+        },
+        createArc() {
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/' + this.workId + '/arcs', 'POST', { title: this.arcTitle });
+                this.arcTitle = '';
+                await this.fetchArcs();
+            });
+        },
+        saveArc(arc, event) {
+            const scenes = [...event.target.selectedOptions].map(option => option.value);
+            return this.run(async () => {
+                try {
+                    await contentRequest(this.endpoint() + '/' + this.workId + '/arcs/' + arc.public_id, 'PUT', { scenes });
+                } finally {
+                    await this.fetchArcs();
+                }
+            });
         },
         createWork() {
             return this.run(async () => {
