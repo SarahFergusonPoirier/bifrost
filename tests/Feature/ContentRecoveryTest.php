@@ -238,6 +238,22 @@ class ContentRecoveryTest extends TestCase
         Storage::disk('local')->assertExists($resource->location);
     }
 
+    public function test_field_states_are_distinct_from_empty_values_and_can_be_restored(): void
+    {
+        $content = $this->content();
+        $field = FieldDefinition::create(['key' => 'field-state', 'label' => 'État', 'value_type' => 'number']);
+        $url = '/api/contents/'.$content->public_id;
+        $entry = ['field_definition_id' => $field->id, 'value_state' => 'unknown'];
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => [$entry + ['value_number' => 0]]])->assertUnprocessable();
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => [$entry]])->assertOk()->assertJsonPath('field_values.0.value_state', 'unknown');
+        $revision = $this->postJson("$url/snapshots", ['label' => 'État initial'])->assertCreated()->json('id');
+        $entry['value_state'] = 'not_applicable';
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => [$entry]])->assertOk()->assertJsonPath('field_values.0.value_state', 'not_applicable');
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => []])->assertOk()->assertJsonCount(0, 'field_values');
+        $this->postJson("$url/revisions/$revision/restore")->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('field_values.0.value_state', 'unknown');
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

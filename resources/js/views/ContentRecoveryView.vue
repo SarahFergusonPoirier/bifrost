@@ -248,7 +248,7 @@
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
                         @open="openPanelContent" @select="selectFicheTab"
-                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-value="fieldValue" :field-references="fieldReferences"
+                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-value="fieldValue" :field-state="fieldState" :field-references="fieldReferences"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
                 </template>
             </FicheTabs>
@@ -334,6 +334,14 @@
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ section }}</summary>
                         <div v-for="field in fields" :key="field.id">
+                            <label>{{ field.label_override || field.field_definition.label }} · État
+                                <select :value="fieldState(field) ?? ''" @change="setFieldState(field, $event.target.value)">
+                                    <option value="">Valeur ou champ vide</option>
+                                    <option value="unknown">Inconnu</option>
+                                    <option value="not_applicable">Non applicable</option>
+                                </select>
+                            </label>
+                            <template v-if="!fieldState(field)">
                             <label v-if="field.format === 'multiple_choice'">
                                 {{ field.label_override || field.field_definition.label }}
                                 <select multiple @change="setMultipleChoice(field, $event)">
@@ -369,6 +377,7 @@
                                     :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
                             </label>
                             <small v-if="field.help_text">{{ field.help_text }}</small>
+                            </template>
                         </div>
                     </details>
                     <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">

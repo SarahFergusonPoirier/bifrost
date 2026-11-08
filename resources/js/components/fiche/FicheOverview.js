@@ -24,6 +24,7 @@ export default {
         hiddenFields: { type: Array, required: true },
         displayValue: { type: Function, required: true },
         fieldValue: Function,
+        fieldState: Function,
         fieldReferences: { type: Function, default: () => [] },
         placements: Array,
         persist: Function,
@@ -44,7 +45,7 @@ export default {
                     definitionId: field.field_definition_id,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
-                    empty: this.fieldValue?.(field) === '',
+                    empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
                         ? {

@@ -141,13 +141,14 @@ class ContentRecoveryController extends Controller
             'blocks.*.title' => ['nullable', 'string', 'max:255'],
             'blocks.*.body' => ['nullable', 'string'],
             'field_values' => ['sometimes', 'array', 'list'],
-            'field_values.*' => ['array:field_definition_id,value_text,value_number,value_boolean,value_date,value_json,reference_content_id'],
+            'field_values.*' => ['array:field_definition_id,value_text,value_number,value_boolean,value_date,value_json,reference_content_id,value_state'],
             'field_values.*.field_definition_id' => ['required', 'integer', 'distinct', 'exists:field_definitions,id,deleted_at,NULL'],
             'field_values.*.value_text' => ['nullable', 'string'],
             'field_values.*.value_number' => ['nullable', 'numeric', 'between:-99999999999999,99999999999999'],
             'field_values.*.value_boolean' => ['nullable', 'boolean'],
             'field_values.*.value_date' => ['nullable', 'date_format:Y-m-d'],
             'field_values.*.value_json' => ['nullable', 'array'],
+            'field_values.*.value_state' => ['nullable', 'in:unknown,not_applicable'],
             'field_values.*.reference_content_id' => ['nullable', 'integer'],
         ]);
 
@@ -294,7 +295,7 @@ class ContentRecoveryController extends Controller
     private function saveFields(Content $content, array $fields): void
     {
         $columns = array_fill_keys([
-            'value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id',
+            'value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state',
         ], null);
         foreach ($fields as $field) {
             $value = $content->fieldValues()->firstOrNew(['field_definition_id' => $field['field_definition_id']]);
@@ -340,7 +341,7 @@ class ContentRecoveryController extends Controller
                 // Existing historical references may point to a soft-deleted target.
                 DB::table('content_field_values')->updateOrInsert(
                     ['content_id' => $content->id, 'field_definition_id' => $value['field_definition_id']],
-                    $value + ['updated_at' => now()],
+                    $value + ['value_state' => null, 'updated_at' => now()],
                 );
             }
         }
@@ -358,8 +359,15 @@ class ContentRecoveryController extends Controller
             ])->map(fn ($block): array => $block->getAttributes())->all(),
             'field_values' => $content->fieldValues()->orderBy('field_definition_id')->get([
                 'field_definition_id', 'value_text', 'value_number', 'value_boolean', 'value_date',
-                'value_json', 'reference_content_id', 'created_at',
-            ])->map(fn ($value): array => $value->getAttributes())->all(),
+                'value_json', 'reference_content_id', 'value_state', 'created_at',
+            ])->map(function ($value): array {
+                $attributes = $value->getAttributes();
+                if ($attributes['value_state'] === null) {
+                    unset($attributes['value_state']);
+                }
+
+                return $attributes;
+            })->all(),
         ];
     }
 

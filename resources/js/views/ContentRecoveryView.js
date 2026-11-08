@@ -265,7 +265,17 @@ export default {
             });
         }
 
+        function fieldState(field) {
+            return draft.value?.field_values?.find(item => item.field_definition_id === field.field_definition_id)?.value_state;
+        }
+
+        function setFieldState(field, state) {
+            setField(field, state ? { value_state: state } : '');
+        }
+
         function displayValue(field) {
+            const state = fieldState(field);
+            if (state) return state === 'unknown' ? 'Inconnu' : 'Non applicable';
             const value = fieldValue(field);
             if (value === '') return '—';
             if (field.column === 'reference_content_id' || field.format === 'references') {
@@ -307,7 +317,8 @@ export default {
 
             const entry = {
                 field_definition_id: field.field_definition_id,
-                [field.column]: field.column === 'value_boolean' ? value === 'true' : value,
+                ...(value?.value_state ? { value_state: value.value_state }
+                    : { [field.column]: field.column === 'value_boolean' ? value === 'true' : value }),
             };
             if (index >= 0) values.splice(index, 1, entry);
             else values.push(entry);
@@ -325,8 +336,9 @@ export default {
                 })),
             };
             if (templateSections.value.size) {
-                editable.field_values = (data.field_values ?? []).map(({ id, content_id, created_at, updated_at, ...value }) => ({
+                editable.field_values = (data.field_values ?? []).map(({ id, content_id, created_at, updated_at, value_state, ...value }) => ({
                     ...value,
+                    ...(value_state ? { value_state } : {}),
                     ...(value.value_date ? { value_date: value.value_date.slice(0, 10) } : {}),
                 }));
             }
@@ -470,7 +482,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences, fieldState, setFieldState,
             sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

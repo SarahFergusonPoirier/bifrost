@@ -11,7 +11,7 @@ class ContentFieldValue extends Model
 {
     protected $fillable = [
         'content_id', 'field_definition_id', 'value_text', 'value_number',
-        'value_boolean', 'value_date', 'value_json', 'reference_content_id',
+        'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state',
     ];
 
     protected function casts(): array
@@ -61,6 +61,14 @@ class ContentFieldValue extends Model
                 'value_json' => $value->value_json !== null,
                 'reference_content_id' => $value->reference_content_id !== null,
             ]);
+
+            if ($value->value_state !== null) {
+                if ($present !== [] || ! in_array($value->value_state, ['unknown', 'not_applicable'], true)) {
+                    throw ValidationException::withMessages(['value_state' => 'Un état explicite ne peut pas accompagner une valeur.']);
+                }
+
+                return;
+            }
 
             if (count($present) !== 1 || ! isset($present[$expected])) {
                 throw ValidationException::withMessages(['value' => 'Une seule valeur compatible avec le type du champ doit être renseignée.']);
