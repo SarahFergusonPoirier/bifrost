@@ -173,7 +173,7 @@ export default {
 
         const fieldColumns = {
             text: 'value_text', choice: 'value_text', number: 'value_number',
-            boolean: 'value_boolean', date: 'value_date', json: 'value_json',
+            boolean: 'value_boolean', date: 'value_date', json: 'value_json', reference: 'reference_content_id',
         };
         const templateSections = computed(() => {
             const sections = new Map();
@@ -193,6 +193,9 @@ export default {
         function displayValue(field) {
             const value = fieldValue(field);
             if (value === '') return '—';
+            if (field.column === 'reference_content_id') {
+                return treeContents.value.find(item => item.id === Number(value))?.title ?? 'Fiche indisponible';
+            }
             if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
             if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
             if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');
@@ -200,6 +203,12 @@ export default {
             if (field.format === 'references') return value.map(id =>
                 treeContents.value.find(item => item.public_id === id)?.title ?? 'Fiche indisponible').join(', ');
             return value;
+        }
+
+        function allowedTargets(field) {
+            const allowed = field.field_definition?.options_data?.content_type_ids ?? [];
+            return [...new Map(treeContents.value.map(item => [item.id, item])).values()]
+                .filter(item => !allowed.length || allowed.some(id => Number(id) === item.content_type_id));
         }
 
         function setField(field, value) {
@@ -369,7 +378,7 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
-            sidebarItems, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
+            sidebarItems, templateSections, fieldValue, setField, allowedTargets, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;

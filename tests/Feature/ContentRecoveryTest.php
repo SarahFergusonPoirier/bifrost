@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Content;
 use App\Models\ContentType;
 use App\Models\FieldDefinition;
+use App\Models\Project;
 use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -192,6 +193,27 @@ class ContentRecoveryTest extends TestCase
         $this->getJson("/api/contents?tag={$tag->id}")->assertOk()->assertJsonCount(0, 'data');
         $this->postJson("$url/revisions/$revision/restore")->assertOk();
         $this->getJson("/api/contents?tag={$tag->id}")->assertOk()->assertJsonPath('data.0.public_id', $content->public_id);
+    }
+
+    public function test_a_single_reference_can_be_set_but_cannot_target_another_project(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $type = ContentType::create(['key' => 'personnage', 'name' => 'Personnage']);
+        $attributes = ['content_type_id' => $type->id, 'scope_type' => 'project'];
+        $source = $project->contents()->create($attributes + ['title' => 'Source']);
+        $target = $project->contents()->create($attributes + ['title' => 'Cible']);
+        $outside = $other->contents()->create($attributes + ['title' => 'Externe']);
+        $field = FieldDefinition::create(['key' => 'owner', 'label' => 'Propriétaire', 'value_type' => 'reference']);
+        $url = '/api/contents/'.$source->public_id;
+        $input = fn (int $id): array => [
+            'title' => 'Source', 'summary' => null,
+            'field_values' => [['field_definition_id' => $field->id, 'reference_content_id' => $id]],
+        ];
+
+        $this->patchJson($url, $input($target->id))->assertOk()->assertJsonPath('field_values.0.reference_content_id', $target->id);
+        $this->patchJson($url, $input($outside->id))->assertUnprocessable();
+        $this->assertTrue($source->fieldValues()->sole()->referenceContent->is($target));
     }
 
     private function content(): Content

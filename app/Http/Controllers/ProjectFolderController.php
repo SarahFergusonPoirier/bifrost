@@ -13,7 +13,7 @@ class ProjectFolderController extends Controller
 {
     public function tree(Project $project): JsonResponse
     {
-        $contents = $project->contents()->select('contents.public_id', 'contents.title', 'contents.content_type_id', 'contents.updated_at')
+        $contents = $project->contents()->select('contents.id', 'contents.public_id', 'contents.title', 'contents.content_type_id', 'contents.updated_at')
             ->leftJoin('content_collection_memberships', 'content_collection_memberships.content_id', '=', 'contents.id')
             ->addSelect('content_collection_memberships.folder_id')->orderBy('title')->orderBy('contents.id')->orderBy('folder_id')->get();
 

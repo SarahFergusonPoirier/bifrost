@@ -246,7 +246,13 @@
                             </fieldset>
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}
-                                <select v-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">
+                                <select v-if="field.column === 'reference_content_id'" :value="fieldValue(field)" @change="setField(field, $event.target.value)">
+                                    <option value="">Aucune fiche</option>
+                                    <option v-if="fieldValue(field) && !allowedTargets(field).some(item => item.id === Number(fieldValue(field)))"
+                                        :value="fieldValue(field)">Fiche indisponible</option>
+                                    <option v-for="target in allowedTargets(field)" :key="target.id" :value="target.id">{{ target.title }}</option>
+                                </select>
+                                <select v-else-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">
                                     <option value="">Vide</option>
                                     <option value="true">Oui</option>
                                     <option value="false">Non</option>
