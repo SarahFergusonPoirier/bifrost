@@ -38,6 +38,13 @@
                 <strong>{{ bySource.get(placement.source)?.title ?? 'Bloc indisponible' }}</strong>
                 <label>Largeur <input v-model.number="placement.width" required type="number" min="1" max="12" /></label>
                 <label>Hauteur <input v-model.number="placement.height" required type="number" min="1" max="12" /></label>
+                <label v-if="placement.source === 'timeline'">Tri de la chronologie
+                    <select :value="placement.sort ?? 'chronological'" @change="placement.sort = $event.target.value">
+                        <option value="chronological">Ordre chronologique</option>
+                        <option value="recent">Dates récentes</option>
+                        <option value="importance">Importance</option>
+                    </select>
+                </label>
                 <label><input v-model="placement.hidden" type="checkbox" /> Masqué</label>
                 <label><input v-model="placement.collapsed" type="checkbox" /> Réduit</label>
                 <button type="button" :disabled="index === 0" @click="move(index, index - 1)">Monter</button>
@@ -64,7 +71,7 @@
             </template>
             <template v-if="!placement.collapsed">
                 <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source"
-                    :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
+                    :sort="placement.sort" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
                 <FicheText v-else-if="card.text" :text="card.text" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">

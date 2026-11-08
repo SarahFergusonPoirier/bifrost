@@ -1,7 +1,10 @@
 import { contentRequest } from '../../services/contentRecovery';
 
+const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
+const dateOrder = new Intl.Collator('fr', { numeric: true });
+
 export default {
-    props: { path: { type: String, required: true }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean },
+    props: { path: { type: String, required: true }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String },
     emits: ['open', 'show-all'],
     data: () => ({ data: null, error: '', expanded: false, previewSize: 4 }),
     computed: {
@@ -9,7 +12,18 @@ export default {
             return this.full || this.expanded ? undefined : this.previewSize;
         },
         events() {
-            return this.data.timeline.toSorted((a, b) => (a.date.start || '').localeCompare(b.date.start || '', 'fr', { numeric: true }));
+            return this.data.timeline.toSorted((a, b) => {
+                if (this.sort === 'importance') {
+                    const difference = (importance[a.importance] ?? 3) - (importance[b.importance] ?? 3);
+                    if (difference) return difference;
+                }
+
+                const start = a.date.start || a.date.end;
+                const end = b.date.start || b.date.end;
+                if (!start || !end) return Number(Boolean(end)) - Number(Boolean(start));
+                const order = dateOrder.compare(start, end);
+                return this.sort === 'recent' ? -order : order;
+            });
         },
     },
     mounted() {

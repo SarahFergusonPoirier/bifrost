@@ -49,6 +49,7 @@ class FicheLinkedDataController extends Controller
             ->orderBy('id')->get()
             ->map(fn (object $event): array => [
                 'key' => 'event-'.$event->id,
+                'importance' => $event->importance,
                 'title' => $event->title,
                 'date' => ['start' => $event->start, 'end' => $event->end, 'precision' => $event->precision, 'calendar' => $event->calendar],
             ]);

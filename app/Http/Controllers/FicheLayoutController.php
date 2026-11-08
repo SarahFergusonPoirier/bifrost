@@ -32,13 +32,14 @@ class FicheLayoutController extends Controller
             'tabs.*.icon' => ['required', 'in:overview,catalogue,connections,timeline,folder,narration,ideas'],
             'tabs.*.hidden' => ['required', 'boolean'],
             'tabs.*.placements' => ['sometimes', 'array', 'list', 'max:80'],
-            'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed'],
+            'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed,sort'],
             'tabs.*.placements.*.id' => ['required', 'uuid', 'distinct:strict'],
             'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|section:.+|text:[a-f0-9-]+)$/u'],
             'tabs.*.placements.*.width' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.height' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.hidden' => ['required', 'boolean'],
             'tabs.*.placements.*.collapsed' => ['required', 'boolean'],
+            'tabs.*.placements.*.sort' => ['sometimes', 'in:chronological,recent,importance'],
         ]);
 
         if (collect($input['tabs'])->every(fn (array $tab): bool => (bool) $tab['hidden'])) {
