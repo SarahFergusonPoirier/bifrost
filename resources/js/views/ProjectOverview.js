@@ -1,32 +1,23 @@
+import ProjectToolbar from '../components/ProjectToolbar.vue';
 import WorkspaceIcon from '../components/WorkspaceIcon.vue';
 
 export default {
-    components: { WorkspaceIcon },
+    components: { WorkspaceIcon, ProjectToolbar },
     props: {
         projectId: String, project: Object, categories: Array, recent: Array, folders: Array, busy: Boolean, error: String,
     },
     emits: ['search', 'catalogue', 'category', 'panel', 'content', 'folder'],
-    data: () => ({ query: '', images: {}, imageError: '' }),
+    data: () => ({ images: {}, imageError: '' }),
     mounted() {
         try {
             this.images = JSON.parse(localStorage.getItem(this.imageKey()) ?? '{}') ?? {};
         } catch {
             this.images = {};
         }
-        window.addEventListener('keydown', this.focusSearch);
-    },
-    beforeUnmount() {
-        window.removeEventListener('keydown', this.focusSearch);
     },
     methods: {
         imageKey() {
             return 'bifrost:overview-images:' + this.projectId;
-        },
-        focusSearch(event) {
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-                event.preventDefault();
-                this.$refs.search.focus();
-            }
         },
         saveImage(slot, value) {
             const next = { ...this.images, [slot]: value };

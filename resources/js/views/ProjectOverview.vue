@@ -1,21 +1,6 @@
 <template>
     <section class="project-overview">
-        <header class="overview-toolbar">
-            <nav aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › <strong>{{ project?.name ?? 'Projet' }}</strong></nav>
-            <form class="overview-search" role="search" @submit.prevent="$emit('search', query)">
-                <WorkspaceIcon name="search" />
-                <input ref="search" v-model="query" type="search" aria-label="Rechercher dans le projet" placeholder="Rechercher dans le projet…" maxlength="255" />
-                <button type="submit" :disabled="busy">Rechercher</button>
-            </form>
-            <details class="overview-menu">
-                <summary aria-label="Notifications"><i class="workspace-icon fi-rr-bell" aria-hidden="true"></i></summary>
-                <p>Aucune notification.</p>
-            </details>
-            <details class="overview-menu">
-                <summary class="overview-avatar" aria-label="Menu du profil"><i class="workspace-icon fi-rr-user" aria-hidden="true"></i></summary>
-                <p>Profil</p>
-            </details>
-        </header>
+        <ProjectToolbar :project="project" :busy="busy" @search="$emit('search', $event)" />
 
         <header class="overview-hero">
             <img v-if="images.banner" class="overview-banner" :src="images.banner" alt="" />

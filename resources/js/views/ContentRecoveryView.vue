@@ -1,5 +1,5 @@
 <template>
-    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId }" :workspace="Boolean(projectId)">
+    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId, 'project-workspace--catalogue': projectId && panel === 'catalogue' && !trash && !selected }" :workspace="Boolean(projectId)">
         <template #sidebar>
             <header class="workspace-brand">
                 <span class="workspace-brand__mark" aria-hidden="true">
@@ -48,12 +48,21 @@
             @search="overviewSearch" @catalogue="overviewCatalogue" @category="openCategory"
             @panel="openPanel" @content="openPanelContent" @folder="folder => openTreeItem({ folder })" />
     <section v-else class="content-templates-view">
-        <header class="page-header">
+        <ProjectToolbar v-if="projectId && !trash && !selected" :project="currentProject" :busy="busy" @search="overviewSearch" />
+        <header v-if="projectId && !trash && !selected" class="catalogue-heading catalogue-page-heading">
+            <div class="catalogue-heading__title">
+                <WorkspaceIcon name="catalogue" />
+                <div>
+                    <h1>Catalogue</h1>
+                    <p>Toutes les fiches de ton univers, organisées par catégories.</p>
+                </div>
+            </div>
+            <button type="button" :aria-expanded="catalogueCreate" @click="catalogueCreate = !catalogueCreate">＋ Nouvelle fiche</button>
+        </header>
+        <header v-else class="page-header">
             <nav v-if="projectId" aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › {{ currentProject?.name }}</nav>
             <div class="catalogue-heading">
                 <h1>{{ trash ? (projectId ? 'Corbeille des fiches' : 'Corbeille des projets') : 'Catalogue' }}</h1>
-                <button v-if="projectId && !trash && !selected" type="button" :aria-expanded="catalogueCreate"
-                    @click="catalogueCreate = !catalogueCreate">＋ Nouvelle fiche</button>
             </div>
             <p v-if="currentProject">{{ currentProject.name }}</p>
             <p>{{ projectId ? 'Organise et ouvre les fiches de ce projet.' : 'Restaure un projet et ses contenus.' }}</p>
@@ -113,7 +122,7 @@
                     <label><input v-model="searchWholeProject" type="checkbox" /> Tout le projet</label>
                     <button type="submit">Appliquer</button>
                 </details>
-                <label>Trier par <select v-model="catalogueSort" @change="browse(1)">
+                <label class="catalogue-sort">Trier par <select v-model="catalogueSort" @change="browse(1)">
                     <option value="recent">Dernière modification</option><option value="title">Titre</option>
                 </select></label>
                 <button type="button" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'"><WorkspaceIcon name="grid" /> Grille</button>

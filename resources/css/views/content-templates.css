@@ -554,3 +554,55 @@
 .catalogue-index .workspace-icon {
     align-self: center;
 }
+
+.project-workspace--catalogue .app-content {
+    width: 100%;
+    padding: 0 clamp(0.75rem, 2vw, 2rem) 3rem;
+}
+
+.project-workspace--catalogue .overview-toolbar {
+    padding-block: 0.65rem;
+}
+
+.catalogue-page-heading {
+    padding-block: 1.25rem;
+}
+
+.catalogue-heading__title,
+.catalogue-toolbar .catalogue-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.catalogue-heading__title > .workspace-icon {
+    font-size: 2rem;
+}
+
+.catalogue-heading__title h1,
+.catalogue-heading__title p {
+    margin: 0;
+}
+
+.catalogue-heading__title p {
+    color: var(--color-text-muted);
+}
+
+.project-workspace--catalogue .catalogue-legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.catalogue-toolbar details > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+}
