@@ -1,6 +1,12 @@
 <template>
     <ul class="fiche-tags">
-        <li v-for="tag in visible" :key="tag.id ?? tag.name">{{ tag.name }}</li>
+        <li v-for="tag in visible" :key="tag.id ?? tag.name">
+            <details v-if="tag.description">
+                <summary>{{ tag.name }}</summary>
+                <p>{{ tag.description }}</p>
+            </details>
+            <template v-else>{{ tag.name }}</template>
+        </li>
     </ul>
     <button v-if="limited" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
         {{ expanded ? 'Voir moins' : 'Voir tout' }}

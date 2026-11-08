@@ -77,7 +77,7 @@ export default {
             }));
             return [
                 { source: 'summary', title: 'Résumé', text: this.summary, icon: 'catalogue' },
-                { source: 'tags', title: 'Étiquettes', tags: this.tags, icon: 'folder' },
+                { source: 'tags', title: 'Étiquettes', tags: this.tags, keywords: this.localKeywords, icon: 'folder' },
                 ...(this.linksPath ? [
                     { source: 'relations', title: 'Relations', icon: 'connections', linked: true },
                     { source: 'timeline', title: 'Chronologie', icon: 'timeline', linked: true },
@@ -89,6 +89,19 @@ export default {
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
             ];
+        },
+        localKeywords() {
+            return [...this.templateSections.values()].flatMap(fields => fields
+                .filter(field => field.format === 'keywords' && !this.hiddenFields.includes(field.field_definition_id))
+                .flatMap(field => {
+                    const entries = this.fieldValue?.(field);
+                    if (!Array.isArray(entries)) return [];
+                    return entries.map((entry, index) => ({
+                        id: field.field_definition_id + ':' + index,
+                        name: entry.label,
+                        description: entry.description,
+                    }));
+                }));
         },
         localCapabilities() {
             return [...this.templateSections.values()].flatMap(fields => fields
@@ -120,7 +133,7 @@ export default {
         },
         defaults() {
 
-            return this.cards.filter(card => card.linked || card.entries || card.text || card.tags?.length || card.fields?.length)
+            return this.cards.filter(card => card.linked || card.entries || card.text || card.tags?.length || card.keywords?.length || card.fields?.length)
                 .map(card => placement(card.source, card.source));
         },
         initialPlacements() {

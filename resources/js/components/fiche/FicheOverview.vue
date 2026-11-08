@@ -77,7 +77,7 @@
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
                         @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
                 </label>
-                <label v-if="placement.source === 'tags'">Nombre d’étiquettes (0 pour toutes)
+                <label v-if="placement.source === 'tags'">Nombre de pastilles par liste (0 pour toutes)
                     <input type="number" min="0" max="100" required :value="placement.tag_limit ?? 0"
                         @change="placement.tag_limit = Number($event.target.value)" />
                 </label>
@@ -154,7 +154,17 @@
                     </template>
                 </FicheLinkedData>
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
-                <FicheTags v-else-if="card.tags?.length" :tags="card.tags" :limit="placement.tag_limit" />
+                <template v-else-if="card.source === 'tags'">
+                    <section v-if="card.tags.length">
+                        <h3>Étiquettes du projet</h3>
+                        <FicheTags :tags="card.tags" :limit="placement.tag_limit" />
+                    </section>
+                    <section v-if="card.keywords.length">
+                        <h3>Mots-clés libres</h3>
+                        <FicheTags :tags="card.keywords" :limit="placement.tag_limit" />
+                    </section>
+                    <p v-if="!card.tags.length && !card.keywords.length">Aucune étiquette ni mot-clé.</p>
+                </template>
                 <dl v-else-if="fields?.length || card.fullName" class="fiche-fields" :style="{ '--fiche-field-columns': placement.field_columns ?? 1 }">
                     <div v-if="card.fullName">
                         <dt>Nom complet</dt>
