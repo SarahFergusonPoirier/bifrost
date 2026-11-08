@@ -7,7 +7,11 @@
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTreeItem({})">Racine du projet</button>
                 <button v-for="item in sidebarItems" :key="item.key" class="app-navigation__link"
                     type="button" :style="{ paddingInlineStart: (item.depth + 1) + 'rem' }"
-                    :disabled="busy || saving" @click="openTreeItem(item)">
+                    :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
+                    @dragstart="item.content && beginDrag($event, item)"
+                    @dragover="item.folder && $event.preventDefault()"
+                    @drop.prevent="item.folder && dropInto($event, item)"
+                    @click="openTreeItem(item)">
                     {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
                 </button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
@@ -138,15 +142,24 @@
 
             <button type="button" :disabled="busy || saving || dirty" @click="deleteContent">Mettre à la corbeille</button>
 
-            <form v-if="projectId" @submit.prevent="moveContent">
-                <label>Emplacement de la fiche
-                    <select v-model="placement" :disabled="busy || saving">
-                        <option :value="0">Racine du projet</option>
-                        <option v-for="folder in folderOptions" :key="folder.id" :value="folder.id">{{ folder.label }}</option>
-                    </select>
-                </label>
-                <button type="submit" :disabled="busy || saving || dirty">Déplacer la fiche</button>
-            </form>
+            <section v-if="projectId" aria-label="Collections de la fiche">
+                <h3>Collections de la fiche</h3>
+                <ul>
+                    <li v-for="folder in folderOptions.filter(item => memberships.includes(item.id))" :key="folder.id">
+                        {{ folder.label }}
+                        <button type="button" :disabled="busy || saving || dirty" @click="removeMembership(folder.id)">Retirer</button>
+                    </li>
+                </ul>
+                <form @submit.prevent="addMembership">
+                    <label>Ajouter à une collection
+                        <select v-model="placement" :disabled="busy || saving" required>
+                            <option :value="0" disabled>Choisir une collection</option>
+                            <option v-for="folder in folderOptions.filter(item => !memberships.includes(item.id))" :key="folder.id" :value="folder.id">{{ folder.label }}</option>
+                        </select>
+                    </label>
+                    <button type="submit" :disabled="!placement || busy || saving || dirty">Ajouter</button>
+                </form>
+            </section>
 
             <section aria-labelledby="revision-heading">
                 <h2 id="revision-heading">Historique</h2>

@@ -24,16 +24,24 @@ class ContentRecoveryController extends Controller
                     'folder_id' => ['required', 'integer', 'min:0'],
                     'project_id' => ['required'],
                 ])['folder_id'];
-                $placements = DB::table('content_placements')->select('content_id');
+                $placements = DB::table('content_collection_memberships')->select('content_id');
                 if ((int) $folder === 0) {
                     $query->whereNotIn('contents.id', $placements);
                 } else {
-                    $query->whereIn('contents.id', $placements->where('folder_id', $folder));
+                    $branches = DB::table('project_folders')->where('project_id', $request->integer('project_id'))->get(['id', 'parent_id'])->groupBy('parent_id');
+                    $descendants = [(int) $folder];
+                    for ($index = 0; $index < count($descendants); $index++) {
+                        foreach ($branches->get($descendants[$index], []) as $child) {
+                            $descendants[] = $child->id;
+                        }
+                    }
+
+                    $query->whereIn('contents.id', $placements->whereIn('folder_id', $descendants));
                 }
             })
             ->orderBy('title')->orderBy('id')
             ->addSelect(['public_id', 'title', 'scope_type'])
-            ->addSelect(['folder_id' => DB::table('content_placements')->select('folder_id')->whereColumn('content_id', 'contents.id')])
+            ->addSelect(['folder_id' => DB::table('content_collection_memberships')->selectRaw('MIN(folder_id)')->whereColumn('content_id', 'contents.id')])
             ->paginate(25));
     }
 
@@ -56,7 +64,7 @@ class ContentRecoveryController extends Controller
 
             $content = Content::create(Arr::except($validated, ['folder_id', 'template_version_id']) + ['scope_type' => 'project']);
             if ($folder !== null) {
-                DB::table('content_placements')->insert(['content_id' => $content->id, 'folder_id' => $folder]);
+                DB::table('content_collection_memberships')->insert(['content_id' => $content->id, 'folder_id' => $folder]);
             }
 
             if (isset($validated['template_version_id'])) {

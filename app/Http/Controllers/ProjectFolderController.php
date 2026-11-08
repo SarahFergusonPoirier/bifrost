@@ -14,8 +14,8 @@ class ProjectFolderController extends Controller
     public function tree(Project $project): JsonResponse
     {
         $contents = $project->contents()->select('contents.public_id', 'contents.title')
-            ->leftJoin('content_placements', 'content_placements.content_id', '=', 'contents.id')
-            ->addSelect('content_placements.folder_id')->orderBy('title')->orderBy('contents.id')->get();
+            ->leftJoin('content_collection_memberships', 'content_collection_memberships.content_id', '=', 'contents.id')
+            ->addSelect('content_collection_memberships.folder_id')->orderBy('title')->orderBy('contents.id')->orderBy('folder_id')->get();
 
         return response()->json($contents);
     }
@@ -40,10 +40,9 @@ class ProjectFolderController extends Controller
         return DB::transaction(function () use ($project, $folder): JsonResponse {
             $this->lockProject($project);
             $folders = $this->folders($project);
-            abort_unless((clone $folders)->where('id', $folder)->exists(), 404);
-            abort_if((clone $folders)->where('parent_id', $folder)->exists()
-                || DB::table('content_placements')->where('folder_id', $folder)->exists(),
-                409, 'Ce dossier contient encore des fiches ou des sous-dossiers.');
+            $record = (clone $folders)->where('id', $folder)->first();
+            abort_if($record === null, 404);
+            (clone $folders)->where('parent_id', $folder)->update(['parent_id' => $record->parent_id, 'updated_at' => now()]);
             $folders->where('id', $folder)->delete();
 
             return response()->json(null, 204);
@@ -59,15 +58,45 @@ class ProjectFolderController extends Controller
             $record = $project->contents()->where('public_id', $content)->firstOrFail();
             $folder = $validated['folder_id'];
             if ($folder === null) {
-                DB::table('content_placements')->where('content_id', $record->id)->delete();
+                DB::table('content_collection_memberships')->where('content_id', $record->id)->delete();
             } else {
                 if (! $this->folders($project)->where('id', $folder)->exists()) {
                     throw ValidationException::withMessages(['folder_id' => 'Ce dossier est introuvable dans le projet.']);
                 }
-                DB::table('content_placements')->updateOrInsert(['content_id' => $record->id], ['folder_id' => $folder]);
+                DB::table('content_collection_memberships')->where('content_id', $record->id)->delete();
+                DB::table('content_collection_memberships')->insert(['content_id' => $record->id, 'folder_id' => $folder]);
             }
 
             return response()->json(['folder_id' => $folder]);
+        }, attempts: 3);
+    }
+
+    public function addMembership(Project $project, int $folder, string $content): JsonResponse
+    {
+        return $this->changeMembership($project, $folder, $content, true);
+    }
+
+    public function removeMembership(Project $project, int $folder, string $content): JsonResponse
+    {
+        return $this->changeMembership($project, $folder, $content, false);
+    }
+
+    private function changeMembership(Project $project, int $folder, string $content, bool $attach): JsonResponse
+    {
+        return DB::transaction(function () use ($project, $folder, $content, $attach): JsonResponse {
+            $this->lockProject($project);
+            abort_unless($this->folders($project)->where('id', $folder)->exists(), 404);
+            $record = $project->contents()->where('public_id', $content)->firstOrFail();
+            $membership = ['content_id' => $record->id, 'folder_id' => $folder];
+            $memberships = DB::table('content_collection_memberships');
+
+            if ($attach) {
+                $memberships->updateOrInsert($membership);
+            } else {
+                $memberships->where($membership)->delete();
+            }
+
+            return response()->json(null, 204);
         }, attempts: 3);
     }
 

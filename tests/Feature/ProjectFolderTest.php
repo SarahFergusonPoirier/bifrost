@@ -30,7 +30,15 @@ class ProjectFolderTest extends TestCase
 
         $this->getJson("/api/contents?project_id={$project->id}&folder_id=$child")->assertOk()->assertJsonPath('data.0.public_id', $content);
         $this->getJson("/api/contents?project_id={$project->id}&folder_id=0")->assertOk()->assertJsonCount(0, 'data');
-        $this->deleteJson("$url/$child")->assertConflict();
+        $this->putJson("$url/$parent/contents/$content")->assertNoContent();
+        $this->putJson("$url/$parent/contents/$content")->assertNoContent();
+        $this->getJson("/api/contents?project_id={$project->id}&folder_id=$parent")
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.public_id', $content);
+        $this->getJson("/api/projects/{$project->id}/tree")->assertOk()->assertJsonCount(2);
+        $this->deleteJson("$url/$parent")->assertNoContent();
+        $this->getJson($url)->assertOk()->assertJsonPath('0.parent_id', null);
+        $this->getJson("/api/contents?project_id={$project->id}&folder_id=$child")
+            ->assertOk()->assertJsonPath('data.0.public_id', $content);
 
         $placement = "/api/projects/{$project->id}/contents/$content/placement";
         $this->putJson($placement, ['folder_id' => $foreign])->assertUnprocessable();

@@ -45,3 +45,6 @@ Route::delete('/projects/{project}/folders/{folder}', [ProjectFolderController::
 Route::put('/projects/{project}/contents/{content}/placement', [ProjectFolderController::class, 'place']);
 Route::get('/projects/{project}/tree', [ProjectFolderController::class, 'tree']);
 Route::get('/content-templates/{template}', [ContentTemplateController::class, 'show'])->whereNumber('template');
+
+Route::put('/projects/{project}/folders/{folder}/contents/{content}', [ProjectFolderController::class, 'addMembership'])->whereNumber('folder');
+Route::delete('/projects/{project}/folders/{folder}/contents/{content}', [ProjectFolderController::class, 'removeMembership'])->whereNumber('folder');

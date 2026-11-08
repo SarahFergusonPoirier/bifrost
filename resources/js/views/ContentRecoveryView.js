@@ -20,7 +20,7 @@ export default {
                     visit(folder.id, depth + 1);
                 }
                 for (const content of treeContents.value.filter(item => item.folder_id === parent)) {
-                    items.push({ key: content.public_id, content, depth });
+                    items.push({ key: content.public_id + ':' + parent, content, depth });
                 }
             };
             visit(null, 0);
@@ -31,6 +31,9 @@ export default {
         const folderParent = ref(0);
         const folderEditing = ref(false);
         const placement = ref(0);
+        const memberships = computed(() => treeContents.value
+            .filter(item => item.public_id === selected.value?.public_id && item.folder_id !== null)
+            .map(item => item.folder_id));
         const folderOptions = computed(() => {
             const branches = new Map();
             for (const folder of folders.value) {
@@ -203,7 +206,7 @@ export default {
         }
 
         async function open(id) {
-            placement.value = treeContents.value.find(item => item.public_id === id)?.folder_id ?? 0;
+            placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
             from.value = '';
@@ -321,17 +324,30 @@ export default {
                 await loadList();
             }),
             deleteFolder: () => run(async () => {
-                if (!window.confirm('Supprimer ce dossier vide ?')) return;
+                if (!window.confirm('Supprimer cette collection ? Ses fiches seront conservées et ses sous-collections remonteront d’un niveau.')) return;
                 await contentRequest(folderPath() + '/' + folderId.value, 'DELETE');
                 selectFolder(0);
                 await Promise.all([loadFolders(), loadList()]);
             }),
-            moveContent: () => run(async () => {
-                await contentRequest('/projects/' + props.projectId + path() + '/placement', 'PUT', {
-                    folder_id: placement.value || null,
-                });
-                selectFolder(placement.value);
-                await loadList();
+            memberships,
+            beginDrag: (event, item) => {
+                event.dataTransfer.setData('application/x-bifrost-content', item.content.public_id);
+                event.dataTransfer.effectAllowed = 'copy';
+            },
+            dropInto: (event, item) => run(async () => {
+                const id = event.dataTransfer.getData('application/x-bifrost-content');
+                if (!id) return;
+                await contentRequest(folderPath() + '/' + item.folder.id + '/contents/' + encodeURIComponent(id), 'PUT');
+                await loadList(listing.value?.current_page);
+            }),
+            addMembership: () => run(async () => {
+                await contentRequest(folderPath() + '/' + placement.value + path(), 'PUT');
+                placement.value = 0;
+                await loadList(listing.value?.current_page);
+            }),
+            removeMembership: id => run(async () => {
+                await contentRequest(folderPath() + '/' + id + path(), 'DELETE');
+                await loadList(listing.value?.current_page);
             }),
             browse: page => run(() => loadList(page)),
             openContent: id => run(() => open(id)),
