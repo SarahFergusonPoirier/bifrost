@@ -136,6 +136,28 @@
             <p v-if="selected.template_assignment">
                 Modèle · Version {{ selected.template_assignment.template_version.version_number }}
             </p>
+            <details v-if="selected.template_assignment">
+                <summary>Changer de version du modèle</summary>
+                <button type="button" :disabled="busy || saving || dirty" @click="loadUpgradeVersions">Rechercher les versions publiées</button>
+                <form v-if="upgradeVersions.length" @submit.prevent="previewUpgrade">
+                    <label>Version cible <select v-model="upgradeVersionId" required @change="upgradePreview = null">
+                        <option value="" disabled>Choisir une version</option>
+                        <option v-for="version in upgradeVersions" :key="version.id" :value="version.id">Version {{ version.version_number }}</option>
+                    </select></label>
+                    <button type="submit" :disabled="busy || saving || dirty">Prévisualiser</button>
+                </form>
+                <template v-if="upgradePreview">
+                    <p>Les valeurs des champs retirés seront conservées.</p>
+                    <section v-for="[key, label] in [['added', 'Champs ajoutés'], ['removed', 'Champs retirés'], ['changed', 'Champs modifiés']]" :key="key">
+                        <h3>{{ label }}</h3>
+                        <ul v-if="upgradePreview[key].length">
+                            <li v-for="field in upgradePreview[key]" :key="field.id">{{ field.label || 'Champ ' + field.id }}</li>
+                        </ul>
+                        <p v-else>Aucun</p>
+                    </section>
+                    <button type="button" :disabled="busy || saving || dirty" @click="applyUpgrade">Appliquer cette version</button>
+                </template>
+            </details>
             <p role="status">{{ saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : 'Toutes les modifications sont enregistrées.' }}</p>
             <form @submit.prevent="save">
                 <fieldset :disabled="busy || saving">

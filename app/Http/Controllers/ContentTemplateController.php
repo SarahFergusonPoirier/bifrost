@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Content;
 use App\Models\ContentTemplate;
+use App\Models\ContentTemplateAssignment;
 use App\Models\ContentType;
+use App\Models\TemplateVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ContentTemplateController extends Controller
 {
@@ -15,6 +19,71 @@ class ContentTemplateController extends Controller
             ->whereNotNull('published_at')->with('fields.fieldDefinition')]);
 
         return response()->json($template);
+    }
+
+    public function previewUpgrade(string $content, int $version): JsonResponse
+    {
+        $record = Content::where('public_id', $content)->firstOrFail();
+        $assignment = $record->templateAssignment()->firstOrFail();
+        $target = $this->publishedVersion($assignment, $version);
+
+        return response()->json($this->versionChanges($assignment, $target));
+    }
+
+    public function applyUpgrade(Request $request, string $content, int $version): JsonResponse
+    {
+        $validated = $request->validate(['from_version_id' => ['required', 'integer']]);
+
+        return DB::transaction(function () use ($content, $version, $validated): JsonResponse {
+            $record = Content::where('public_id', $content)->lockForUpdate()->firstOrFail();
+            $assignment = $record->templateAssignment()->firstOrFail();
+            $target = $this->publishedVersion($assignment, $version);
+            abort_if((int) $assignment->template_version_id !== (int) $validated['from_version_id'], 409, 'La version de la fiche a changé.');
+            abort_if((int) $assignment->template_version_id === $target->id, 422, 'Cette version est déjà utilisée.');
+
+            $changes = $this->versionChanges($assignment, $target);
+            $record->templateUpdateEvents()->create([
+                'template_id' => $assignment->template_id,
+                'from_template_version_id' => $assignment->template_version_id,
+                'to_template_version_id' => $target->id,
+                'change_details' => $changes,
+            ]);
+            $assignment->update(['template_version_id' => $target->id, 'assigned_at' => now()]);
+
+            return response()->json($changes);
+        }, attempts: 3);
+    }
+
+    private function publishedVersion(ContentTemplateAssignment $assignment, int $version): TemplateVersion
+    {
+        return TemplateVersion::where('template_id', $assignment->template_id)
+            ->whereNotNull('published_at')->findOrFail($version);
+    }
+
+    private function versionChanges(ContentTemplateAssignment $assignment, TemplateVersion $target): array
+    {
+        $fields = fn (TemplateVersion $version) => $version->fields()->with('fieldDefinition:id,label')->get()
+            ->keyBy('field_definition_id')->map(fn ($field): array => [
+                'id' => $field->field_definition_id,
+                'label' => $field->label_override ?? $field->fieldDefinition?->label,
+                'section' => $field->section_key,
+                'position' => $field->position,
+                'required' => $field->is_required,
+                'default' => $field->default_value,
+                'help' => $field->help_text,
+                'display' => $field->display_options,
+            ]);
+        $from = $fields($assignment->templateVersion);
+        $to = $fields($target);
+
+        return [
+            'from_version_id' => $assignment->template_version_id,
+            'to_version_id' => $target->id,
+            'added' => $to->diffKeys($from)->values(),
+            'removed' => $from->diffKeys($to)->values(),
+            'changed' => $to->intersectByKeys($from)
+                ->filter(fn (array $field, int $id): bool => $field !== $from[$id])->values(),
+        ];
     }
 
     public function types()

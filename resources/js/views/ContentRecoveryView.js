@@ -79,6 +79,9 @@ export default {
         const typeId = ref('');
         const templates = ref([]);
         const versionId = ref('');
+        const upgradeVersions = ref([]);
+        const upgradeVersionId = ref('');
+        const upgradePreview = ref(null);
         const versions = ref([]);
         const templateId = ref('');
         const templateOptions = computed(() => templates.value.filter(template =>
@@ -241,6 +244,9 @@ export default {
             from.value = '';
             to.value = '';
             comparison.value = null;
+            upgradeVersions.value = [];
+            upgradeVersionId.value = '';
+            upgradePreview.value = null;
             const saved = localStorage.getItem(draftKey());
             if (saved) {
                 const recovered = JSON.parse(saved);
@@ -307,6 +313,24 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
+            upgradeVersions, upgradeVersionId, upgradePreview,
+            loadUpgradeVersions: () => run(async () => {
+                const assignment = selected.value.template_assignment;
+                const { data } = await contentRequest('/content-templates/' + assignment.template_id);
+                upgradeVersions.value = data.versions.filter(version => version.id !== assignment.template_version_id);
+                upgradeVersionId.value = '';
+                upgradePreview.value = null;
+            }),
+            previewUpgrade: () => run(async () => {
+                upgradePreview.value = (await contentRequest(path() + '/template-versions/' + upgradeVersionId.value + '/preview')).data;
+            }),
+            applyUpgrade: () => run(async () => {
+                if (!upgradePreview.value || dirty.value) return;
+                await contentRequest(path() + '/template-versions/' + upgradePreview.value.to_version_id + '/apply', 'POST', {
+                    from_version_id: upgradePreview.value.from_version_id,
+                });
+                await open(selected.value.public_id);
+            }),
             timeline, connections, ideas, narration,
             openNarration: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la narration ?')) return;
