@@ -38,7 +38,7 @@ export default {
             this.error = '';
             try {
                 const { data } = await contentRequest(this.path);
-                this.data = { relations: data?.relations ?? [], timeline: data?.timeline ?? [] };
+                this.data = { relations: data?.relations ?? [], timeline: data?.timeline ?? [], equipment: data?.equipment ?? [] };
             } catch (error) {
                 this.error = error.message;
             }

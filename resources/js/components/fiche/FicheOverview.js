@@ -75,6 +75,7 @@ export default {
                 ...(this.linksPath ? [
                     { source: 'relations', title: 'Relations', icon: 'connections', linked: true },
                     { source: 'timeline', title: 'Chronologie', icon: 'timeline', linked: true },
+                    { source: 'equipment', title: 'Équipements', icon: 'folder', linked: true },
                 ] : []),
                 ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }, { source: 'gallery', title: 'Galerie d’images', icon: 'folder' }] : []),
                 ...sections,
@@ -95,7 +96,7 @@ export default {
                 .map(card => placement(card.source, card.source));
         },
         initialPlacements() {
-            if (this.useDefaults) return this.defaults;
+            if (this.useDefaults) return this.defaults.filter(item => item.source !== 'equipment');
             return this.defaults.filter(item => item.source === this.active);
         },
         displayed() {

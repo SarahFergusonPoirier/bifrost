@@ -128,7 +128,7 @@ export default {
             return this.save(this.layout.tabs.map(tab => {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
-                return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults : defaults.filter(placement => placement.source === tab.id))), ...added] } : tab;
+                return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults.filter(placement => placement.source !== 'equipment') : defaults.filter(placement => placement.source === tab.id))), ...added] } : tab;
             }), copies);
         },
         saveTabs() {

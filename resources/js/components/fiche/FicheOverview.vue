@@ -83,7 +83,7 @@
                         <option value="single">Image unique</option>
                     </select>
                 </label>
-                <label v-if="placement.source === 'relations'">Présentation des relations
+                <label v-if="['relations', 'equipment'].includes(placement.source)">Présentation de la liste
                     <select :value="placement.view ?? 'list'" @change="placement.view = $event.target.value">
                         <option value="list">Liste compacte</option>
                         <option value="cards">Cartes</option>

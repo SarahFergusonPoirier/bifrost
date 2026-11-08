@@ -159,4 +159,25 @@ class FicheLayoutTest extends TestCase
         $this->postJson("$base/fiche-tab-templates", $definition + ['scope' => 'global'])->assertCreated();
         $this->getJson($otherLibrary)->assertOk()->assertJsonCount(1)->assertJsonPath('0.scope', 'global');
     }
+
+    public function test_equipment_reads_canonical_objects_from_outgoing_equipment_links(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $characterType = ContentType::firstOrCreate(['key' => 'personnage'], ['name' => 'Personnage']);
+        $objectType = ContentType::firstOrCreate(['key' => 'objet-artefact'], ['name' => 'Objet']);
+        $make = fn (ContentType $type, string $title) => Content::create([
+            'title' => $title, 'content_type_id' => $type->id, 'scope_type' => 'project', 'project_id' => $project->id,
+        ]);
+        $character = $make($characterType, 'Élia');
+        $object = $make($objectType, 'Épée');
+        $unrelated = $make($objectType, 'Pendentif');
+        foreach ([[$object, 'equipment'], [$unrelated, 'mention']] as [$target, $type]) {
+            ContentRelation::create(['source_content_id' => $character->id, 'target_content_id' => $target->id, 'type_key' => $type]);
+        }
+        $object->update(['title' => 'Épée de voyage', 'summary' => 'Lame courte']);
+        $url = "/api/projects/{$project->id}/contents";
+        $this->getJson("$url/{$character->public_id}/fiche-links")->assertOk()->assertJsonCount(1, 'equipment')
+            ->assertJsonPath('equipment.0.title', 'Épée de voyage')->assertJsonPath('equipment.0.note', 'Lame courte');
+        $this->getJson("$url/{$object->public_id}/fiche-links")->assertOk()->assertJsonCount(0, 'equipment');
+    }
 }

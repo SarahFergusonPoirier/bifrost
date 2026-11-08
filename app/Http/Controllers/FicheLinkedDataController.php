@@ -18,7 +18,7 @@ class FicheLinkedDataController extends Controller
         $relations = ContentRelation::query()
             ->where(fn (Builder $query) => $query->where('source_content_id', $record->id)->orWhere('target_content_id', $record->id))
             ->whereHas('source', $inProject)->whereHas('target', $inProject)
-            ->with(['source:id,public_id,title,project_id', 'target:id,public_id,title,project_id'])
+            ->with(['source:id,public_id,title,project_id', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
             ->orderBy('id')->get();
         $linked = $relations->map(function (ContentRelation $relation) use ($record): array {
             $forward = $relation->source_content_id === $record->id;
@@ -37,6 +37,16 @@ class FicheLinkedDataController extends Controller
                 'end' => $properties['end'] ?? null,
             ];
         });
+
+        $equipment = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
+            && $relation->type_key === 'equipment'
+            && $relation->target->contentType?->key === 'objet-artefact')
+            ->unique('target_content_id')->map(fn (ContentRelation $relation): array => [
+                'id' => $relation->id,
+                'public_id' => $relation->target->public_id,
+                'title' => $relation->target->title,
+                'note' => $relation->target->summary,
+            ])->values();
 
         $dates = ContentFieldValue::query()->where('content_id', $record->id)
             ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('options_data->format', 'temporal'))
@@ -57,6 +67,6 @@ class FicheLinkedDataController extends Controller
                 'date' => ['start' => $event->start, 'end' => $event->end, 'precision' => $event->precision, 'calendar' => $event->calendar],
             ]);
 
-        return response()->json(['relations' => $linked, 'timeline' => $dates->concat($events)->values()]);
+        return response()->json(['relations' => $linked, 'equipment' => $equipment, 'timeline' => $dates->concat($events)->values()]);
     }
 }

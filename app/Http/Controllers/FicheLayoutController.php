@@ -34,7 +34,7 @@ class FicheLayoutController extends Controller
             'tabs.*.placements' => ['sometimes', 'array', 'list', 'max:80'],
             'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed,sort,view,title,text_limit,icon,hide_empty,field_order,field_columns,media_mode,media_image'],
             'tabs.*.placements.*.id' => ['required', 'uuid', 'distinct:strict'],
-            'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|attachments|gallery|section:.+|text:[a-f0-9-]+)$/u'],
+            'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|equipment|attachments|gallery|section:.+|text:[a-f0-9-]+)$/u'],
             'tabs.*.placements.*.width' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.height' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.hidden' => ['required', 'boolean'],
