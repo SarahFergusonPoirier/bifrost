@@ -11,6 +11,23 @@ class ProjectConnectionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_saved_views_are_scoped_to_the_project_and_replace_the_same_name(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $url = "/api/projects/{$project->id}/graph/views";
+        $input = ['name' => 'Vue', 'filters' => ['depth' => 2, 'mode' => 'all', 'status' => 'draft']];
+        $this->putJson($url, $input)->assertNoContent();
+        $input['filters']['mode'] = 'any';
+        $this->putJson($url, $input)->assertNoContent();
+
+        $view = $this->getJson("/api/projects/{$project->id}/connections")->assertOk()
+            ->assertJsonCount(1, 'views')->assertJsonPath('views.0.filters.mode', 'any')->json('views.0.id');
+        $this->getJson("/api/projects/{$other->id}/connections")->assertOk()->assertJsonCount(0, 'views');
+        $this->deleteJson("/api/projects/{$other->id}/graph/views/$view")->assertNotFound();
+        $this->deleteJson("$url/$view")->assertNoContent();
+    }
+
     public function test_graph_preserves_isolated_nodes_and_persisted_positions_within_a_project(): void
     {
         $project = Project::create(['name' => 'Projet']);

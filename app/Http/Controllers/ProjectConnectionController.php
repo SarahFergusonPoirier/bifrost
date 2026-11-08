@@ -12,7 +12,7 @@ class ProjectConnectionController extends Controller
 {
     public function index(Project $project): JsonResponse
     {
-        $nodes = $project->contents()->with('contentType:id,name')
+        $nodes = $project->contents()->with(['contentType:id,name', 'tags:tags.id,name'])
             ->leftJoin('content_graph_positions', 'content_graph_positions.content_id', '=', 'contents.id')
             ->get(['contents.id', 'contents.public_id', 'contents.title', 'contents.summary', 'contents.content_type_id',
                 'contents.work_status_key', 'content_graph_positions.x', 'content_graph_positions.y']);
@@ -21,7 +21,46 @@ class ProjectConnectionController extends Controller
         $edges = ContentRelation::whereIntegerInRaw('source_content_id', $ids)
             ->whereIntegerInRaw('target_content_id', $ids)->orderBy('id')->get();
 
-        return response()->json(['nodes' => $nodes, 'edges' => $edges]);
+        return response()->json([
+            'nodes' => $nodes,
+            'edges' => $edges,
+            'folders' => DB::table('project_folders')->where('project_id', $project->id)->orderBy('name')->get(['id', 'parent_id', 'name']),
+            'memberships' => DB::table('content_collection_memberships')->whereIntegerInRaw('content_id', $ids)->get(),
+            'views' => DB::table('project_graph_views')->where('project_id', $project->id)->orderBy('name')->get()
+                ->map(fn (object $view): array => ['id' => $view->id, 'name' => $view->name, 'filters' => json_decode($view->filters, true, flags: JSON_THROW_ON_ERROR)]),
+        ]);
+    }
+
+    public function saveView(Request $request, Project $project): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'filters' => ['required', 'array:search,type,status,folder,tag,relation,depth,mode,anchor'],
+            'filters.search' => ['nullable', 'string', 'max:255'],
+            'filters.type' => ['nullable', 'integer', 'min:1'],
+            'filters.status' => ['nullable', 'in:draft,in_progress,completed,abandoned'],
+            'filters.folder' => ['nullable', 'integer', 'min:1'],
+            'filters.tag' => ['nullable', 'integer', 'min:1'],
+            'filters.relation' => ['nullable', 'alpha_dash:ascii', 'max:80'],
+            'filters.depth' => ['required', 'integer', 'between:0,10'],
+            'filters.mode' => ['required', 'in:all,any'],
+            'filters.anchor' => ['nullable', 'uuid'],
+        ]);
+
+        DB::table('project_graph_views')->upsert([[
+            'project_id' => $project->id,
+            'name' => $validated['name'],
+            'filters' => json_encode($validated['filters'], JSON_THROW_ON_ERROR),
+        ]], ['project_id', 'name'], ['filters']);
+
+        return response()->json(null, 204);
+    }
+
+    public function deleteView(Project $project, int $view): JsonResponse
+    {
+        abort_unless(DB::table('project_graph_views')->where('project_id', $project->id)->where('id', $view)->delete(), 404);
+
+        return response()->json(null, 204);
     }
 
     public function store(Request $request, Project $project): JsonResponse

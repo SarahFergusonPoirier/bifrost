@@ -62,3 +62,6 @@ Route::get('/projects/{project}/connections', [ProjectConnectionController::clas
 Route::post('/projects/{project}/connections', [ProjectConnectionController::class, 'store']);
 Route::delete('/projects/{project}/connections/{relation}', [ProjectConnectionController::class, 'destroy'])->whereNumber('relation');
 Route::put('/projects/{project}/graph/positions/{content}', [ProjectConnectionController::class, 'position']);
+
+Route::put('/projects/{project}/graph/views', [ProjectConnectionController::class, 'saveView']);
+Route::delete('/projects/{project}/graph/views/{view}', [ProjectConnectionController::class, 'deleteView'])->whereNumber('view');

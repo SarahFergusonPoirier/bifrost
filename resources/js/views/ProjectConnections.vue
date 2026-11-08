@@ -2,8 +2,58 @@
     <section>
         <h1>Graphes et connexions</h1>
         <p v-if="error" role="alert">{{ error }}</p>
-        <label>Rechercher une fiche <input v-model="filter" type="search" /></label>
+        <fieldset>
+            <legend>Filtres du graphe</legend>
+            <label>Rechercher une fiche <input v-model="filters.search" type="search" maxlength="255" /></label>
+            <label>Type <select v-model="filters.type">
+                <option value="">Tous</option>
+                <option v-for="[id, type] in types" :key="id" :value="id">{{ type?.name }}</option>
+            </select></label>
+            <label>Statut <select v-model="filters.status">
+                <option value="">Tous</option><option value="draft">Brouillon</option>
+                <option value="in_progress">En cours</option><option value="completed">Terminé</option>
+                <option value="abandoned">Abandonné</option>
+            </select></label>
+            <label>Collection <select v-model="filters.folder">
+                <option value="">Toutes</option>
+                <option v-for="folder in folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+            </select></label>
+            <label>Étiquette <select v-model="filters.tag">
+                <option value="">Toutes</option>
+                <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+            </select></label>
+            <label>Relation <select v-model="filters.relation">
+                <option value="">Toutes</option>
+                <option v-for="relation in relationTypes" :key="relation">{{ relation }}</option>
+            </select></label>
+            <label>Fiche de départ <select v-model="filters.anchor">
+                <option value="">Aucune</option>
+                <option v-for="node in nodes" :key="node.id" :value="node.public_id">{{ node.title }}</option>
+            </select></label>
+            <label>Profondeur <select v-model.number="filters.depth">
+                <option :value="0">Sans limite de voisinage</option>
+                <option v-for="depth in 10" :key="depth" :value="depth">{{ depth }}</option>
+            </select></label>
+            <label>Combinaison <select v-model="filters.mode">
+                <option value="all">Tous les critères (ET)</option><option value="any">Au moins un critère (OU)</option>
+            </select></label>
+            <button type="button" @click="resetFilters">Réinitialiser</button>
+        </fieldset>
+        <details>
+            <summary>Vues enregistrées</summary>
+            <form @submit.prevent="saveView">
+                <label>Nom de la vue <input v-model="viewName" required maxlength="255" /></label>
+                <button type="submit" :disabled="busy">Enregistrer ces filtres</button>
+            </form>
+            <ul>
+                <li v-for="view in views" :key="view.id">
+                    <button type="button" :disabled="busy" @click="applyView(view)">{{ view.name }}</button>
+                    <button type="button" :disabled="busy" @click="deleteView(view)">Supprimer la vue</button>
+                </li>
+            </ul>
+        </details>
         <p v-if="!nodes.length && !busy">Le projet ne contient aucune fiche.</p>
+        <p v-else-if="!shown.length && !busy">Aucune fiche ne correspond aux filtres.</p>
         <svg v-else ref="graph" viewBox="0 0 1000 600" preserveAspectRatio="none" width="100%" height="420"
             aria-label="Graphe des fiches" @pointermove="move" @pointerup="finish()" @pointercancel="finish(true)">
             <defs>
