@@ -289,7 +289,7 @@
                 <button type="button" :aria-pressed="!compact" @click="setCompact(false)">Vue complète</button>
             </div>
             <section v-if="compact" aria-label="Lecture compacte">
-                <p v-if="draft.summary">{{ draft.summary }}</p>
+                <FicheText v-if="draft.summary" :text="draft.summary" :limit="0" />
                 <p v-if="selected.tags?.length">{{ selected.tags.map(tag => tag.name).join(' · ') }}</p>
                 <label v-if="templateSections.size"><input v-model="showHidden" type="checkbox" /> Afficher les champs masqués</label>
                 <details v-for="[section, fields] in templateSections" :key="section" open>
@@ -307,7 +307,7 @@
                 </details>
                 <article v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                     <h3 v-if="block.title">{{ block.title }}</h3>
-                    <p v-if="block.body" style="white-space: pre-wrap">{{ block.body }}</p>
+                    <FicheText v-if="block.body" :text="block.body" :limit="0" />
                 </article>
             </section>
             <form v-else @submit.prevent="save">
@@ -324,6 +324,7 @@
                         </select>
                     </label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
+                    <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse).</p>
                     <fieldset v-if="draft.tag_ids">
                         <legend>Étiquettes</legend>
                         <label>Étiquettes associées

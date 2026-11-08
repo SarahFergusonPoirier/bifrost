@@ -155,3 +155,17 @@ it('uses different mastery displays for placements of the same capability', () =
     expect(hidden.text()).toContain('Vol');
     expect(hidden.text()).not.toContain('Maîtrise');
 });
+
+it('renders supported formatting without interpreting embedded HTML or unsafe links', () => {
+    const wrapper = mount(FicheOverview, { props: {
+        summary: '# Origines\n- **Élia**\n- [Source](https://example.test)\n<img src=x onerror=alert(1)>\n[Interdit](javascript:alert(1))',
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+    } });
+    const text = wrapper.get('.fiche-text');
+    expect(text.get('h3').text()).toBe('Origines');
+    expect(text.get('li strong').text()).toBe('Élia');
+    expect(text.findAll('a')).toHaveLength(1);
+    expect(text.get('a').attributes('href')).toBe('https://example.test');
+    expect(text.find('img').exists()).toBe(false);
+    expect(text.text()).toContain('javascript:alert(1)');
+});
