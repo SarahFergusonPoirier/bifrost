@@ -5,18 +5,14 @@ export default {
     emits: ['open-content'],
     data: () => ({
         page: null, title: '', body: '', archive: false, view: 'kanban', query: '', busy: false, error: '',
-        editing: null, conversion: null,
-        columns: { new: 'Nouvelles', develop: 'À développer', retained: 'Retenues', abandoned: 'Abandonnées' },
+        editing: null, conversion: null, columnFilter: '', columnDraft: null,
+        columns: [],
     }),
     computed: {
-        visible() {
-            const query = this.query.trim().toLocaleLowerCase('fr');
-            return (this.page?.data ?? []).filter(idea => [idea.title ?? '', idea.body]
-                .some(value => value.toLocaleLowerCase('fr').includes(query)));
-        },
+
         groups() {
-            if (this.archive || this.view === 'list') return [['Idées', this.visible]];
-            return Object.entries(this.columns).map(([key, label]) => [label, this.visible.filter(idea => idea.column_key === key)]);
+            if (this.archive || this.view === 'list') return [['Idées', this.page?.data ?? []]];
+            return this.columns.map(({ key, label }) => [label, (this.page?.data ?? []).filter(idea => idea.column_key === key)]);
         },
     },
     mounted() {
@@ -33,10 +29,30 @@ export default {
             try { await action(); } catch (error) { this.error = error.message; } finally { this.busy = false; }
         },
         async fetch(page = 1) {
-            this.page = (await contentRequest(this.endpoint() + '?archive=' + Number(this.archive) + '&page=' + page)).data;
+            const params = new URLSearchParams({ archive: Number(this.archive), page, search: this.query, column: this.columnFilter });
+            this.page = (await contentRequest(this.endpoint() + '?' + params)).data;
+            this.columns = this.page.columns;
         },
         load(page) {
             return this.run(() => this.fetch(page));
+        },
+        editColumns() {
+            this.columnDraft = this.columns.map(column => ({ ...column }));
+        },
+        addColumn() {
+            this.columnDraft.push({ key: crypto.randomUUID().replaceAll('-', ''), label: '' });
+        },
+        moveColumn(index, offset) {
+            const [column] = this.columnDraft.splice(index, 1);
+            this.columnDraft.splice(index + offset, 0, column);
+        },
+        saveColumns() {
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/columns', 'PUT', { columns: this.columnDraft });
+                this.columnDraft = null;
+                this.columnFilter = '';
+                await this.fetch();
+            });
         },
         capture() {
             return this.run(async () => {

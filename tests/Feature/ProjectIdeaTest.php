@@ -12,6 +12,31 @@ class ProjectIdeaTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_custom_columns_preserve_ideas_and_search_runs_before_pagination(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $url = "/api/projects/{$project->id}/ideas";
+        $idea = $this->postJson($url, ['body' => 'Indice unique'])->assertCreated()->json('id');
+        $this->patchJson("$url/$idea", ['column_key' => 'retained'])->assertNoContent();
+        $this->postJson("/api/projects/{$other->id}/ideas", ['body' => 'Indice unique'])->assertCreated();
+
+        $this->putJson("$url/columns", ['columns' => [
+            ['key' => 'inbox', 'label' => 'Boîte'],
+            ['key' => 'new', 'label' => 'À lire'],
+        ]])->assertNoContent();
+        $this->assertDatabaseHas('project_ideas', ['id' => $idea, 'column_key' => 'inbox', 'body' => 'Indice unique']);
+        $this->patchJson("$url/$idea", ['column_key' => 'retained'])->assertUnprocessable();
+
+        for ($index = 0; $index < 51; $index++) {
+            $this->postJson($url, ['body' => "Autre idée $index"])->assertCreated();
+        }
+
+        $this->getJson("$url?search=unique&column=inbox")->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $idea)->assertJsonPath('columns.0.label', 'Boîte');
+        $this->getJson("/api/projects/{$other->id}/ideas")->assertOk()->assertJsonPath('columns.0.key', 'new');
+    }
+
     public function test_capture_is_separate_from_catalogue_and_conversion_preserves_provenance(): void
     {
         $project = Project::create(['name' => 'Projet']);

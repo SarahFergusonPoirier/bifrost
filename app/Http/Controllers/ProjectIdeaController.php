@@ -9,14 +9,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProjectIdeaController extends Controller
 {
     public function index(Request $request, Project $project): JsonResponse
     {
-        $filters = $request->validate(['archive' => ['sometimes', 'boolean']]);
+        $filters = $request->validate([
+            'archive' => ['sometimes', 'boolean'],
+            'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'column' => ['sometimes', 'nullable', 'alpha_dash:ascii', 'max:32'],
+        ]);
+        $search = $filters['search'] ?? null;
         $ideas = $this->ideas($project)
             ->when($filters['archive'] ?? false, fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
+            ->when($search !== null, fn ($query) => $query->where(fn ($query) => $query
+                ->whereLike('title', '%'.$search.'%')->orWhereLike('body', '%'.$search.'%')))
+            ->when(isset($filters['column']), fn ($query) => $query->where('column_key', $filters['column']))
             ->orderByDesc('updated_at')->orderByDesc('id')->paginate(50);
         $ids = $ideas->getCollection()->pluck('id');
         $memberships = DB::table('project_idea_collections')->whereIn('idea_id', $ids)->get()->groupBy('idea_id');
@@ -31,17 +40,22 @@ class ProjectIdeaController extends Controller
             return $idea;
         });
 
-        return response()->json($ideas);
+        return response()->json($ideas->toArray() + ['columns' => $this->columns($project)]);
     }
 
     public function store(Request $request, Project $project): JsonResponse
     {
         $input = $request->validate(['title' => ['nullable', 'string', 'max:255'], 'body' => ['required', 'string', 'max:100000']]);
-        $id = $this->ideas($project)->insertGetId($input + [
-            'project_id' => $project->id, 'created_at' => now(), 'updated_at' => now(),
-        ]);
 
-        return response()->json(['id' => $id], 201);
+        return DB::transaction(function () use ($project, $input): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $id = $this->ideas($project)->insertGetId($input + [
+                'project_id' => $project->id, 'column_key' => $this->columns($project)[0]['key'],
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            return response()->json(['id' => $id], 201);
+        }, attempts: 3);
     }
 
     public function update(Request $request, Project $project, int $idea): JsonResponse
@@ -49,13 +63,17 @@ class ProjectIdeaController extends Controller
         $input = $request->validate([
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'body' => ['sometimes', 'required', 'string', 'max:100000'],
-            'column_key' => ['sometimes', 'in:new,develop,retained,abandoned'],
+            'column_key' => ['sometimes', 'required', 'alpha_dash:ascii', 'max:32'],
             'archived' => ['sometimes', 'boolean'],
             'folder_ids' => ['sometimes', 'array', 'list', 'max:100'],
             'folder_ids.*' => ['integer', 'distinct', Rule::exists('project_folders', 'id')->where('project_id', $project->id)],
         ]);
 
         return DB::transaction(function () use ($project, $idea, $input): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            if (isset($input['column_key']) && ! in_array($input['column_key'], array_column($this->columns($project), 'key'), true)) {
+                throw ValidationException::withMessages(['column_key' => 'Cette colonne est indisponible.']);
+            }
             $query = $this->ideas($project)->where('id', $idea);
             abort_if($query->lockForUpdate()->first() === null, 404);
             $changes = Arr::except($input, ['archived', 'folder_ids']);
@@ -103,6 +121,40 @@ class ProjectIdeaController extends Controller
 
             return response()->json(['public_id' => $content->public_id], 201);
         }, attempts: 3);
+    }
+
+    public function saveColumns(Request $request, Project $project): JsonResponse
+    {
+        $input = $request->validate([
+            'columns' => ['required', 'array', 'list', 'min:1', 'max:20'],
+            'columns.*' => ['required', 'array:key,label'],
+            'columns.*.key' => ['required', 'alpha_dash:ascii', 'distinct', 'max:32'],
+            'columns.*.label' => ['required', 'string', 'distinct:ignore_case', 'max:80'],
+        ]);
+
+        return DB::transaction(function () use ($project, $input): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $columns = $input['columns'];
+            $this->ideas($project)->whereNotIn('column_key', array_column($columns, 'key'))
+                ->update(['column_key' => $columns[0]['key'], 'updated_at' => now()]);
+            DB::table('project_idea_boards')->upsert([[
+                'project_id' => $project->id, 'columns' => json_encode($columns, JSON_THROW_ON_ERROR),
+            ]], ['project_id'], ['columns']);
+
+            return response()->json(null, 204);
+        }, attempts: 3);
+    }
+
+    private function columns(Project $project): array
+    {
+        $columns = DB::table('project_idea_boards')->where('project_id', $project->id)->value('columns');
+
+        return $columns === null ? [
+            ['key' => 'new', 'label' => 'Nouvelles'],
+            ['key' => 'develop', 'label' => 'À développer'],
+            ['key' => 'retained', 'label' => 'Retenues'],
+            ['key' => 'abandoned', 'label' => 'Abandonnées'],
+        ] : json_decode($columns, true, flags: JSON_THROW_ON_ERROR);
     }
 
     private function ideas(Project $project): Builder

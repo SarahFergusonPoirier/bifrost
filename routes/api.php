@@ -71,3 +71,4 @@ Route::get('/projects/{project}/ideas', [ProjectIdeaController::class, 'index'])
 Route::post('/projects/{project}/ideas', [ProjectIdeaController::class, 'store']);
 Route::patch('/projects/{project}/ideas/{idea}', [ProjectIdeaController::class, 'update'])->whereNumber('idea');
 Route::post('/projects/{project}/ideas/{idea}/convert', [ProjectIdeaController::class, 'convert'])->whereNumber('idea');
+Route::put('/projects/{project}/ideas/columns', [ProjectIdeaController::class, 'saveColumns']);
