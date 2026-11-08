@@ -30,12 +30,12 @@
                         :title="key === 'maps' || key === 'search' ? 'Module à venir' : undefined"
                         @click="openPanel(key)"><WorkspaceIcon :name="key" />{{ label }}</button>
                 </template>
+                <button type="button" class="workspace-link" :aria-current="trash ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openProjectTrash"><WorkspaceIcon name="trash" />Corbeille des fiches</button>
                 <hr />
                 <RouterLink :to="{ name: 'home' }" class="workspace-link"><WorkspaceIcon name="exit" />Quitter le projet</RouterLink>
                 <button type="button" class="workspace-link" :aria-current="panel === 'settings' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('settings')"><WorkspaceIcon name="settings" />Paramètres du projet</button>
-                <button type="button" class="workspace-link workspace-link--child" :aria-current="trash ? 'page' : undefined"
-                    :disabled="busy || saving" @click="openProjectTrash"><WorkspaceIcon name="trash" />Corbeille des fiches</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="panel === 'settings'" />
