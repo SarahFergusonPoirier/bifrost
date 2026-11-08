@@ -4,6 +4,7 @@ use App\Http\Controllers\ContentAttachmentController;
 use App\Http\Controllers\ContentRecoveryController;
 use App\Http\Controllers\ContentTemplateAuthoringController;
 use App\Http\Controllers\ContentTemplateController;
+use App\Http\Controllers\FicheLayoutController;
 use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
@@ -102,3 +103,6 @@ Route::get('/contents/{content}/attachments', [ContentAttachmentController::clas
 Route::post('/contents/{content}/attachments', [ContentAttachmentController::class, 'store']);
 Route::get('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'download']);
 Route::delete('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'destroy']);
+
+Route::get('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutController::class, 'show'])->whereNumber('project');
+Route::put('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutController::class, 'update'])->whereNumber('project');

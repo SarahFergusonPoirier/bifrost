@@ -233,19 +233,18 @@
                         <p>{{ types.find(type => type.id === selected.content_type_id)?.name }}</p>
                     </div>
                 </div>
-                <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
+                <div>
+                    <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
+                    <button type="button" @click="ficheTab = 'details'">Modifier</button>
+                </div>
             </header>
-            <nav class="fiche-tabs" aria-label="Sections de la fiche">
-                <button type="button" :aria-pressed="ficheTab === 'overview'" @click="ficheTab = 'overview'">
-                    <WorkspaceIcon name="overview" /> Vue d’ensemble
-                </button>
-                <button type="button" :aria-pressed="ficheTab === 'details'" @click="ficheTab = 'details'">
-                    <WorkspaceIcon name="catalogue" /> Informations générales
-                </button>
-            </nav>
+            <FicheTabs :key="selected.public_id" :active="ficheTab"
+                :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
+                @select="ficheTab = $event" />
             <FicheOverview v-if="ficheTab === 'overview'" :key="selected.public_id" :summary="draft.summary"
                 :tags="selected.tags" :blocks="draft.blocks" :template-sections="templateSections"
                 :hidden-fields="hiddenFields" :display-value="displayValue" />
+            <p v-if="!['overview', 'details'].includes(ficheTab)">Cet onglet ne contient aucun bloc.</p>
             <div v-show="ficheTab === 'details'">
             <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" />
             <p v-if="selected.origin_idea">
