@@ -21,7 +21,21 @@
                     <label><input v-model="tab.hidden" type="checkbox" /> Masqué</label>
                     <button type="button" :disabled="index === 0" @click="move(index, -1)">Monter</button>
                     <button type="button" :disabled="index === tabs.length - 1" @click="move(index, 1)">Descendre</button>
-                    <button type="button" @click="remove(tab)">Supprimer</button>
+                    <button type="button" @click="requestRemoval(tab)">Supprimer</button>
+                    <div v-if="removalId === tab.id" class="fiche-tab-removal">
+                        <p>Retirer « {{ tab.title }} » de la fiche ?</p>
+                        <p>{{ tab.placements?.length ?? 0 }} placement(s) personnalisé(s). Les données enregistrées sont conservées.</p>
+                        <label v-if="tab.placements?.length">Placements personnalisés
+                            <select v-model="removalDestination">
+                                <option :value="null">Retirer les placements</option>
+                                <option v-for="target in removalTargets(tab)" :key="target.id" :value="target.id">
+                                    Déplacer vers {{ target.title }}
+                                </option>
+                            </select>
+                        </label>
+                        <button type="button" @click="remove(tab)">Confirmer la suppression</button>
+                        <button type="button" @click="cancelRemoval">Annuler la suppression</button>
+                    </div>
                 </div>
                 <button type="button" :disabled="tabs.length >= 24" @click="add()">Ajouter un onglet</button>
                 <button v-for="[id, title] in optionalTabs" :key="id" type="button"

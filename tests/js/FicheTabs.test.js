@@ -46,3 +46,28 @@ it('keeps a visible restored tab and falls back when the active tab is hidden', 
     await wrapper.vm.load();
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
+
+it('moves placements when removing a tab and submits both changes together', async () => {
+    const placement = { id: 'placement', source: 'summary', width: 6, height: 2, hidden: false, collapsed: false };
+    const tabs = [
+        { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
+        { id: 'notes', title: 'Notes', icon: 'folder', hidden: false, placements: [placement] },
+        { id: 'details', title: 'Détails', icon: 'catalogue', hidden: false },
+    ];
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'notes' } });
+    await flushPromises();
+
+    await wrapper.findAll('button').filter(button => button.text() === 'Supprimer')[1].trigger('click');
+    const confirmation = wrapper.get('.fiche-tab-removal');
+    await confirmation.get('select').setValue('details');
+    await confirmation.findAll('button')[0].trigger('click');
+    contentRequest.mockImplementationOnce(async (path, method, input) => ({ data: { version: 2, tabs: input.tabs } }));
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+
+    const [, , request] = contentRequest.mock.lastCall;
+    expect(request.tabs.map(tab => tab.id)).toEqual(['overview', 'details']);
+    expect(request.tabs[1].placements).toEqual([placement]);
+    expect(wrapper.emitted('select')).toEqual([['overview']]);
+});

@@ -12,7 +12,7 @@ export default {
     components: { WorkspaceIcon },
     props: { path: String, templatesPath: String, active: String, canCopy: Boolean },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, removalId: null, removalDestination: null }),
     computed: {
         hasPendingText() {
             return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
@@ -91,6 +91,7 @@ export default {
         },
         reset() {
             this.tabs = this.layout.tabs.map(tab => ({ ...tab }));
+            this.cancelRemoval();
         },
         add(id = 'tab-' + crypto.randomUUID(), title = 'Nouvel onglet') {
             this.tabs.push({ id, title, icon: 'folder', hidden: false });
@@ -99,10 +100,29 @@ export default {
             const [tab] = this.tabs.splice(index, 1);
             this.tabs.splice(index + offset, 0, tab);
         },
+        requestRemoval(tab) {
+            this.removalId = tab.id;
+            this.removalDestination = null;
+        },
+        cancelRemoval() {
+            this.removalId = null;
+            this.removalDestination = null;
+        },
+        removalTargets(tab) {
+            const defaults = ['overview', 'relations', 'timeline'];
+            return this.tabs.filter(target => target.id !== tab.id
+                && (target.placements || !defaults.includes(target.id))
+                && (target.placements?.length ?? 0) + (tab.placements?.length ?? 0) <= 80);
+        },
         remove(tab) {
-            if (window.confirm(`Supprimer l’onglet « ${tab.title} » ? Les données de la fiche seront conservées.`)) {
-                this.tabs = this.tabs.filter(item => item.id !== tab.id);
+            if (this.removalDestination) {
+                const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
+                if (!target) return;
+                target.placements = [...(target.placements ?? []), ...(tab.placements ?? [])];
             }
+
+            this.tabs = this.tabs.filter(item => item.id !== tab.id);
+            this.cancelRemoval();
         },
         savePlacements(next, transfers, defaults, copies) {
             return this.save(this.layout.tabs.map(tab => {
