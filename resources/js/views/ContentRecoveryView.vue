@@ -100,7 +100,7 @@
             <button type="button" :disabled="busy || saving" @click="close">Retour aux fiches</button>
             <h2>{{ selected.title }}</h2>
             <p v-if="selected.template_assignment">
-                {{ selected.template_assignment.template_version.version_number === 1 ? 'Modèle · Version 1' : 'Modèle · Version ' + selected.template_assignment.template_version.version_number }}
+                Modèle · Version {{ selected.template_assignment.template_version.version_number }}
             </p>
             <p role="status">{{ saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : 'Toutes les modifications sont enregistrées.' }}</p>
             <form @submit.prevent="save">
@@ -108,6 +108,23 @@
                     <legend>Modifier la fiche</legend>
                     <p><label>Titre <input v-model="draft.title" required maxlength="255" /></label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
+                    <details v-for="[section, fields] in templateSections" :key="section" open>
+                        <summary>{{ section }}</summary>
+                        <p v-for="field in fields" :key="field.id">
+                            <label>
+                                {{ field.label_override || field.field_definition.label }}
+                                <select v-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">
+                                    <option value="">Vide</option>
+                                    <option value="true">Oui</option>
+                                    <option value="false">Non</option>
+                                </select>
+                                <input v-else :type="field.column === 'value_number' ? 'number' : field.column === 'value_date' ? 'date' : 'text'"
+                                    :step="field.column === 'value_number' ? 'any' : undefined"
+                                    :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
+                            </label>
+                            <small v-if="field.help_text">{{ field.help_text }}</small>
+                        </p>
+                    </details>
                     <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                         <legend>Bloc {{ index + 1 }}</legend>
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>

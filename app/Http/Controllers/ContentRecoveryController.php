@@ -264,10 +264,11 @@ class ContentRecoveryController extends Controller
             'value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id',
         ], null);
         foreach ($fields as $field) {
-            $content->fieldValues()->updateOrCreate(
-                ['field_definition_id' => $field['field_definition_id']],
-                array_intersect_key($field, $columns) + $columns,
-            );
+            $value = $content->fieldValues()->firstOrNew(['field_definition_id' => $field['field_definition_id']]);
+            $value->fill(array_intersect_key($field, $columns) + $columns);
+            if (! $value->exists || $value->isDirty()) {
+                $value->save();
+            }
         }
 
         $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'))->delete();

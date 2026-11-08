@@ -111,6 +111,40 @@ export default {
         const path = () => '/contents/' + selected.value.public_id;
         const draftKey = () => 'bifrost:draft:' + selected.value.public_id;
 
+        const fieldColumns = {
+            text: 'value_text', choice: 'value_text', number: 'value_number',
+            boolean: 'value_boolean', date: 'value_date',
+        };
+        const templateSections = computed(() => {
+            const sections = new Map();
+            for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
+                const column = fieldColumns[field.field_definition?.value_type];
+                if (!column) continue;
+                const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
+                if (!sections.has(section)) sections.set(section, []);
+                sections.get(section).push({ ...field, column });
+            }
+            return sections;
+        });
+        const fieldValue = field => draft.value.field_values?.find(value =>
+            value.field_definition_id === field.field_definition_id
+        )?.[field.column] ?? '';
+        function setField(field, value) {
+            const values = draft.value.field_values ??= [];
+            const index = values.findIndex(item => item.field_definition_id === field.field_definition_id);
+            if (value === '') {
+                if (index >= 0) values.splice(index, 1);
+                return;
+            }
+
+            const entry = {
+                field_definition_id: field.field_definition_id,
+                [field.column]: field.column === 'value_boolean' ? value === 'true' : value,
+            };
+            if (index >= 0) values.splice(index, 1, entry);
+            else values.push(entry);
+        }
+
         function accept(data, token) {
             selected.value = data;
             const editable = {
@@ -120,6 +154,12 @@ export default {
                     public_id, block_type, title, body,
                 })),
             };
+            if (templateSections.value.size) {
+                editable.field_values = (data.field_values ?? []).map(({ id, content_id, created_at, updated_at, ...value }) => ({
+                    ...value,
+                    ...(value.value_date ? { value_date: value.value_date.slice(0, 10) } : {}),
+                }));
+            }
             baseline.value = JSON.stringify(editable);
             version.value = token;
             draft.value = editable;
@@ -232,7 +272,7 @@ export default {
         });
 
         return {
-            sidebarItems, settings, templateId, templateOptions, versions, versionId,
+            sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
             openSettings: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
                 selected.value = null;
