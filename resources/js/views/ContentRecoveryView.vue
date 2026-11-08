@@ -248,7 +248,7 @@
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
                         @open="openPanelContent" @select="ficheTab = $event"
-                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue"
+                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-references="fieldReferences"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
                 </template>
             </FicheTabs>

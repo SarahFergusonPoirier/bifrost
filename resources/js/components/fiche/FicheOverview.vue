@@ -73,7 +73,15 @@
                 <dl v-else-if="card.fields?.length" class="fiche-fields">
                     <div v-for="field in card.fields" :key="field.id">
                         <dt>{{ field.label }}</dt>
-                        <dd>{{ field.value }}</dd>
+                        <dd>
+                            <ul v-if="field.references.length" class="fiche-references">
+                                <li v-for="reference in field.references" :key="reference.id">
+                                    <button v-if="reference.publicId" type="button" @click="$emit('open', reference.publicId)">{{ reference.title }}</button>
+                                    <span v-else>{{ reference.title }}</span>
+                                </li>
+                            </ul>
+                            <template v-else>{{ field.value }}</template>
+                        </dd>
                     </div>
                 </dl>
                 <p v-else>Ce bloc est vide.</p>

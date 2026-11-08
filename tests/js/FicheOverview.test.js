@@ -50,3 +50,23 @@ it('previews keyboard resizing and persists the same dimensions', async () => {
     await wrapper.get('form').trigger('submit');
     expect(saved[0]).toMatchObject({ width: 12, height: 3 });
 });
+
+it('opens available references and keeps unavailable references readable', async () => {
+    const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Alliés' } };
+    const wrapper = mount(FicheOverview, {
+        props: {
+            templateSections: new Map([['Relations', [field]]]),
+            hiddenFields: [],
+            displayValue: () => 'Kael, Fiche indisponible',
+            fieldReferences: () => [
+                { id: 1, title: 'Kael', publicId: 'kael-id' },
+                { id: 2, title: 'Fiche indisponible' },
+            ],
+        },
+    });
+
+    expect(wrapper.get('.fiche-references').text()).toContain('Fiche indisponible');
+    expect(wrapper.findAll('.fiche-references button')).toHaveLength(1);
+    await wrapper.get('.fiche-references button').trigger('click');
+    expect(wrapper.emitted('open')).toEqual([['kael-id']]);
+});

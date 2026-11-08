@@ -236,19 +236,37 @@ export default {
         const fieldValue = field => draft.value.field_values?.find(value =>
             value.field_definition_id === field.field_definition_id
         )?.[field.column] ?? '';
+        const referenceIndex = computed(() => {
+            const index = new Map();
+            for (const item of treeContents.value) {
+                index.set(String(item.id), item);
+                index.set(item.public_id, item);
+            }
+            return index;
+        });
+
+        function fieldReferences(field) {
+            const value = fieldValue(field);
+            if (value === '') return [];
+            const ids = field.column === 'reference_content_id' ? [value]
+                : field.format === 'references' && Array.isArray(value) ? value : [];
+            return ids.map(id => {
+                const item = referenceIndex.value.get(String(id));
+                return { id, title: item?.title ?? 'Fiche indisponible', publicId: item?.public_id };
+            });
+        }
+
         function displayValue(field) {
             const value = fieldValue(field);
             if (value === '') return '—';
-            if (field.column === 'reference_content_id') {
-                return treeContents.value.find(item => item.id === Number(value))?.title ?? 'Fiche indisponible';
+            if (field.column === 'reference_content_id' || field.format === 'references') {
+                return fieldReferences(field).map(item => item.title).join(', ') || '—';
             }
             if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
             if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
             if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');
             if (field.format === 'temporal') return [value.start, value.end, value.calendar].filter(Boolean).join(' · ') || 'Date inconnue';
             if (field.format === 'multiple_choice') return value.join(', ');
-            if (field.format === 'references') return value.map(id =>
-                treeContents.value.find(item => item.public_id === id)?.title ?? 'Fiche indisponible').join(', ');
             return value;
         }
 
@@ -443,7 +461,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
+            ficheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences,
             sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

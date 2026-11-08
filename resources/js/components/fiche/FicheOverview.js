@@ -22,6 +22,7 @@ export default {
         templateSections: { type: Map, required: true },
         hiddenFields: { type: Array, required: true },
         displayValue: { type: Function, required: true },
+        fieldReferences: { type: Function, default: () => [] },
         placements: Array,
         persist: Function,
         canCopy: Boolean,
@@ -40,6 +41,7 @@ export default {
                     id: field.id,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
+                    references: this.fieldReferences(field),
                 })),
             }));
             const texts = this.blocks.filter(block => block.public_id && typeof block.body === 'string').map(block => ({
