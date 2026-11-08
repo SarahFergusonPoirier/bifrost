@@ -11,6 +11,29 @@ export default {
         work() {
             return this.works.find(work => work.public_id === this.workId);
         },
+        datedGroups() {
+            const groups = new Map();
+            const undated = [];
+            this.work?.scenes.forEach((scene, index) => {
+                const entry = { ...scene, narrativePosition: index + 1 };
+                if (!scene.date?.start && scene.date?.order == null) {
+                    undated.push(entry);
+                    return;
+                }
+                const calendar = scene.date.calendar || 'Calendrier non précisé';
+                if (!groups.has(calendar)) groups.set(calendar, []);
+                groups.get(calendar).push(entry);
+            });
+            const order = scene => scene.date.order != null ? 0 : /^\d{4}-\d{2}-\d{2}$/.test(scene.date.start ?? '') ? 1 : 2;
+            const result = [...groups].map(([calendar, scenes]) => [calendar, scenes.sort((left, right) => {
+                const rank = order(left) - order(right);
+                if (rank) return rank;
+                if (order(left) === 0) return Number(left.date.order) - Number(right.date.order);
+                if (order(left) === 1) return left.date.start.localeCompare(right.date.start);
+                return 0;
+            })]);
+            return undated.length ? [...result, ['Sans repère daté', undated]] : result;
+        },
         groups() {
             if (this.view !== 'status') return [['Scènes', this.work?.scenes ?? []]];
             return Object.entries(this.statuses).map(([key, label]) => [label, this.work.scenes.filter(scene => scene.work_status_key === key)]);

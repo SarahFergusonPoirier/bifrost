@@ -25,6 +25,10 @@
             <input type="checkbox" :checked="Boolean(value?.timeline)" @change="update('timeline', $event.target.checked || '')" />
             Ajouter à la chronologie
         </label>
+        <label>Ordre dans le calendrier (facultatif)
+            <input type="number" step="1" min="-1000000000" max="1000000000"
+                :value="value?.order ?? ''" @input="update('order', $event.target.value)" />
+        </label>
         <template v-if="value?.timeline">
             <label>Titre dans la chronologie <input :value="value.timeline_title ?? ''" maxlength="255" @input="update('timeline_title', $event.target.value)" /></label>
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>

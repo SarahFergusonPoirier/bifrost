@@ -29,8 +29,23 @@
                     <option value="structure">Ordre du récit</option>
                     <option value="status">Par statut</option>
                     <option value="cards">Cartes de scènes</option>
+                    <option value="dates">Dates dans l’univers</option>
                 </select>
             </label>
+            <template v-if="view === 'dates'">
+                <p v-if="!datedGroups.length">Aucune scène.</p>
+                <section v-for="[calendar, scenes] in datedGroups" :key="calendar">
+                    <h2>{{ calendar }}</h2>
+                    <ul>
+                        <li v-for="scene in scenes" :key="scene.public_id">
+                            <button type="button" @click="$emit('open-content', scene.public_id)">{{ scene.title }}</button>
+                            <span> · Scène {{ scene.narrativePosition }} du récit</span>
+                            <span v-if="scene.date?.start"> · {{ scene.date.start }}{{ scene.date.end ? ' – ' + scene.date.end : '' }}</span>
+                        </li>
+                    </ul>
+                </section>
+            </template>
+            <template v-else>
             <section v-for="[label, scenes] in groups" :key="label">
                 <h2>{{ label }}</h2>
                 <p v-if="!scenes.length">Aucune scène.</p>
@@ -46,6 +61,7 @@
                     </li>
                 </ol>
             </section>
+            </template>
         </template>
     </section>
 </template>

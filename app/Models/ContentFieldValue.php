@@ -109,11 +109,12 @@ class ContentFieldValue extends Model
                 'value_json.y' => ['sometimes', 'numeric'],
             ],
             'temporal' => [
-                'value_json' => ['array:precision,start,end,calendar,timeline,timeline_title,timeline_description', 'min:1'],
+                'value_json' => ['array:precision,start,end,calendar,order,timeline,timeline_title,timeline_description', 'min:1'],
                 'value_json.precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown'],
                 'value_json.start' => ['sometimes', 'string', 'max:255'],
                 'value_json.end' => ['sometimes', 'string', 'max:255'],
                 'value_json.calendar' => ['sometimes', 'string', 'max:255'],
+                'value_json.order' => ['sometimes', 'integer', 'between:-1000000000,1000000000'],
                 'value_json.timeline' => ['sometimes', 'boolean'],
                 'value_json.timeline_title' => ['sometimes', 'string', 'max:255'],
                 'value_json.timeline_description' => ['sometimes', 'string', 'max:10000'],

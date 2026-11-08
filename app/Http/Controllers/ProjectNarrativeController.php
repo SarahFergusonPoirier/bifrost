@@ -20,11 +20,17 @@ class ProjectNarrativeController extends Controller
             ->orderBy('title')->orderBy('id')->get(['id', 'public_id', 'title', 'summary']);
         $scenes = $project->contents()->join('project_narrative_scenes', 'project_narrative_scenes.scene_id', '=', 'contents.id')
             ->whereIntegerInRaw('work_id', $works->modelKeys())->orderBy('position')->orderBy('contents.id')
+            ->with(['fieldValues' => fn ($query) => $query
+                ->whereHas('fieldDefinition', fn ($definition) => $definition->where('key', 'narrative-scene.date'))
+                ->select(['content_id', 'value_json'])])
             ->get(['contents.id', 'contents.public_id', 'contents.title', 'contents.summary', 'contents.work_status_key', 'work_id'])
             ->groupBy('work_id');
 
         return response()->json($works->map(fn (Content $work): array => $work->toArray() + [
-            'scenes' => $scenes->get($work->id, collect())->values(),
+            'scenes' => $scenes->get($work->id, collect())->map(fn (Content $scene): array => [
+                ...$scene->attributesToArray(),
+                'date' => $scene->fieldValues->first()?->value_json,
+            ])->values(),
         ]));
     }
 

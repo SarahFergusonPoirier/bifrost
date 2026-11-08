@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -9,6 +10,22 @@ use Tests\TestCase;
 class ProjectNarrativeTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_narrative_date_is_read_from_the_scene_field(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $url = "/api/projects/{$project->id}/narration";
+        $work = $this->postJson($url, ['title' => 'Roman'])->assertCreated()->json('public_id');
+        $scene = $this->postJson("$url/$work/scenes", ['title' => 'Scène'])->assertCreated()->json('public_id');
+        $field = FieldDefinition::where('key', 'narrative-scene.date')->sole();
+        $date = ['precision' => 'relative', 'start' => 'Avant le départ', 'calendar' => 'Ère des brumes', 'order' => -2];
+
+        $this->patchJson("/api/contents/$scene", ['title' => 'Scène', 'summary' => null,
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => $date]],
+        ])->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('0.scenes.0.date', $date)
+            ->assertJsonPath('0.scenes.0.public_id', $scene);
+    }
 
     public function test_exports_follow_scene_order_and_only_include_notes_when_requested(): void
     {
