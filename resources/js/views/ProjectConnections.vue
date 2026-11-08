@@ -1,7 +1,8 @@
 <template>
     <section>
-        <h1>Graphes et connexions</h1>
+        <h1>{{ mode === 'graphs' ? 'Graphes' : 'Connexions' }}</h1>
         <p v-if="error" role="alert">{{ error }}</p>
+        <template v-if="mode === 'graphs'">
         <fieldset>
             <legend>Filtres du graphe</legend>
             <label>Rechercher une fiche <input v-model="filters.search" type="search" maxlength="255" /></label>
@@ -72,6 +73,13 @@
                 <text x="16" y="5" fill="currentColor" font-size="15">{{ node.title }}</text>
             </g>
         </svg>
+        </template>
+        <label v-else>Fiche à explorer
+            <select :value="selection?.id ?? ''" @change="select(nodes.find(node => node.id === Number($event.target.value)) ?? null)">
+                <option value="">Choisir une fiche</option>
+                <option v-for="node in nodes" :key="node.id" :value="node.id">{{ node.title }}</option>
+            </select>
+        </label>
         <section v-if="selection" aria-label="Aperçu de la fiche">
             <h2>{{ selection.title }}</h2>
             <p>{{ selection.content_type?.name }}</p>

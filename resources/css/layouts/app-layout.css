@@ -370,15 +370,3 @@
     text-align: start;
     overflow-wrap: anywhere;
 }
-
-.workspace-graph-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.2rem;
-}
-
-.workspace-graph-toggle {
-    justify-content: center;
-    width: 2.5rem;
-    padding-inline: 0;
-}

@@ -19,19 +19,11 @@
                     :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
                     :disabled="busy || saving" @click="openTreeItem({})"><WorkspaceIcon name="catalogue" />Catalogue</button>
-                <div class="workspace-graph-row">
-                    <button type="button" class="workspace-link" :aria-current="panel === 'connections' ? 'page' : undefined"
-                        :disabled="busy || saving" @click="openPanel('connections')"><WorkspaceIcon name="connections" />Graphes</button>
-                    <button type="button" class="workspace-link workspace-graph-toggle"
-                        :aria-expanded="graphsExpanded" aria-controls="workspace-graph-children"
-                        aria-label="Sous-menu Graphes" @click="graphsExpanded = !graphsExpanded">
-                        <span aria-hidden="true">{{ graphsExpanded ? '⌄' : '›' }}</span>
-                    </button>
-                </div>
-                <div v-show="graphsExpanded" id="workspace-graph-children">
-                    <button type="button" class="workspace-link workspace-link--child"
-                        :disabled="busy || saving" @click="openPanel('connections')">↳ Connexions</button>
-                </div>
+                <button type="button" class="workspace-link" :aria-current="panel === 'graphs' ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openPanel('graphs')"><WorkspaceIcon name="connections" />Graphes</button>
+                <button v-if="panel === 'graphs' || panel === 'connections'" type="button" class="workspace-link workspace-link--child"
+                    :aria-current="panel === 'connections' ? 'page' : undefined"
+                    :disabled="busy || saving" @click="openPanel('connections')">↳ Connexions</button>
                 <template v-for="[key, label] in [['timeline', 'Chronologies'], ['maps', 'Cartes'], ['narration', 'Narration'], ['ideas', 'Idées'], ['search', 'Recherche']]" :key="key">
                     <button type="button" class="workspace-link" :aria-current="panel === key ? 'page' : undefined"
                         :disabled="busy || saving || key === 'maps' || key === 'search'"
@@ -49,7 +41,7 @@
         <ProjectDetailsView v-if="panel === 'settings'" />
         <ProjectNarrative v-else-if="panel === 'narration'" :project-id="projectId" @open-content="openPanelContent" />
         <ProjectIdeas v-else-if="panel === 'ideas'" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openPanelContent" />
-        <ProjectConnections v-else-if="panel === 'connections'" :project-id="projectId" @open-content="openPanelContent" />
+        <ProjectConnections v-else-if="panel === 'graphs' || panel === 'connections'" :mode="panel" :project-id="projectId" @open-content="openPanelContent" />
         <ProjectTimeline v-else-if="panel === 'timeline'" :project-id="projectId" @open-content="openPanelContent" />
         <section v-else-if="panel === 'overview'" class="content-templates-view">
             <header class="page-header">
@@ -62,7 +54,7 @@
             <nav aria-label="Accès rapides du projet">
                 <button type="button" :disabled="busy" @click="openTreeItem({})">Catalogue et création de fiche</button>
                 <button type="button" :disabled="busy" @click="openPanel('ideas')">Capturer une idée</button>
-                <button type="button" :disabled="busy" @click="openPanel('connections')">Graphes et connexions</button>
+                <button type="button" :disabled="busy" @click="openPanel('graphs')">Graphes et connexions</button>
                 <button type="button" :disabled="busy" @click="openPanel('timeline')">Chronologie</button>
                 <button type="button" :disabled="busy" @click="openPanel('narration')">Narration</button>
             </nav>

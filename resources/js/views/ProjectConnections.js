@@ -3,7 +3,7 @@ import { contentRequest } from '../services/contentRecovery';
 const emptyFilters = () => ({ search: '', type: '', status: '', folder: '', tag: '', relation: '', depth: 0, mode: 'all', anchor: '' });
 
 export default {
-    props: { projectId: { type: String, required: true } },
+    props: { projectId: { type: String, required: true }, mode: { type: String, default: 'graphs' } },
     emits: ['open-content'],
     data: () => ({
         nodes: [], edges: [], selection: null, target: '', type: '', filters: emptyFilters(), folders: [], memberships: [], views: [], viewName: '', editing: null, busy: false, error: '', drag: null,
