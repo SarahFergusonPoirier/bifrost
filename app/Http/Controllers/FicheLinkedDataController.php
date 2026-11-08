@@ -48,6 +48,15 @@ class FicheLinkedDataController extends Controller
                 'note' => $relation->target->summary,
             ])->values();
 
+        $capabilities = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
+            && $relation->type_key === 'capability')
+            ->unique('target_content_id')->map(fn (ContentRelation $relation): array => [
+                'id' => 'capability-'.$relation->id,
+                'public_id' => $relation->target->public_id,
+                'label' => $relation->target->title,
+                'description' => $relation->target->summary,
+            ])->values();
+
         $dates = ContentFieldValue::query()->where('content_id', $record->id)
             ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('options_data->format', 'temporal'))
             ->where('value_json->timeline', true)->with('fieldDefinition:id,label')->get()
@@ -67,6 +76,6 @@ class FicheLinkedDataController extends Controller
                 'date' => ['start' => $event->start, 'end' => $event->end, 'precision' => $event->precision, 'calendar' => $event->calendar],
             ]);
 
-        return response()->json(['relations' => $linked, 'equipment' => $equipment, 'timeline' => $dates->concat($events)->values()]);
+        return response()->json(['relations' => $linked, 'equipment' => $equipment, 'capabilities' => $capabilities, 'timeline' => $dates->concat($events)->values()]);
     }
 }

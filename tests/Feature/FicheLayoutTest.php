@@ -174,10 +174,15 @@ class FicheLayoutTest extends TestCase
         foreach ([[$object, 'equipment'], [$unrelated, 'mention']] as [$target, $type]) {
             ContentRelation::create(['source_content_id' => $character->id, 'target_content_id' => $target->id, 'type_key' => $type]);
         }
+        ContentRelation::create([
+            'source_content_id' => $character->id, 'target_content_id' => $unrelated->id, 'type_key' => 'capability',
+        ]);
+        $unrelated->update(['title' => 'Protection', 'summary' => 'Bloque les sorts']);
         $object->update(['title' => 'Épée de voyage', 'summary' => 'Lame courte']);
         $url = "/api/projects/{$project->id}/contents";
         $this->getJson("$url/{$character->public_id}/fiche-links")->assertOk()->assertJsonCount(1, 'equipment')
-            ->assertJsonPath('equipment.0.title', 'Épée de voyage')->assertJsonPath('equipment.0.note', 'Lame courte');
+            ->assertJsonPath('equipment.0.title', 'Épée de voyage')->assertJsonPath('equipment.0.note', 'Lame courte')
+            ->assertJsonPath('capabilities.0.label', 'Protection')->assertJsonPath('capabilities.0.description', 'Bloque les sorts');
         $this->getJson("$url/{$object->public_id}/fiche-links")->assertOk()->assertJsonCount(0, 'equipment');
     }
 }

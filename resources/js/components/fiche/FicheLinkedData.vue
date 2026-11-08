@@ -3,7 +3,8 @@
     <p v-else-if="!data" role="status">Chargement…</p>
     <template v-else-if="kind !== 'timeline'">
         <ul v-if="items.length" class="fiche-relations" :class="{ 'fiche-relations--cards': view === 'cards' }">
-            <li v-for="relation in items.slice(0, limit)" :key="relation.id">
+            <li v-for="(relation, index) in items.slice(0, limit)" :key="relation.id ?? index">
+                <slot name="entry" :entry="relation">
                 <img v-if="view === 'cards' && relation.image" class="fiche-equipment-image"
                     :src="relation.image" alt="" loading="lazy" @error="$event.target.hidden = true" />
                 <button v-if="relation.public_id" type="button" @click="$emit('open', relation.public_id)">{{ relation.title }}</button>
@@ -14,9 +15,10 @@
                     <p v-if="relation.start || relation.end">{{ [relation.start, relation.end].filter(Boolean).join(' – ') }}</p>
                     <p v-if="relation.note">{{ relation.note }}</p>
                 </template>
+                </slot>
             </li>
         </ul>
-        <p v-else>{{ kind === 'equipment' ? 'Aucun équipement lié à cette fiche.' : 'Aucune relation liée à cette fiche.' }}</p>
+        <p v-else>{{ kind === 'equipment' ? 'Aucun équipement lié à cette fiche.' : kind === 'capabilities' ? 'Aucune capacité.' : 'Aucune relation liée à cette fiche.' }}</p>
     </template>
     <template v-else>
         <ol v-if="events.length">
