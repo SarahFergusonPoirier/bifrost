@@ -4,7 +4,7 @@ export default {
     props: { projectId: { type: String, required: true } },
     emits: ['open-content'],
     data: () => ({
-        works: [], workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
+        works: [], includeNotes: false, workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
         statuses: { draft: 'Brouillon', in_progress: 'En cours', completed: 'Terminée', abandoned: 'Abandonnée' },
     }),
     computed: {
@@ -20,6 +20,10 @@ export default {
         this.run(() => this.load());
     },
     methods: {
+        exportUrl(format) {
+            const query = new URLSearchParams({ format, notes: Number(this.includeNotes) });
+            return '/api' + this.endpoint() + '/' + encodeURIComponent(this.workId) + '/export?' + query;
+        },
         endpoint() {
             return '/projects/' + this.projectId + '/narration';
         },

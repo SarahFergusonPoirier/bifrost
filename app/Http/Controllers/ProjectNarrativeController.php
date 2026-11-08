@@ -7,6 +7,7 @@ use App\Models\ContentType;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -77,6 +78,55 @@ class ProjectNarrativeController extends Controller
 
             return response()->json(null, 204);
         }, attempts: 3);
+    }
+
+    public function export(Request $request, Project $project, string $work): Response
+    {
+        $input = $request->validate([
+            'format' => ['required', 'in:txt,md'],
+            'notes' => ['sometimes', 'boolean'],
+        ]);
+        $record = $this->work($project, $work);
+        $markdown = $input['format'] === 'md';
+        $includeNotes = (bool) ($input['notes'] ?? false);
+        $scenes = $project->contents()->join('project_narrative_scenes', 'scene_id', '=', 'contents.id')
+            ->where('work_id', $record->id)->orderBy('position')->orderBy('contents.id')
+            ->with(['blocks' => fn ($query) => $query->orderBy('id')])->get(['contents.*']);
+        $parts = [$this->exportHeading($record->title, 1, $markdown)];
+
+        foreach ($scenes as $scene) {
+            $parts[] = $this->exportHeading($scene->title, 2, $markdown);
+
+            if ($includeNotes && filled($scene->summary)) {
+                $parts[] = $scene->summary;
+            }
+
+            foreach ($scene->blocks as $block) {
+                if (! $includeNotes && in_array($block->block_type, ['note', 'private_note'], true)) {
+                    continue;
+                }
+
+                if (filled($block->title)) {
+                    $parts[] = $this->exportHeading($block->title, 3, $markdown);
+                }
+
+                if (filled($block->body)) {
+                    $parts[] = $block->body;
+                }
+            }
+        }
+
+        return response(implode("\n\n", $parts)."\n", 200, [
+            'Content-Type' => ($markdown ? 'text/markdown' : 'text/plain').'; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="bifrost-oeuvre.'.$input['format'].'"',
+        ]);
+    }
+
+    private function exportHeading(string $title, int $level, bool $markdown): string
+    {
+        $title = str_replace(["\r", "\n"], ' ', $title);
+
+        return $markdown ? str_repeat('#', $level).' '.addcslashes($title, '\\*_#[]<>'.chr(96)) : $title;
     }
 
     private function work(Project $project, string $publicId): Content

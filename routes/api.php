@@ -78,3 +78,4 @@ Route::get('/projects/{project}/narration', [ProjectNarrativeController::class, 
 Route::post('/projects/{project}/narration', [ProjectNarrativeController::class, 'store']);
 Route::post('/projects/{project}/narration/{work}/scenes', [ProjectNarrativeController::class, 'storeScene']);
 Route::put('/projects/{project}/narration/{work}/scenes/order', [ProjectNarrativeController::class, 'reorder']);
+Route::get('/projects/{project}/narration/{work}/export', [ProjectNarrativeController::class, 'export']);

@@ -14,6 +14,12 @@
                 </select>
             </label>
             <button type="button" @click="$emit('open-content', work.public_id)">Ouvrir l’œuvre</button>
+            <fieldset>
+                <legend>Exporter l’œuvre</legend>
+                <label><input v-model="includeNotes" type="checkbox" /> Inclure les résumés et les blocs de notes</label>
+                <p><a :href="exportUrl('txt')">Télécharger en texte</a></p>
+                <p><a :href="exportUrl('md')">Télécharger en Markdown</a></p>
+            </fieldset>
             <form @submit.prevent="createScene">
                 <label>Titre de la scène <input v-model="sceneTitle" required maxlength="255" :disabled="busy" /></label>
                 <button type="submit" :disabled="busy">Ajouter une scène</button>
