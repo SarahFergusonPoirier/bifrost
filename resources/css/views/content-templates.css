@@ -509,3 +509,30 @@
     align-items: center;
     gap: 0.4rem;
 }
+
+.catalogue-collections-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.catalogue-collection-add {
+    display: inline-grid;
+    width: 2rem;
+    min-height: 2rem;
+    margin-inline-start: auto;
+    padding: 0;
+    place-items: center;
+    background: transparent;
+    border: 0;
+}
+
+.catalogue-collection-add:hover:not(:disabled) {
+    background: transparent;
+    color: var(--workspace-caption);
+}
+
+.catalogue-collection-add .workspace-icon {
+    width: 1rem;
+    font-size: 0.85rem;
+}
