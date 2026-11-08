@@ -1,3 +1,4 @@
+import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
 
@@ -10,9 +11,12 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlock, FicheText },
+    components: { FicheBlock, FicheText, FicheLinkedData },
     props: {
         summary: String,
+        active: String,
+        linksPath: String,
+        linkedTabs: { type: Array, default: () => [] },
         tags: { type: Array, default: () => [] },
         blocks: { type: Array, default: () => [] },
         templateSections: { type: Map, required: true },
@@ -24,6 +28,7 @@ export default {
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
+    emits: ['open', 'select'],
     data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
     computed: {
         cards() {
@@ -46,6 +51,10 @@ export default {
             return [
                 { source: 'summary', title: 'Résumé', text: this.summary, icon: 'catalogue' },
                 { source: 'tags', title: 'Étiquettes', tags: this.tags, icon: 'folder' },
+                ...(this.linksPath ? [
+                    { source: 'relations', title: 'Relations', icon: 'connections', linked: true },
+                    { source: 'timeline', title: 'Chronologie', icon: 'timeline', linked: true },
+                ] : []),
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
@@ -60,11 +69,15 @@ export default {
         },
         defaults() {
 
-            return this.cards.filter(card => card.text || card.tags?.length || card.fields?.length)
+            return this.cards.filter(card => card.linked || card.text || card.tags?.length || card.fields?.length)
                 .map(card => placement(card.source, card.source));
         },
+        initialPlacements() {
+            if (this.useDefaults) return this.defaults;
+            return this.defaults.filter(item => item.source === this.active);
+        },
         displayed() {
-            const placements = this.editing ? this.draft : this.placements ?? (this.useDefaults ? this.defaults : []);
+            const placements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
             return placements.filter(item => !item.hidden && this.bySource.has(item.source))
                 .map(item => ({ placement: item, card: this.bySource.get(item.source) }));
         },
@@ -72,7 +85,7 @@ export default {
     methods: {
         begin() {
             this.draft = this.placements?.map(item => ({ ...item }))
-                ?? (this.useDefaults ? this.defaults.map(item => placement(item.source)) : []);
+                ?? this.initialPlacements.map(item => placement(item.source));
             this.transfers = [];
             this.copies = [];
             this.editing = true;

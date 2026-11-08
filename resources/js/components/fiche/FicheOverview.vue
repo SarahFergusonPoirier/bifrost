@@ -63,7 +63,10 @@
                     @keydown="resizeWithKeyboard($event, placement)">↘</button>
             </template>
             <template v-if="!placement.collapsed">
-                <FicheText v-if="card.text" :text="card.text" />
+                <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source"
+                    :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
+                    @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
+                <FicheText v-else-if="card.text" :text="card.text" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
                 </ul>

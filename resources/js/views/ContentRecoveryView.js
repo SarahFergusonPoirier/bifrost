@@ -1,4 +1,3 @@
-import FicheLinkedData from '../components/fiche/FicheLinkedData.vue';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
 import FicheOverview from '../components/fiche/FicheOverview.vue';
 import ProjectToolbar from '../components/ProjectToolbar.vue';
@@ -18,7 +17,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { FicheLinkedData, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
