@@ -1,6 +1,6 @@
 <template>
-    <div class="app-layout">
-        <aside class="app-sidebar" aria-label="Navigation principale">
+    <div class="app-layout" :style="{ '--sidebar-width': sidebarWidth + 'px' }">
+        <aside id="app-sidebar" class="app-sidebar" aria-label="Navigation principale">
             <slot name="sidebar">
             <RouterLink
                 :to="{ name: 'home' }"
@@ -65,6 +65,12 @@
                     </slot>
         </aside>
 
+        <div class="app-sidebar-resize" role="separator" tabindex="0" aria-orientation="vertical"
+            aria-label="Largeur de la barre latérale" aria-controls="app-sidebar"
+            :aria-valuemin="minWidth" :aria-valuemax="maxWidth" :aria-valuenow="sidebarWidth"
+            @keydown="resizeWithKeyboard" @pointerdown.prevent="startResize" @pointermove="resize"
+            @pointerup="endResize" @pointercancel="endResize" @lostpointercapture="endResize"></div>
+
         <div class="app-main">
             <main class="app-content">
                 <slot />
@@ -72,3 +78,5 @@
         </div>
     </div>
 </template>
+
+<script src="./AppLayout.js"></script>
