@@ -99,7 +99,7 @@
                 <input v-model="catalogueSearch" type="search" aria-label="Rechercher une fiche" placeholder="Rechercher une fiche…" maxlength="255" />
                 <button type="submit">Rechercher</button>
                 <details>
-                    <summary>Filtres</summary>
+                    <summary><WorkspaceIcon name="filter" /> Filtres</summary>
                     <label>Type <select v-model="catalogueType">
                         <option value="">Tous</option><option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
                     </select></label>
@@ -116,8 +116,8 @@
                 <label>Trier par <select v-model="catalogueSort" @change="browse(1)">
                     <option value="recent">Dernière modification</option><option value="title">Titre</option>
                 </select></label>
-                <button type="button" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'">Grille</button>
-                <button type="button" :aria-pressed="catalogueDisplay === 'list'" @click="catalogueDisplay = 'list'">Liste</button>
+                <button type="button" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'"><WorkspaceIcon name="grid" /> Grille</button>
+                <button type="button" :aria-pressed="catalogueDisplay === 'list'" @click="catalogueDisplay = 'list'"><WorkspaceIcon name="list" /> Liste</button>
             </form>
             <div :class="{ 'catalogue-layout': projectId && !trash }">
             <aside v-if="projectId && !trash" class="catalogue-index">
@@ -125,16 +125,16 @@
                 <h2 id="universe-categories-heading">Catégories de l’univers</h2>
                 <ul class="catalogue-categories">
                     <li><button type="button" :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && !appliedCatalogueFilters.type)"
-                        @click="openCategory()">Toutes les fiches <span>{{ catalogueTotal }}</span></button></li>
+                        @click="openCategory()"><span class="catalogue-category-label"><WorkspaceIcon name="catalogue" /> Toutes les fiches</span><span class="catalogue-category-count">{{ catalogueTotal }}</span></button></li>
                     <li v-for="category in universeCategories" :key="category.key">
                         <button type="button" :disabled="!category.id"
                             :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && appliedCatalogueFilters.type === category.id)"
-                            @click="openCategory(category.id)">{{ category.label }} <span>{{ category.count }}</span></button>
+                            @click="openCategory(category.id)"><span class="catalogue-category-label"><WorkspaceIcon :name="category.key" /> {{ category.label }}</span><span class="catalogue-category-count">{{ category.count }}</span></button>
                     </li>
                 </ul>
             </section>
             <section v-if="projectId && !trash" aria-labelledby="folder-heading">
-                <h2 id="folder-heading">Collections <button type="button" :aria-expanded="catalogueFolder" aria-label="Nouvelle collection" @click="catalogueFolder = !catalogueFolder">＋</button></h2>
+                <h2 id="folder-heading"><WorkspaceIcon name="folder" /> Collections <button type="button" :aria-expanded="catalogueFolder" aria-label="Nouvelle collection" @click="catalogueFolder = !catalogueFolder"><WorkspaceIcon name="plus" /></button></h2>
                 <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">
                     <button v-for="item in sidebarItems" :key="item.key" class="catalogue-tree__item"
                         type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
@@ -143,7 +143,7 @@
                         @dragover="item.folder && $event.preventDefault()"
                         @drop.prevent="item.folder && dropInto($event, item)"
                         @click="openTreeItem(item)">
-                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
+                        <WorkspaceIcon :name="item.folder ? 'folder' : 'catalogue'" /> {{ item.folder ? item.folder.name : item.content.title }}
                     </button>
                 </nav>
                 <template v-if="folderId">
@@ -174,7 +174,7 @@
                 <p v-if="!listing.data.length">{{ trash ? 'La corbeille est vide.' : 'Aucune fiche active.' }}</p>
                 <div v-else-if="!trash" class="catalogue-groups">
                     <section v-for="group in catalogueGroups" :key="group.id" class="catalogue-group">
-                        <h2>{{ group.label }}</h2>
+                        <h2><WorkspaceIcon :name="universeCategories.find(category => category.id === group.id)?.key ?? 'catalogue'" /> {{ group.label }}</h2>
                         <div class="catalogue-cards" :class="{ 'catalogue-cards--list': catalogueDisplay === 'list' }">
                             <article v-for="item in group.items" :key="item.public_id" class="catalogue-card">
                                 <button type="button" draggable="true" @dragstart="beginDrag($event, { content: item })" @click="openContent(item.public_id)">

@@ -20,5 +20,16 @@ const icons = {
     exit: 'exit',
     trash: 'trash',
     archive: 'archive',
+    personnage: 'users',
+    lieu: 'mountains',
+    'organisation-faction': 'bank',
+    'evenement-historique': 'hourglass',
+    'objet-artefact': 'cube',
+    'creature-animal': 'paw',
+    'plante-organisme': 'leaf',
+    filter: 'filter',
+    grid: 'apps',
+    list: 'list',
+    plus: 'plus',
 };
 </script>

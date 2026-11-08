@@ -432,7 +432,7 @@
     text-align: start;
 }
 
-.catalogue-categories button span {
+.catalogue-categories .catalogue-category-count {
     border-radius: var(--radius-pill);
     padding-inline: 0.45rem;
     background: rgb(127 127 127 / 20%);
@@ -502,4 +502,10 @@
 .catalogue-tree__item {
     background: transparent;
     border-color: transparent;
+}
+
+.catalogue-category-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
