@@ -16,11 +16,13 @@
                 </button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openConnections">Graphes et connexions</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openIdeas">Idées</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTimeline">Chronologie</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openSettings">Paramètres du projet</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="settings" />
+        <ProjectIdeas v-else-if="ideas" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openTimelineContent" />
         <ProjectConnections v-else-if="connections" :project-id="projectId" @open-content="openTimelineContent" />
         <ProjectTimeline v-else-if="timeline" :project-id="projectId" @open-content="openTimelineContent" />
     <section v-else class="content-templates-view">
@@ -107,6 +109,10 @@
         <template v-else>
             <button type="button" :disabled="busy || saving" @click="close">Retour aux fiches</button>
             <h2>{{ selected.title }}</h2>
+            <p v-if="selected.origin_idea">
+                Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
+                <button type="button" :disabled="busy || saving" @click="openIdeas">Ouvrir les idées du projet</button>
+            </p>
             <p v-if="selected.template_assignment">
                 Modèle · Version {{ selected.template_assignment.template_version.version_number }}
             </p>

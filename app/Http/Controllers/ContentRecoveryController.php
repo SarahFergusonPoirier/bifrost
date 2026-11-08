@@ -333,7 +333,13 @@ class ContentRecoveryController extends Controller
 
     private function contentResponse(Content $content): JsonResponse
     {
-        return response()->json($content->load('blocks', 'fieldValues', 'templateAssignment.templateVersion.fields.fieldDefinition'))->header(
+        $content->load('blocks', 'fieldValues', 'templateAssignment.templateVersion.fields.fieldDefinition');
+        $origin = DB::table('project_idea_conversions')->where('content_id', $content->id)
+            ->join('project_ideas', 'project_ideas.id', '=', 'project_idea_conversions.idea_id')
+            ->first(['project_ideas.id', 'project_ideas.title', 'project_ideas.archived_at']);
+        $content->setAttribute('origin_idea', $origin);
+
+        return response()->json($content)->header(
             'ETag',
             '"'.$this->version($this->snapshotData($content, $content->getAttributes())).'"',
         );

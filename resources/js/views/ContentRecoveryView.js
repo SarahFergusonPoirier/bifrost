@@ -3,13 +3,14 @@ import { onBeforeRouteLeave } from 'vue-router';
 import StructuredField from '../components/StructuredField.vue';
 import AppLayout from '../layouts/AppLayout.vue';
 import ProjectConnections from './ProjectConnections.vue';
+import ProjectIdeas from './ProjectIdeas.vue';
 import ProjectTimeline from './ProjectTimeline.vue';
 import ProjectDetailsView from './ProjectDetailsView.vue';
 import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections },
+    components: { AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -17,6 +18,7 @@ export default {
         const settings = ref(false);
         const timeline = ref(false);
         const connections = ref(false);
+        const ideas = ref(false);
         const sidebarItems = computed(() => {
             const items = [];
             const visit = (parent, depth) => {
@@ -284,10 +286,21 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
-            timeline, connections,
+            timeline, connections, ideas,
+            openIdeas: () => {
+                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les idées ?')) return;
+                selected.value = null;
+                draft.value = null;
+                settings.value = false;
+                timeline.value = false;
+                connections.value = false;
+                ideas.value = true;
+            },
             openConnections: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les connexions ?')) return;
-                selected.value = null;
+
+                ideas.value = false;
+                                selected.value = null;
                 draft.value = null;
                 settings.value = false;
                 connections.value = false;
@@ -296,13 +309,17 @@ export default {
             },
             openTimeline: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la chronologie ?')) return;
-                selected.value = null;
+
+                ideas.value = false;
+                                selected.value = null;
                 draft.value = null;
                 settings.value = false;
                 connections.value = false;
                 timeline.value = true;
             },
             openTimelineContent: id => run(async () => {
+                
+                ideas.value = false;
                 connections.value = false;
                 timeline.value = false;
                 trash.value = false;
@@ -310,6 +327,8 @@ export default {
                 await open(id);
             }),
             openSettings: () => {
+                
+                ideas.value = false;
                 connections.value = false;
                 timeline.value = false;
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
@@ -319,7 +338,9 @@ export default {
             },
             openProjectTrash: () => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la corbeille ?')) return;
-                settings.value = false;
+
+                ideas.value = false;
+                                settings.value = false;
                 selected.value = null;
                 draft.value = null;
                 connections.value = false;
@@ -329,7 +350,9 @@ export default {
             }),
             openTreeItem: item => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cet élément ?')) return;
-                settings.value = false;
+
+                ideas.value = false;
+                                settings.value = false;
                 selected.value = null;
                 draft.value = null;
                 connections.value = false;

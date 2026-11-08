@@ -5,6 +5,7 @@ use App\Http\Controllers\ContentTemplateController;
 use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
+use App\Http\Controllers\ProjectIdeaController;
 use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
@@ -65,3 +66,8 @@ Route::put('/projects/{project}/graph/positions/{content}', [ProjectConnectionCo
 
 Route::put('/projects/{project}/graph/views', [ProjectConnectionController::class, 'saveView']);
 Route::delete('/projects/{project}/graph/views/{view}', [ProjectConnectionController::class, 'deleteView'])->whereNumber('view');
+
+Route::get('/projects/{project}/ideas', [ProjectIdeaController::class, 'index']);
+Route::post('/projects/{project}/ideas', [ProjectIdeaController::class, 'store']);
+Route::patch('/projects/{project}/ideas/{idea}', [ProjectIdeaController::class, 'update'])->whereNumber('idea');
+Route::post('/projects/{project}/ideas/{idea}/convert', [ProjectIdeaController::class, 'convert'])->whereNumber('idea');
