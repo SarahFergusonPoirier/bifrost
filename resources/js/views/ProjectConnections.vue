@@ -1,0 +1,53 @@
+<template>
+    <section>
+        <h1>Graphes et connexions</h1>
+        <p v-if="error" role="alert">{{ error }}</p>
+        <label>Rechercher une fiche <input v-model="filter" type="search" /></label>
+        <p v-if="!nodes.length && !busy">Le projet ne contient aucune fiche.</p>
+        <svg v-else ref="graph" viewBox="0 0 1000 600" preserveAspectRatio="none" width="100%" height="420"
+            aria-label="Graphe des fiches" @pointermove="move" @pointerup="finish()" @pointercancel="finish(true)">
+            <defs>
+                <marker id="connection-arrow" markerWidth="9" markerHeight="9" refX="19" refY="4.5" orient="auto">
+                    <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="currentColor" />
+                </marker>
+            </defs>
+            <line v-for="edge in shownEdges" :key="edge.id"
+                :x1="edge.source.x * 1000" :y1="edge.source.y * 600" :x2="edge.target.x * 1000" :y2="edge.target.y * 600"
+                stroke="currentColor" marker-end="url(#connection-arrow)" />
+            <g v-for="node in shown" :key="node.id" :transform="'translate(' + (node.x * 1000) + ' ' + (node.y * 600) + ')'"
+                role="button" tabindex="0" :aria-label="node.title" style="touch-action: none; cursor: grab"
+                @keydown.enter.prevent="select(node)" @keydown.space.prevent="select(node)" @pointerdown="start($event, node)">
+                <circle r="12" :fill="'hsl(' + ((node.content_type_id * 67) % 360) + ' 55% 52%)'"
+                    :stroke="selection?.id === node.id ? 'currentColor' : 'none'" stroke-width="3" />
+                <text x="16" y="5" fill="currentColor" font-size="15">{{ node.title }}</text>
+            </g>
+        </svg>
+        <section v-if="selection" aria-label="Aperçu de la fiche">
+            <h2>{{ selection.title }}</h2>
+            <p>{{ selection.content_type?.name }}</p>
+            <p v-if="selection.summary">{{ selection.summary }}</p>
+            <button type="button" @click="$emit('open-content', selection.public_id)">Ouvrir la fiche</button>
+            <h3>Connexions</h3>
+            <p v-if="!connections.length">Cette fiche est isolée.</p>
+            <ul>
+                <li v-for="edge in connections" :key="edge.id">
+                    {{ edge.source_content_id === selection.id ? '→' : '←' }} {{ edge.type_key }}
+                    <button type="button" @click="select(peer(edge))">{{ peer(edge)?.title }}</button>
+                    <button type="button" :disabled="busy" @click="remove(edge)">Retirer</button>
+                </li>
+            </ul>
+            <form @submit.prevent="add">
+                <label>Fiche cible
+                    <select v-model="target" required>
+                        <option value="" disabled>Choisir une fiche</option>
+                        <option v-for="node in nodes.filter(item => item.id !== selection.id)" :key="node.id" :value="node.public_id">{{ node.title }}</option>
+                    </select>
+                </label>
+                <label>Type de relation <input v-model="type" required maxlength="80" pattern="[A-Za-z0-9_\-]+" placeholder="ex. appartient_a" /></label>
+                <button type="submit" :disabled="busy">Ajouter la relation</button>
+            </form>
+        </section>
+    </section>
+</template>
+
+<script src="./ProjectConnections.js"></script>

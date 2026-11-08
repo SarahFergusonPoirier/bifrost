@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContentRecoveryController;
 use App\Http\Controllers\ContentTemplateController;
+use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
 use App\Http\Controllers\ProjectTimelineController;
@@ -56,3 +57,8 @@ Route::post('/projects/{project}/timeline/events', [ProjectTimelineController::c
 Route::put('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'update'])->whereNumber('event');
 Route::delete('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'destroy'])->whereNumber('event');
 Route::post('/projects/{project}/timeline/events/{event}/convert', [ProjectTimelineController::class, 'convert'])->whereNumber('event');
+
+Route::get('/projects/{project}/connections', [ProjectConnectionController::class, 'index']);
+Route::post('/projects/{project}/connections', [ProjectConnectionController::class, 'store']);
+Route::delete('/projects/{project}/connections/{relation}', [ProjectConnectionController::class, 'destroy'])->whereNumber('relation');
+Route::put('/projects/{project}/graph/positions/{content}', [ProjectConnectionController::class, 'position']);
