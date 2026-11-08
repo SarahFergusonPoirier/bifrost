@@ -43,31 +43,10 @@
         <ProjectIdeas v-else-if="panel === 'ideas'" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openPanelContent" />
         <ProjectConnections v-else-if="panel === 'graphs' || panel === 'connections'" :mode="panel" :project-id="projectId" @open-content="openPanelContent" />
         <ProjectTimeline v-else-if="panel === 'timeline'" :project-id="projectId" @open-content="openPanelContent" />
-        <section v-else-if="panel === 'overview'" class="content-templates-view">
-            <header class="page-header">
-                <h1>{{ currentProject?.name ?? 'Vue d’ensemble du projet' }}</h1>
-                <p v-if="currentProject?.description">{{ currentProject.description }}</p>
-                <img v-if="currentProject?.cover_image" :src="'/storage/' + currentProject.cover_image"
-                    :alt="'Couverture de ' + currentProject.name" width="300" />
-            </header>
-            <p v-if="error" role="alert">{{ error }}</p>
-            <nav aria-label="Accès rapides du projet">
-                <button type="button" :disabled="busy" @click="openTreeItem({})">Catalogue et création de fiche</button>
-                <button type="button" :disabled="busy" @click="openPanel('ideas')">Capturer une idée</button>
-                <button type="button" :disabled="busy" @click="openPanel('graphs')">Graphes et connexions</button>
-                <button type="button" :disabled="busy" @click="openPanel('timeline')">Chronologie</button>
-                <button type="button" :disabled="busy" @click="openPanel('narration')">Narration</button>
-            </nav>
-            <h2>Fiches récemment modifiées</h2>
-            <p v-if="busy">Chargement…</p>
-            <p v-else-if="!recentContents.length">Aucune fiche dans ce projet.</p>
-            <ul v-else>
-                <li v-for="item in recentContents" :key="item.public_id">
-                    <button type="button" @click="openPanelContent(item.public_id)">{{ item.title }}</button>
-                    <time v-if="item.updated_at" :datetime="item.updated_at"> · {{ item.updated_at.slice(0, 10) }}</time>
-                </li>
-            </ul>
-        </section>
+        <ProjectOverview v-else-if="panel === 'overview'" :project-id="projectId" :project="currentProject"
+            :categories="universeCategories" :recent="recentContents" :folders="overviewFolders" :busy="busy" :error="error"
+            @search="overviewSearch" @catalogue="overviewCatalogue" @category="openCategory"
+            @panel="openPanel" @content="openPanelContent" @folder="folder => openTreeItem({ folder })" />
     <section v-else class="content-templates-view">
         <header class="page-header">
             <h1>{{ projectId ? 'Fiches du projet' : 'Corbeille des projets' }}</h1>
@@ -110,7 +89,7 @@
                     <button type="button" @click="deleteFolder">Supprimer ce dossier</button>
                 </template>
                 <form @submit.prevent="saveFolder">
-                    <label>Nom du dossier <input v-model="folderName" required maxlength="255" /></label>
+                    <label>Nom du dossier <input id="catalogue-folder-name" v-model="folderName" required maxlength="255" /></label>
                     <label>Dossier parent
                         <select v-model="folderParent">
                             <option :value="0">Racine du projet</option>
@@ -123,7 +102,7 @@
             </section>
 
             <form v-if="!trash" @submit.prevent="create">
-                <label>Titre <input v-model="newTitle" required maxlength="255" /></label>
+                <label>Titre <input id="catalogue-create-title" v-model="newTitle" required maxlength="255" /></label>
                 <label>
                     Type de fiche
                     <select v-model="typeId" required>

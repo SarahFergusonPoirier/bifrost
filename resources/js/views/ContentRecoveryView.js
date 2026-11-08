@@ -1,5 +1,6 @@
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
+import ProjectOverview from './ProjectOverview.vue';
 import WorkspaceIcon from '../components/WorkspaceIcon.vue';
 import ContentAttachments from '../components/ContentAttachments.vue';
 import StructuredField from '../components/StructuredField.vue';
@@ -13,7 +14,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -79,6 +80,16 @@ export default {
         const projectId = ref(props.projectId);
         const currentProject = computed(() => projects.value.find(project => String(project.id) === props.projectId));
         const types = ref([]);
+        const countsByType = computed(() => {
+            const counts = new Map();
+            const seen = new Set();
+            for (const item of treeContents.value) {
+                if (seen.has(item.public_id)) continue;
+                seen.add(item.public_id);
+                counts.set(item.content_type_id, (counts.get(item.content_type_id) ?? 0) + 1);
+            }
+            return counts;
+        });
         const universeCategories = computed(() => [
             ['personnage', 'Personnages'],
             ['lieu', 'Lieux'],
@@ -87,9 +98,10 @@ export default {
             ['objet-artefact', 'Objets'],
             ['creature-animal', 'Faune'],
             ['plante-organisme', 'Flore'],
-        ].map(([key, label]) => ({
-            key, label, id: types.value.find(type => type.key === key && type.scope_type === 'system')?.id,
-        })));
+        ].map(([key, label]) => {
+            const id = types.value.find(type => type.key === key && type.scope_type === 'system')?.id;
+            return { key, label, id, count: countsByType.value.get(id) ?? 0 };
+        }));
         const newTitle = ref('');
         const typeId = ref('');
         const templates = ref([]);
@@ -424,6 +436,29 @@ export default {
                 await open(selected.value.public_id);
             }),
             panel, recentContents,
+            overviewFolders: computed(() => folders.value.filter(folder => folder.parent_id === null).slice(0, 5)),
+            overviewCatalogue: async focus => {
+                await run(async () => {
+                    panel.value = 'catalogue';
+                    trash.value = false;
+                    selectFolder(0);
+                    appliedCatalogueFilters.value = {};
+                    await loadList();
+                });
+                await nextTick();
+                if (focus) document.getElementById(focus)?.focus();
+            },
+            overviewSearch: query => run(async () => {
+                panel.value = 'catalogue';
+                trash.value = false;
+                catalogueSearch.value = query.trim();
+                catalogueType.value = '';
+                catalogueStatus.value = '';
+                catalogueTag.value = '';
+                searchWholeProject.value = true;
+                appliedCatalogueFilters.value = { search: catalogueSearch.value, wholeProject: true };
+                await loadList();
+            }),
             openPanel: next => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et changer de vue ?')) return;
                 selected.value = null;
@@ -513,6 +548,8 @@ export default {
             }),
             universeCategories, appliedCatalogueFilters,
             openCategory: id => run(async () => {
+                panel.value = 'catalogue';
+                trash.value = false;
                 catalogueType.value = id ?? '';
                 catalogueSearch.value = '';
                 catalogueStatus.value = '';
