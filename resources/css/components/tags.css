@@ -73,7 +73,7 @@
 
 .projects-section .project-tag-filters button.tag-chip.tag-chip-active,
 .projects-section .project-tag-filters button.tag-chip.tag-chip-active:hover {
-    color: #fff;
+    color: var(--color-on-primary);
     background-color: var(--color-primary);
     border-color: var(--color-primary);
 }

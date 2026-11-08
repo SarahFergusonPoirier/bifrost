@@ -63,6 +63,14 @@
                 </span>
             </nav>
                     </slot>
+            <label class="app-theme">
+                Apparence
+                <select :value="theme" @change="chooseTheme($event.target.value)">
+                    <option value="system">Système</option>
+                    <option value="light">Clair</option>
+                    <option value="dark">Sombre</option>
+                </select>
+            </label>
         </aside>
 
         <div class="app-sidebar-resize" role="separator" tabindex="0" aria-orientation="vertical"

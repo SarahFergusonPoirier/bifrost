@@ -2,12 +2,15 @@ const defaultWidth = 248;
 const minWidth = 200;
 const maxWidth = 480;
 const preferenceKey = 'bifrost:sidebar-width';
+const themeKey = 'bifrost:theme';
 
 export default {
     data() {
         let stored;
+        let theme;
         try {
             stored = Number(window.localStorage.getItem(preferenceKey));
+            theme = window.localStorage.getItem(themeKey);
         } catch {
             stored = 0;
         }
@@ -15,9 +18,32 @@ export default {
         return {
             sidebarWidth: stored >= minWidth && stored <= maxWidth ? stored : defaultWidth,
             minWidth, maxWidth, resizePointer: null,
+            theme: ['light', 'dark'].includes(theme) ? theme : 'system',
+            colorPreference: null,
         };
     },
+    mounted() {
+        this.colorPreference = window.matchMedia?.('(prefers-color-scheme: dark)');
+        this.colorPreference?.addEventListener('change', this.applyTheme);
+        this.applyTheme();
+    },
+    beforeUnmount() {
+        this.colorPreference?.removeEventListener('change', this.applyTheme);
+    },
     methods: {
+        applyTheme() {
+            const theme = this.theme === 'system' ? (this.colorPreference?.matches ? 'dark' : 'light') : this.theme;
+            document.documentElement.dataset.theme = theme;
+        },
+        chooseTheme(theme) {
+            this.theme = theme;
+            this.applyTheme();
+            try {
+                window.localStorage.setItem(themeKey, theme);
+            } catch {
+                // The theme still applies to the current page.
+            }
+        },
         setSidebarWidth(width) {
             this.sidebarWidth = Math.max(minWidth, Math.min(maxWidth, Math.round(width)));
         },

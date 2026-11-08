@@ -35,13 +35,13 @@ button:disabled {
 /* Action principale */
 
 .button-primary {
-    color: #fff;
+    color: var(--color-on-primary);
     background-color: var(--color-primary);
     border-color: var(--color-primary);
 }
 
 .button-primary:hover:not(:disabled) {
-    color: #fff;
+    color: var(--color-on-primary);
     background-color: var(--color-primary-hover);
     border-color: var(--color-primary-hover);
 }
