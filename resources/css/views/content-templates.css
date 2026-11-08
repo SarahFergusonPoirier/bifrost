@@ -497,3 +497,9 @@
         grid-template-columns: 1fr;
     }
 }
+
+.catalogue-categories button[aria-pressed="false"],
+.catalogue-tree__item {
+    background: transparent;
+    border-color: transparent;
+}
