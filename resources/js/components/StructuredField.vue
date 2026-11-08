@@ -34,6 +34,12 @@
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
         </template>
     </div>
+    <div v-else-if="format === 'external_link'">
+        <label>Adresse web <input type="url" maxlength="2048" :value="value?.url ?? ''"
+            @change="$emit('change', $event.target.value ? { ...value, url: $event.target.value.trim() } : '')" /></label>
+        <label>Libellé <input maxlength="255" :disabled="!value?.url" :value="value?.label ?? ''"
+            @change="update('label', $event.target.value.trim())" /></label>
+    </div>
     <div v-else-if="format === 'keywords'">
         <ol v-if="value?.length">
             <li v-for="(entry, index) in value" :key="index">

@@ -106,6 +106,11 @@ class ContentFieldValue extends Model
     {
         $format = $definition->options_data['format'] ?? null;
         $rules = match ($format) {
+            'external_link' => [
+                'value_json' => ['required', 'array:url,label'],
+                'value_json.url' => ['required', 'string', 'max:2048', 'url:http,https'],
+                'value_json.label' => ['nullable', 'string', 'max:255'],
+            ],
             'keywords' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label,description'],

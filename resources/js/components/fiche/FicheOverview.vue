@@ -159,6 +159,7 @@
                                     </ol>
                                 </details>
                             </div>
+                            <a v-else-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
                             <span v-else-if="field.badgeColor" class="fiche-choice-badge" :data-color="field.badgeColor">{{ field.value }}</span>
                             <template v-else>{{ field.value }}</template>
                         </dd>

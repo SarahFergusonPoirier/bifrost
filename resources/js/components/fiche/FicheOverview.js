@@ -49,6 +49,7 @@ export default {
                     references: this.fieldReferences(field),
                     badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)
                         ? field.display_options?.badge_color : null,
+                    url: field.format === 'external_link' ? this.safeExternalUrl(this.fieldValue?.(field)?.url) : null,
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
                         ? {
@@ -106,6 +107,14 @@ export default {
         },
     },
     methods: {
+        safeExternalUrl(value) {
+            try {
+                const url = new URL(value);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+            } catch {
+                return null;
+            }
+        },
         orderedFields(placement, fields = []) {
             if (!placement.field_order) return fields;
             const index = new Map(fields.map(field => [field.definitionId, field]));

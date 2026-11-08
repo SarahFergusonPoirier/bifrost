@@ -235,7 +235,7 @@ export default {
             for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
                 const column = fieldColumns[field.field_definition?.value_type];
                 const format = field.field_definition?.options_data?.format;
-                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords'].includes(format))) continue;
+                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'external_link'].includes(format))) continue;
                 const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
                 if (!sections.has(section)) sections.set(section, []);
                 sections.get(section).push({ ...field, column, format });
@@ -282,6 +282,7 @@ export default {
                 return fieldReferences(field).map(item => item.title).join(', ') || '—';
             }
             if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+            if (field.format === 'external_link') return value.label || value.url;
             if (field.format === 'keywords') return value.map(keyword => keyword.label).join(', ');
             if (field.format === 'scale') return value.level + ' / ' + (field.field_definition.options_data?.levels ?? 5);
             if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');

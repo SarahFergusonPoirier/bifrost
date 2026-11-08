@@ -272,6 +272,21 @@ class ContentRecoveryTest extends TestCase
         $this->assertDatabaseMissing('tags', ['name' => 'Loyal']);
     }
 
+    public function test_external_link_fields_only_accept_web_urls(): void
+    {
+        $content = $this->content();
+        $field = FieldDefinition::create([
+            'key' => 'external-link', 'label' => 'Source', 'value_type' => 'json', 'options_data' => ['format' => 'external_link'],
+        ]);
+        $save = fn (string $url) => $this->patchJson('/api/contents/'.$content->public_id, [
+            'title' => 'Original', 'summary' => null,
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => ['url' => $url, 'label' => 'Source']]],
+        ]);
+
+        $save('javascript:alert(1)')->assertUnprocessable()->assertJsonValidationErrors('value_json.url');
+        $save('https://example.test/reference')->assertOk()->assertJsonPath('field_values.0.value_json.label', 'Source');
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);
