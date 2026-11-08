@@ -1,3 +1,4 @@
+import { ageFromBirthDate } from '../components/fiche/characterAge';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
 import FicheOverview from '../components/fiche/FicheOverview.vue';
 import ProjectToolbar from '../components/ProjectToolbar.vue';
@@ -289,10 +290,18 @@ export default {
             setField(field, state ? { value_state: state } : '');
         }
 
+        function effectiveFieldValue(field) {
+            const value = fieldValue(field);
+            if (value !== '' || fieldState(field) || field.field_definition.key !== 'character-age') return value;
+            const birthField = (templateSections.value.get('Identité') ?? []).find(item =>
+                item.field_definition.label === 'Date de naissance' && item.format === 'temporal');
+            return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
+        }
+
         function displayValue(field) {
             const state = fieldState(field);
             if (state) return state === 'unknown' ? 'Inconnu' : 'Non applicable';
-            const value = fieldValue(field);
+            const value = effectiveFieldValue(field);
             if (value === '') return '—';
             if (field.column === 'reference_content_id' || field.format === 'references') {
                 return fieldReferences(field).map(item => item.title).join(', ') || '—';
@@ -500,7 +509,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences, fieldState, setFieldState,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
