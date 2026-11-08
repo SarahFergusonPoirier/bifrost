@@ -1,3 +1,4 @@
+import FicheFieldHistory from './FicheFieldHistory.vue';
 import FicheTags from './FicheTags.vue';
 import FicheScale from './FicheScale.vue';
 import ContentAttachments from '../ContentAttachments.vue';
@@ -15,7 +16,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlock, FicheText, FicheTags, FicheScale, FicheLinkedData, ContentAttachments },
+    components: { FicheFieldHistory, FicheBlock, FicheText, FicheTags, FicheScale, FicheLinkedData, ContentAttachments },
     props: {
         summary: String,
         fullName: String,
@@ -30,6 +31,7 @@ export default {
         hiddenFields: { type: Array, required: true },
         displayValue: { type: Function, required: true },
         fieldValue: Function,
+        formatHistoricalValue: Function,
         fieldState: Function,
         fieldReferences: { type: Function, default: () => [] },
         placements: Array,
@@ -50,6 +52,7 @@ export default {
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({
                     id: field.id,
                     definitionId: field.field_definition_id,
+                    historyField: field.display_options?.history_view === 'history' ? field : null,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
                     empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',

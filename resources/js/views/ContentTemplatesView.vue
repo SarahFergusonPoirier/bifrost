@@ -48,6 +48,12 @@
                         <input type="number" min="2" max="20" required :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />
                     </label>
+                    <label>Historique du champ
+                        <select v-model="field.historyView">
+                            <option value="current">Valeur actuelle</option>
+                            <option value="history">Valeur actuelle et historique</option>
+                        </select>
+                    </label>
                     <label v-if="field.type === 'repeatable'">Présentation du niveau
                         <select v-model="field.repeatableLevelMode">
                             <option value="text">Texte libre</option>

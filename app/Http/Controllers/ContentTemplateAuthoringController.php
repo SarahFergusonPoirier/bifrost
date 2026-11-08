@@ -71,13 +71,14 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.history_view' => ['sometimes', 'in:current,history'],
             'fields.*.scale_strategy' => ['sometimes', 'in:preserve'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
             'fields.*.level_descriptions' => ['sometimes', 'array', 'list', 'max:20'],
@@ -143,6 +144,10 @@ class ContentTemplateAuthoringController extends Controller
 
             if (($definition->options_data['format'] ?? null) === 'repeatable' && isset($field['repeatable_level_mode'])) {
                 $display['repeatable_level_mode'] = $field['repeatable_level_mode'];
+            }
+
+            if (isset($field['history_view'])) {
+                $display['history_view'] = $field['history_view'];
             }
 
             $version->fields()->create([

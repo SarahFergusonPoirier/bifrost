@@ -277,8 +277,7 @@ export default {
             return referenceIndex.value.get(id)?.title;
         }
 
-        function fieldReferences(field) {
-            const value = fieldValue(field);
+        function fieldReferences(field, value = fieldValue(field)) {
             if (value === '') return [];
             const ids = field.column === 'reference_content_id' ? [value]
                 : field.format === 'references' && Array.isArray(value) ? value : [];
@@ -304,13 +303,27 @@ export default {
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }
 
+        function formatHistoricalValue(field, entry) {
+            let value = entry?.[field.column] ?? '';
+            if (field.column === 'value_json' && typeof value === 'string' && value !== '') {
+                try {
+                    value = JSON.parse(value);
+                } catch {
+                    return value;
+                }
+            }
+            return formatFieldValue(field, value, entry?.value_state);
+        }
+
         function displayValue(field) {
-            const state = fieldState(field);
+            return formatFieldValue(field, effectiveFieldValue(field), fieldState(field));
+        }
+
+        function formatFieldValue(field, value, state) {
             if (state) return state === 'unknown' ? 'Inconnu' : 'Non applicable';
-            const value = effectiveFieldValue(field);
             if (value === '') return '—';
             if (field.column === 'reference_content_id' || field.format === 'references') {
-                return fieldReferences(field).map(item => item.title).join(', ') || '—';
+                return fieldReferences(field, value).map(item => item.title).join(', ') || '—';
             }
             if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
             if (field.format === 'external_link') return value.label || value.url;
@@ -518,7 +531,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
