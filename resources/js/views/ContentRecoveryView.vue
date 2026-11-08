@@ -324,15 +324,7 @@
                         </select>
                     </label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
-                    <div v-if="referenceTargets.length">
-                        <label>Fiche à citer dans le résumé
-                            <select v-model="summaryReference">
-                                <option value="">Choisir une fiche</option>
-                                <option v-for="target in referenceTargets" :key="target.public_id" :value="target.public_id">{{ target.title }}</option>
-                            </select>
-                        </label>
-                        <button type="button" :disabled="!summaryReference" @click="insertSummaryReference">Insérer le lien</button>
-                    </div>
+                    <FicheReferencePicker :key="selected.public_id" v-model="draft.summary" :targets="referenceTargets" />
                     <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse). Pour une autre fiche, utilise [[identifiant|libellé]].</p>
                     <fieldset v-if="draft.tag_ids">
                         <legend>Étiquettes</legend>
@@ -397,6 +389,7 @@
                         <legend>Bloc {{ index + 1 }}</legend>
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>
                         <p><label>Texte <textarea v-model="block.body" /></label></p>
+                        <FicheReferencePicker v-model="block.body" :targets="referenceTargets" />
                         <button type="button" @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
                     </fieldset>
                     <button type="button" @click="draft.blocks.push({ block_type: 'text', title: null, body: null })">Ajouter un bloc</button>

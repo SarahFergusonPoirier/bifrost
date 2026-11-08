@@ -1,3 +1,4 @@
+import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
 import FicheText from '../components/fiche/FicheText.vue';
 import { ageFromBirthDate } from '../components/fiche/characterAge';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
@@ -19,7 +20,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheReferencePicker, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -163,7 +164,6 @@ export default {
         });
         const selected = ref(null);
         const ficheTab = ref('overview');
-        const summaryReference = ref('');
         const compact = ref(false);
         const hiddenFields = ref([]);
         const showHidden = ref(false);
@@ -272,13 +272,6 @@ export default {
             }
             return index;
         });
-
-        function insertSummaryReference() {
-            if (!resolveFicheReference(summaryReference.value)) return;
-            const marker = '[[' + summaryReference.value + ']]';
-            draft.value.summary = [draft.value.summary, marker].filter(Boolean).join(' ');
-            summaryReference.value = '';
-        }
 
         function resolveFicheReference(id) {
             return referenceIndex.value.get(id)?.title;
@@ -445,7 +438,6 @@ export default {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
-            summaryReference.value = '';
             loadDisplay();
             from.value = '';
             to.value = '';
@@ -526,7 +518,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            summaryReference, insertSummaryReference, ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
