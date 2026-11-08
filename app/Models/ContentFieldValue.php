@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ContentFieldValue extends Model
@@ -65,6 +66,10 @@ class ContentFieldValue extends Model
                 throw ValidationException::withMessages(['value' => 'Une seule valeur compatible avec le type du champ doit être renseignée.']);
             }
 
+            if ($definition->value_type === 'json') {
+                $value->validateStructuredValue($definition, $content);
+            }
+
             if ($definition->value_type === 'reference') {
                 $target = Content::query()->find($value->reference_content_id);
                 $allowed = $definition->options_data['content_type_ids'] ?? null;
@@ -75,7 +80,67 @@ class ContentFieldValue extends Model
         });
     }
 
-    public function content(): BelongsTo { return $this->belongsTo(Content::class); }
-    public function fieldDefinition(): BelongsTo { return $this->belongsTo(FieldDefinition::class); }
-    public function referenceContent(): BelongsTo { return $this->belongsTo(Content::class, 'reference_content_id'); }
+    private function validateStructuredValue(FieldDefinition $definition, Content $content): void
+    {
+        $format = $definition->options_data['format'] ?? null;
+        $rules = match ($format) {
+            'measurement' => [
+                'value_json' => ['array:amount,unit', 'min:1'],
+                'value_json.amount' => ['sometimes', 'numeric'],
+                'value_json.unit' => ['sometimes', 'string', 'max:80'],
+            ],
+            'coordinates' => [
+                'value_json' => ['array:x,y', 'min:1'],
+                'value_json.x' => ['sometimes', 'numeric'],
+                'value_json.y' => ['sometimes', 'numeric'],
+            ],
+            'temporal' => [
+                'value_json' => ['array:precision,start,end,calendar', 'min:1'],
+                'value_json.precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown'],
+                'value_json.start' => ['sometimes', 'string', 'max:255'],
+                'value_json.end' => ['sometimes', 'string', 'max:255'],
+                'value_json.calendar' => ['sometimes', 'string', 'max:255'],
+            ],
+            'references' => [
+                'value_json' => ['array', 'list', 'min:1', 'max:200'],
+                'value_json.*' => ['required', 'uuid', 'distinct:ignore_case'],
+            ],
+            default => [],
+        };
+
+        Validator::make(['value_json' => $this->value_json], $rules)->validate();
+
+        if ($format === 'references') {
+            $original = $this->getOriginal('value_json') ?? [];
+            $added = array_diff($this->value_json, $original);
+            $targets = Content::where('project_id', $content->project_id)
+                ->where('universe_id', $content->universe_id)
+                ->where('scope_type', $content->scope_type)
+                ->where('public_id', '!=', $content->public_id)
+                ->whereIn('public_id', $added);
+            $allowed = $definition->options_data['content_type_ids'] ?? [];
+            if ($allowed !== []) {
+                $targets->whereIn('content_type_id', $allowed);
+            }
+
+            if ($targets->count() !== count($added)) {
+                throw ValidationException::withMessages(['value_json' => 'Une fiche liée est indisponible dans cet espace.']);
+            }
+        }
+    }
+
+    public function content(): BelongsTo
+    {
+        return $this->belongsTo(Content::class);
+    }
+
+    public function fieldDefinition(): BelongsTo
+    {
+        return $this->belongsTo(FieldDefinition::class);
+    }
+
+    public function referenceContent(): BelongsTo
+    {
+        return $this->belongsTo(Content::class, 'reference_content_id');
+    }
 }

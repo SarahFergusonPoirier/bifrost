@@ -114,8 +114,13 @@
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ section }}</summary>
-                        <p v-for="field in fields" :key="field.id">
-                            <label>
+                        <div v-for="field in fields" :key="field.id">
+                            <fieldset v-if="field.column === 'value_json'">
+                                <legend>{{ field.label_override || field.field_definition.label }}</legend>
+                                <StructuredField :format="field.format" :value="fieldValue(field) || null"
+                                    :targets="referenceTargets" @change="setField(field, $event)" />
+                            </fieldset>
+                            <label v-else>
                                 {{ field.label_override || field.field_definition.label }}
                                 <select v-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">
                                     <option value="">Vide</option>
@@ -127,7 +132,7 @@
                                     :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
                             </label>
                             <small v-if="field.help_text">{{ field.help_text }}</small>
-                        </p>
+                        </div>
                     </details>
                     <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                         <legend>Bloc {{ index + 1 }}</legend>

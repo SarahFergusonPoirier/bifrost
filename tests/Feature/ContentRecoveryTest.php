@@ -158,6 +158,26 @@ class ContentRecoveryTest extends TestCase
         $this->assertDatabaseCount('content_revisions', 0);
     }
 
+    public function test_temporal_fields_validate_precision_and_keep_fictional_dates(): void
+    {
+        $content = $this->content();
+        $field = FieldDefinition::create([
+            'key' => 'date-fictive', 'label' => 'Date', 'value_type' => 'json',
+            'options_data' => ['format' => 'temporal'],
+        ]);
+        $url = '/api/contents/'.$content->public_id;
+        $data = ['title' => 'Original', 'summary' => null];
+        $date = ['precision' => 'relative', 'calendar' => 'Ère des brumes', 'start' => 'Avant la Grande Guerre'];
+        $this->patchJson($url, $data + [
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => $date]],
+        ])->assertOk()->assertJsonPath('field_values.0.value_json', $date);
+
+        $this->patchJson($url, $data + [
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => ['precision' => 'invalid']]],
+        ])->assertUnprocessable();
+        $this->assertSame($date, $content->fieldValues()->sole()->value_json);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

@@ -1,12 +1,13 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
+import StructuredField from '../components/StructuredField.vue';
 import AppLayout from '../layouts/AppLayout.vue';
 import ProjectDetailsView from './ProjectDetailsView.vue';
 import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { AppLayout, ProjectDetailsView },
+    components: { AppLayout, ProjectDetailsView, StructuredField },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -116,16 +117,17 @@ export default {
 
         const fieldColumns = {
             text: 'value_text', choice: 'value_text', number: 'value_number',
-            boolean: 'value_boolean', date: 'value_date',
+            boolean: 'value_boolean', date: 'value_date', json: 'value_json',
         };
         const templateSections = computed(() => {
             const sections = new Map();
             for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
                 const column = fieldColumns[field.field_definition?.value_type];
-                if (!column) continue;
+                const format = field.field_definition?.options_data?.format;
+                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references'].includes(format))) continue;
                 const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
                 if (!sections.has(section)) sections.set(section, []);
-                sections.get(section).push({ ...field, column });
+                sections.get(section).push({ ...field, column, format });
             }
             return sections;
         });
@@ -275,6 +277,8 @@ export default {
         });
 
         return {
+            referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
+                .filter(item => item.public_id !== selected.value?.public_id)),
             sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
             openSettings: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
