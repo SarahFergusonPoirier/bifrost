@@ -77,6 +77,10 @@
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
                         @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
                 </label>
+                <label v-if="placement.source === 'tags'">Nombre d’étiquettes (0 pour toutes)
+                    <input type="number" min="0" max="100" required :value="placement.tag_limit ?? 0"
+                        @change="placement.tag_limit = Number($event.target.value)" />
+                </label>
                 <label v-if="placement.source === 'capabilities'">Affichage de la maîtrise
                     <select :value="placement.mastery_view ?? 'badge'" @change="placement.mastery_view = $event.target.value">
                         <option value="badge">Badge</option>
@@ -150,9 +154,7 @@
                     </template>
                 </FicheLinkedData>
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
-                <ul v-else-if="card.tags?.length" class="fiche-tags">
-                    <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
-                </ul>
+                <FicheTags v-else-if="card.tags?.length" :tags="card.tags" :limit="placement.tag_limit" />
                 <dl v-else-if="fields?.length || card.fullName" class="fiche-fields" :style="{ '--fiche-field-columns': placement.field_columns ?? 1 }">
                     <div v-if="card.fullName">
                         <dt>Nom complet</dt>

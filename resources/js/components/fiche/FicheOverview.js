@@ -1,3 +1,4 @@
+import FicheTags from './FicheTags.vue';
 import FicheScale from './FicheScale.vue';
 import ContentAttachments from '../ContentAttachments.vue';
 import { icons } from './ficheIcons';
@@ -14,7 +15,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlock, FicheText, FicheScale, FicheLinkedData, ContentAttachments },
+    components: { FicheBlock, FicheText, FicheTags, FicheScale, FicheLinkedData, ContentAttachments },
     props: {
         summary: String,
         fullName: String,

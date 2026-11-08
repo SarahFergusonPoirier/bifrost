@@ -32,7 +32,7 @@ class FicheLayoutController extends Controller
             'tabs.*.icon' => ['required', 'in:overview,catalogue,connections,timeline,folder,narration,ideas'],
             'tabs.*.hidden' => ['required', 'boolean'],
             'tabs.*.placements' => ['sometimes', 'array', 'list', 'max:80'],
-            'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed,sort,view,title,text_limit,icon,hide_empty,field_order,field_columns,media_mode,media_image,mastery_view'],
+            'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed,sort,view,title,text_limit,icon,hide_empty,field_order,field_columns,media_mode,media_image,mastery_view,tag_limit'],
             'tabs.*.placements.*.id' => ['required', 'uuid', 'distinct:strict'],
             'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|equipment|capabilities|attachments|gallery|section:.+|text:[a-f0-9-]+)$/u'],
             'tabs.*.placements.*.width' => ['required', 'integer', 'between:1,12'],
@@ -50,6 +50,7 @@ class FicheLayoutController extends Controller
             'tabs.*.placements.*.field_order.*' => ['required', 'integer', 'min:1'],
             'tabs.*.placements.*.field_columns' => ['sometimes', 'integer', 'between:1,3'],
             'tabs.*.placements.*.title' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'tabs.*.placements.*.tag_limit' => ['sometimes', 'integer', 'between:0,100'],
             'tabs.*.placements.*.text_limit' => ['sometimes', 'nullable', 'integer', 'between:0,5000'],
         ]);
 
@@ -76,6 +77,7 @@ class FicheLayoutController extends Controller
                         ...isset($placement['field_columns']) ? ['field_columns' => (int) $placement['field_columns']] : [],
                         ...isset($placement['field_order']) ? ['field_order' => array_values(array_unique(array_map('intval', $placement['field_order'])))] : [],
                         ...isset($placement['hide_empty']) ? ['hide_empty' => (bool) $placement['hide_empty']] : [],
+                        ...isset($placement['tag_limit']) ? ['tag_limit' => (int) $placement['tag_limit']] : [],
                         ...isset($placement['text_limit']) ? ['text_limit' => (int) $placement['text_limit']] : [],
                     ], $tab['placements']);
                 }
