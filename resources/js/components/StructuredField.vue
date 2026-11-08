@@ -50,7 +50,13 @@
                 <template v-if="format === 'repeatable'">
                     <label>Période <input :value="entry.period ?? ''" maxlength="255"
                         @change="editKeyword(index, 'period', $event.target.value)" /></label>
-                    <label>Niveau <input :value="entry.level ?? ''" maxlength="120"
+                    <label v-if="levelMode === 'segments'">Niveau sur 5
+                        <select :value="entry.rank ?? ''" @change="editKeyword(index, 'rank', $event.target.value)">
+                            <option value="">Non renseigné</option>
+                            <option v-for="rank in 5" :key="rank" :value="rank">{{ rank }} / 5</option>
+                        </select>
+                    </label>
+                    <label>Niveau en texte libre <input :value="entry.level ?? ''" maxlength="120"
                         @change="editKeyword(index, 'level', $event.target.value)" /></label>
                 </template>
                 <template v-if="format === 'capabilities'">

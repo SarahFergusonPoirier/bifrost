@@ -6,6 +6,7 @@ export default {
         value: { type: [Object, Array], default: null },
         levels: { type: Number, default: 5 },
         contentId: String,
+        levelMode: String,
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
@@ -40,7 +41,7 @@ export default {
         editKeyword(index, key, text) {
             const value = text.trim();
             if (key === 'label' && !value) return;
-            this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (key === 'mastery' ? Number(value) : value) : null } : entry));
+            this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (['mastery', 'rank'].includes(key) ? Number(value) : value) : null } : entry));
         },
         duplicateEntry(index) {
             if (this.value.length >= 100) return;

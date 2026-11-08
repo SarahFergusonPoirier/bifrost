@@ -171,7 +171,9 @@
                                 <li v-for="(entry, index) in field.entries" :key="index">
                                     <strong>{{ entry.label }}</strong>
                                     <span v-if="entry.period"> · {{ entry.period }}</span>
-                                    <span v-if="entry.level"> · {{ entry.level }}</span>
+                                    <FicheScale v-if="field.levelMode === 'segments' && entry.rank"
+                                        :label="entry.label + ' · Niveau'" :level="Number(entry.rank)" :levels="5" mode="segments" />
+                                    <span v-else-if="entry.level"> · {{ entry.level }}</span>
                                     <FicheText v-if="entry.description" :text="entry.description" />
                                 </li>
                             </ul>

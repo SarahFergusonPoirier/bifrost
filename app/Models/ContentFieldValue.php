@@ -114,7 +114,7 @@ class ContentFieldValue extends Model
             'keywords', 'equipment', 'capabilities', 'repeatable' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label,description'.(match ($format) {
-                    'equipment' => ',image', 'capabilities' => ',category,mastery', 'repeatable' => ',period,level', default => ''
+                    'equipment' => ',image', 'capabilities' => ',category,mastery', 'repeatable' => ',period,level,rank', default => ''
                 })],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
@@ -123,6 +123,7 @@ class ContentFieldValue extends Model
                 'value_json.*.mastery' => ['nullable', 'integer', 'between:1,5'],
                 'value_json.*.period' => ['nullable', 'string', 'max:255'],
                 'value_json.*.level' => ['nullable', 'string', 'max:120'],
+                'value_json.*.rank' => ['nullable', 'integer', 'between:1,5'],
             ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],

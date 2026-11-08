@@ -48,6 +48,12 @@
                         <input type="number" min="2" max="20" :disabled="Boolean(field.id)" :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />
                     </label>
+                    <label v-if="field.type === 'repeatable'">Présentation du niveau
+                        <select v-model="field.repeatableLevelMode">
+                            <option value="text">Texte libre</option>
+                            <option value="segments">Échelle segmentée</option>
+                        </select>
+                    </label>
                     <template v-if="field.type === 'scale'">
                         <label>Descriptions des niveaux (une ligne par niveau)
                             <textarea v-model="field.levelDescriptions" maxlength="5120" />
