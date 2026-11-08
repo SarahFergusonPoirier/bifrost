@@ -112,6 +112,7 @@ class ContentRecoveryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'summary' => ['present', 'nullable', 'string'],
+            'work_status_key' => ['sometimes', 'in:draft,in_progress,completed,abandoned'],
             'version' => ['sometimes', 'required', 'regex:/^[a-f0-9]{64}$/'],
             'blocks' => ['sometimes', 'array', 'list'],
             'blocks.*' => ['array:public_id,block_type,title,body'],
@@ -134,7 +135,7 @@ class ContentRecoveryController extends Controller
             $record = $this->lockContent($content);
             $before = $this->snapshotData($record, $record->getAttributes());
             abort_if(isset($validated['version']) && $validated['version'] !== $this->version($before), 409, 'Ce contenu a changé depuis son ouverture.');
-            $record->update(['title' => $validated['title'], 'summary' => $validated['summary']]);
+            $record->update(Arr::only($validated, ['title', 'summary', 'work_status_key']));
 
             if (array_key_exists('blocks', $validated)) {
                 $this->saveBlocks($record, $validated['blocks']);
@@ -287,6 +288,7 @@ class ContentRecoveryController extends Controller
         $content->update([
             'title' => $snapshot['title'],
             'summary' => $snapshot['summary'],
+            'work_status_key' => $snapshot['work_status_key'] ?? $content->work_status_key,
         ]);
 
         // Older revisions only recorded title and summary.
@@ -321,6 +323,7 @@ class ContentRecoveryController extends Controller
         return [
             'title' => $attributes['title'],
             'summary' => $attributes['summary'] ?? null,
+            'work_status_key' => $attributes['work_status_key'],
             'blocks' => $content->blocks()->reorder()->orderBy('position')->orderBy('id')->get([
                 'public_id', 'block_type', 'title', 'body', 'position', 'created_at',
             ])->map(fn ($block): array => $block->getAttributes())->all(),

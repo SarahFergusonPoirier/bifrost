@@ -16,12 +16,14 @@
                 </button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openConnections">Graphes et connexions</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openNarration">Narration</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openIdeas">Idées</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTimeline">Chronologie</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openSettings">Paramètres du projet</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="settings" />
+        <ProjectNarrative v-else-if="narration" :project-id="projectId" @open-content="openTimelineContent" />
         <ProjectIdeas v-else-if="ideas" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openTimelineContent" />
         <ProjectConnections v-else-if="connections" :project-id="projectId" @open-content="openTimelineContent" />
         <ProjectTimeline v-else-if="timeline" :project-id="projectId" @open-content="openTimelineContent" />
@@ -121,6 +123,12 @@
                 <fieldset :disabled="busy || saving">
                     <legend>Modifier la fiche</legend>
                     <p><label>Titre <input v-model="draft.title" required maxlength="255" /></label></p>
+                    <p v-if="draft.work_status_key"><label>Statut de travail
+                        <select v-model="draft.work_status_key">
+                            <option value="draft">Brouillon</option><option value="in_progress">En cours</option>
+                            <option value="completed">Terminé</option><option value="abandoned">Abandonné</option>
+                        </select>
+                    </label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ section }}</summary>

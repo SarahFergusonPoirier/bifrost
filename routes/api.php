@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
 use App\Http\Controllers\ProjectIdeaController;
+use App\Http\Controllers\ProjectNarrativeController;
 use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
@@ -72,3 +73,8 @@ Route::post('/projects/{project}/ideas', [ProjectIdeaController::class, 'store']
 Route::patch('/projects/{project}/ideas/{idea}', [ProjectIdeaController::class, 'update'])->whereNumber('idea');
 Route::post('/projects/{project}/ideas/{idea}/convert', [ProjectIdeaController::class, 'convert'])->whereNumber('idea');
 Route::put('/projects/{project}/ideas/columns', [ProjectIdeaController::class, 'saveColumns']);
+
+Route::get('/projects/{project}/narration', [ProjectNarrativeController::class, 'index']);
+Route::post('/projects/{project}/narration', [ProjectNarrativeController::class, 'store']);
+Route::post('/projects/{project}/narration/{work}/scenes', [ProjectNarrativeController::class, 'storeScene']);
+Route::put('/projects/{project}/narration/{work}/scenes/order', [ProjectNarrativeController::class, 'reorder']);

@@ -4,13 +4,14 @@ import StructuredField from '../components/StructuredField.vue';
 import AppLayout from '../layouts/AppLayout.vue';
 import ProjectConnections from './ProjectConnections.vue';
 import ProjectIdeas from './ProjectIdeas.vue';
+import ProjectNarrative from './ProjectNarrative.vue';
 import ProjectTimeline from './ProjectTimeline.vue';
 import ProjectDetailsView from './ProjectDetailsView.vue';
 import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas },
+    components: { AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -19,6 +20,7 @@ export default {
         const timeline = ref(false);
         const connections = ref(false);
         const ideas = ref(false);
+        const narration = ref(false);
         const sidebarItems = computed(() => {
             const items = [];
             const visit = (parent, depth) => {
@@ -161,6 +163,7 @@ export default {
             const editable = {
                 title: data.title,
                 summary: data.summary,
+                ...(data.work_status_key ? { work_status_key: data.work_status_key } : {}),
                 blocks: data.blocks.map(({ public_id, block_type, title, body }) => ({
                     public_id, block_type, title, body,
                 })),
@@ -286,7 +289,18 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
-            timeline, connections, ideas,
+            timeline, connections, ideas, narration,
+            openNarration: () => {
+                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la narration ?')) return;
+                selected.value = null;
+                draft.value = null;
+                settings.value = false;
+                timeline.value = false;
+                connections.value = false;
+                narration.value = false;
+                ideas.value = false;
+                narration.value = true;
+            },
             openIdeas: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les idées ?')) return;
                 selected.value = null;
@@ -294,11 +308,13 @@ export default {
                 settings.value = false;
                 timeline.value = false;
                 connections.value = false;
+                narration.value = false;
                 ideas.value = true;
             },
             openConnections: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les connexions ?')) return;
 
+                narration.value = false;
                 ideas.value = false;
                                 selected.value = null;
                 draft.value = null;
@@ -310,6 +326,7 @@ export default {
             openTimeline: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la chronologie ?')) return;
 
+                narration.value = false;
                 ideas.value = false;
                                 selected.value = null;
                 draft.value = null;
@@ -319,6 +336,7 @@ export default {
             },
             openTimelineContent: id => run(async () => {
                 
+                narration.value = false;
                 ideas.value = false;
                 connections.value = false;
                 timeline.value = false;
@@ -328,6 +346,7 @@ export default {
             }),
             openSettings: () => {
                 
+                narration.value = false;
                 ideas.value = false;
                 connections.value = false;
                 timeline.value = false;
@@ -339,6 +358,7 @@ export default {
             openProjectTrash: () => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la corbeille ?')) return;
 
+                narration.value = false;
                 ideas.value = false;
                                 settings.value = false;
                 selected.value = null;
@@ -351,6 +371,7 @@ export default {
             openTreeItem: item => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cet élément ?')) return;
 
+                narration.value = false;
                 ideas.value = false;
                                 settings.value = false;
                 selected.value = null;
