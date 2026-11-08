@@ -64,6 +64,11 @@ export default {
         const folderPath = () => '/projects/' + props.projectId + '/folders';
 
         const listing = ref(null);
+        const catalogueSearch = ref('');
+        const catalogueType = ref('');
+        const catalogueStatus = ref('');
+        const searchWholeProject = ref(false);
+        const appliedCatalogueFilters = ref({});
         const trash = ref(!props.projectId);
         const projectTrash = ref(!props.projectId);
         const projects = ref([]);
@@ -193,8 +198,19 @@ export default {
         }
 
         async function loadList(page = 1) {
-            const { data } = await contentRequest((projectTrash.value ? '/projects/trash' : trash.value ? '/contents/trash' : '/contents') + '?page=' + page
-                + (props.projectId ? '&project_id=' + encodeURIComponent(props.projectId) + (trash.value ? '' : '&folder_id=' + folderId.value) : ''));
+            const params = new URLSearchParams({ page });
+            if (props.projectId) {
+                params.set('project_id', props.projectId);
+                if (!trash.value) {
+                    const filters = appliedCatalogueFilters.value;
+                    if (!filters.wholeProject) params.set('folder_id', folderId.value);
+                    for (const key of ['search', 'type', 'status']) {
+                        if (filters[key]) params.set(key, filters[key]);
+                    }
+                }
+            }
+            const endpoint = projectTrash.value ? '/projects/trash' : trash.value ? '/contents/trash' : '/contents';
+            const { data } = await contentRequest(endpoint + '?' + params);
             listing.value = data;
             if (props.projectId) {
                 treeContents.value = (await contentRequest('/projects/' + props.projectId + '/tree')).data;
@@ -207,6 +223,8 @@ export default {
 
         function selectFolder(id) {
             folderId.value = id;
+            searchWholeProject.value = false;
+            appliedCatalogueFilters.value = { ...appliedCatalogueFilters.value, wholeProject: false };
             folderParent.value = id;
             folderEditing.value = false;
             folderName.value = '';
@@ -431,6 +449,14 @@ export default {
             removeMembership: id => run(async () => {
                 await contentRequest(folderPath() + '/' + id + path(), 'DELETE');
                 await loadList(listing.value?.current_page);
+            }),
+            catalogueSearch, catalogueType, catalogueStatus, searchWholeProject,
+            searchCatalogue: () => run(async () => {
+                appliedCatalogueFilters.value = {
+                    search: catalogueSearch.value.trim(), type: catalogueType.value, status: catalogueStatus.value,
+                    wholeProject: searchWholeProject.value,
+                };
+                await loadList();
             }),
             browse: page => run(() => loadList(page)),
             openContent: id => run(() => open(id)),

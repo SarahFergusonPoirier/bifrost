@@ -90,6 +90,24 @@
                 <button type="submit" :disabled="!projects.length || (templateId && !versionId)">Créer une fiche</button>
             </form>
 
+            <form v-if="projectId && !trash" @submit.prevent="searchCatalogue">
+                <fieldset>
+                    <legend>Rechercher dans le catalogue</legend>
+                    <label>Texte <input v-model="catalogueSearch" type="search" maxlength="255" /></label>
+                    <label>Type <select v-model="catalogueType">
+                        <option value="">Tous</option>
+                        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
+                    </select></label>
+                    <label>Statut <select v-model="catalogueStatus">
+                        <option value="">Tous</option><option value="draft">Brouillon</option>
+                        <option value="in_progress">En cours</option><option value="completed">Terminé</option>
+                        <option value="abandoned">Abandonné</option>
+                    </select></label>
+                    <label><input v-model="searchWholeProject" type="checkbox" /> Chercher dans tout le projet</label>
+                    <button type="submit">Appliquer les filtres</button>
+                </fieldset>
+            </form>
+
             <p v-if="!listing" role="status">Chargement des contenus…</p>
             <template v-else>
                 <p v-if="!listing.data.length">{{ trash ? 'La corbeille est vide.' : 'Aucune fiche active.' }}</p>

@@ -35,6 +35,16 @@ class ProjectFolderTest extends TestCase
         $this->getJson("/api/contents?project_id={$project->id}&folder_id=$parent")
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.public_id', $content);
         $this->getJson("/api/projects/{$project->id}/tree")->assertOk()->assertJsonCount(2);
+        $this->patchJson("/api/contents/$content", [
+            'title' => 'Article', 'summary' => null, 'work_status_key' => 'completed',
+            'blocks' => [['body' => 'Un indice dans le texte']],
+        ])->assertOk();
+        $this->getJson("/api/contents?project_id={$project->id}&folder_id=$parent&search=indice&type={$type->id}&status=completed")
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.public_id', $content);
+        $this->getJson("/api/contents?project_id={$project->id}&search=indice&status=draft")
+            ->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/contents?project_id={$other->id}&search=indice")
+            ->assertOk()->assertJsonCount(0, 'data');
         $this->deleteJson("$url/$parent")->assertNoContent();
         $this->getJson($url)->assertOk()->assertJsonPath('0.parent_id', null);
         $this->getJson("/api/contents?project_id={$project->id}&folder_id=$child")

@@ -15,20 +15,33 @@ class ContentRecoveryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate(['project_id' => ['sometimes', 'required', 'integer', 'exists:projects,id,deleted_at,NULL']]);
+        $validated = $request->validate([
+            'project_id' => ['sometimes', 'required', 'integer', 'exists:projects,id,deleted_at,NULL'],
+            'folder_id' => ['sometimes', 'required', 'integer', 'min:0'],
+            'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'type' => ['sometimes', 'integer', 'min:1'],
+            'status' => ['sometimes', 'in:draft,in_progress,completed,abandoned'],
+        ]);
+        $request->validate(['project_id' => ['required_with:folder_id']]);
+        $search = $validated['search'] ?? null;
 
         return response()->json(Content::query()
             ->when(isset($validated['project_id']), fn ($query) => $query->where('project_id', $validated['project_id']))
-            ->when($request->has('folder_id'), function ($query) use ($request): void {
-                $folder = $request->validate([
-                    'folder_id' => ['required', 'integer', 'min:0'],
-                    'project_id' => ['required'],
-                ])['folder_id'];
+            ->when(isset($validated['type']), fn ($query) => $query->where('content_type_id', $validated['type']))
+            ->when(isset($validated['status']), fn ($query) => $query->where('work_status_key', $validated['status']))
+            ->when($search !== null, function ($query) use ($search): void {
+                $pattern = '%'.$search.'%';
+                $query->where(fn ($query) => $query->whereLike('title', $pattern)->orWhereLike('summary', $pattern)
+                    ->orWhereHas('blocks', fn ($blocks) => $blocks->whereLike('title', $pattern)->orWhereLike('body', $pattern))
+                    ->orWhereHas('fieldValues', fn ($values) => $values->whereLike('value_text', $pattern)));
+            })
+            ->when(isset($validated['folder_id']), function ($query) use ($validated): void {
+                $folder = (int) $validated['folder_id'];
                 $placements = DB::table('content_collection_memberships')->select('content_id');
                 if ((int) $folder === 0) {
                     $query->whereNotIn('contents.id', $placements);
                 } else {
-                    $branches = DB::table('project_folders')->where('project_id', $request->integer('project_id'))->get(['id', 'parent_id'])->groupBy('parent_id');
+                    $branches = DB::table('project_folders')->where('project_id', $validated['project_id'])->get(['id', 'parent_id'])->groupBy('parent_id');
                     $descendants = [(int) $folder];
                     for ($index = 0; $index < count($descendants); $index++) {
                         foreach ($branches->get($descendants[$index], []) as $child) {
