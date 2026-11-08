@@ -79,6 +79,17 @@ export default {
         const projectId = ref(props.projectId);
         const currentProject = computed(() => projects.value.find(project => String(project.id) === props.projectId));
         const types = ref([]);
+        const universeCategories = computed(() => [
+            ['personnage', 'Personnages'],
+            ['lieu', 'Lieux'],
+            ['organisation-faction', 'Organisations'],
+            ['evenement-historique', 'Événements'],
+            ['objet-artefact', 'Objets'],
+            ['creature-animal', 'Faune'],
+            ['plante-organisme', 'Flore'],
+        ].map(([key, label]) => ({
+            key, label, id: types.value.find(type => type.key === key && type.scope_type === 'system')?.id,
+        })));
         const newTitle = ref('');
         const typeId = ref('');
         const templates = ref([]);
@@ -499,6 +510,16 @@ export default {
                 if (!tags.value.some(tag => tag.id === data.id)) tags.value.push(data);
                 if (!draft.value.tag_ids.includes(data.id)) draft.value.tag_ids.push(data.id);
                 newTag.value = '';
+            }),
+            universeCategories, appliedCatalogueFilters,
+            openCategory: id => run(async () => {
+                catalogueType.value = id ?? '';
+                catalogueSearch.value = '';
+                catalogueStatus.value = '';
+                catalogueTag.value = '';
+                searchWholeProject.value = true;
+                appliedCatalogueFilters.value = { type: catalogueType.value, wholeProject: true };
+                await loadList();
             }),
             searchCatalogue: () => run(async () => {
                 appliedCatalogueFilters.value = {

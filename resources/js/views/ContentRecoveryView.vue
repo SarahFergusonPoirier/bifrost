@@ -80,6 +80,18 @@
         <fieldset v-if="!selected" :disabled="busy">
             <legend>Contenus</legend>
 
+            <section v-if="projectId && !trash" aria-labelledby="universe-categories-heading">
+                <h2 id="universe-categories-heading">Catégories de l’univers</h2>
+                <ul class="catalogue-categories">
+                    <li><button type="button" :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && !appliedCatalogueFilters.type)"
+                        @click="openCategory()">Toutes les fiches</button></li>
+                    <li v-for="category in universeCategories" :key="category.key">
+                        <button type="button" :disabled="!category.id"
+                            :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && appliedCatalogueFilters.type === category.id)"
+                            @click="openCategory(category.id)">{{ category.label }}</button>
+                    </li>
+                </ul>
+            </section>
             <section v-if="projectId && !trash" aria-labelledby="folder-heading">
                 <h2 id="folder-heading">Dossiers du projet</h2>
                 <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">

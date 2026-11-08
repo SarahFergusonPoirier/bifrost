@@ -151,3 +151,17 @@
         justify-content: flex-start;
     }
 }
+
+.catalogue-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.catalogue-categories button[aria-pressed="true"] {
+    color: #fff;
+    background: var(--workspace-accent);
+    border-color: var(--workspace-accent);
+}
