@@ -4,6 +4,7 @@
             <RouterLink :to="{ name: 'home' }" class="app-navigation__link">← Quitter le projet</RouterLink>
             <nav class="app-navigation" aria-label="Arborescence du projet">
                 <strong>{{ currentProject?.name ?? 'Projet' }}</strong>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('overview')">Vue d’ensemble</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTreeItem({})">Racine du projet</button>
                 <button v-for="item in sidebarItems" :key="item.key" class="app-navigation__link"
                     type="button" :style="{ paddingInlineStart: (item.depth + 1) + 'rem' }"
@@ -15,18 +16,43 @@
                     {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
                 </button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openConnections">Graphes et connexions</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openNarration">Narration</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openIdeas">Idées</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTimeline">Chronologie</button>
-                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openSettings">Paramètres du projet</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('connections')">Graphes et connexions</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('narration')">Narration</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('ideas')">Idées</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('timeline')">Chronologie</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openPanel('settings')">Paramètres du projet</button>
             </nav>
         </template>
-        <ProjectDetailsView v-if="settings" />
-        <ProjectNarrative v-else-if="narration" :project-id="projectId" @open-content="openTimelineContent" />
-        <ProjectIdeas v-else-if="ideas" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openTimelineContent" />
-        <ProjectConnections v-else-if="connections" :project-id="projectId" @open-content="openTimelineContent" />
-        <ProjectTimeline v-else-if="timeline" :project-id="projectId" @open-content="openTimelineContent" />
+        <ProjectDetailsView v-if="panel === 'settings'" />
+        <ProjectNarrative v-else-if="panel === 'narration'" :project-id="projectId" @open-content="openPanelContent" />
+        <ProjectIdeas v-else-if="panel === 'ideas'" :project-id="projectId" :folders="folderOptions" :types="types" @open-content="openPanelContent" />
+        <ProjectConnections v-else-if="panel === 'connections'" :project-id="projectId" @open-content="openPanelContent" />
+        <ProjectTimeline v-else-if="panel === 'timeline'" :project-id="projectId" @open-content="openPanelContent" />
+        <section v-else-if="panel === 'overview'" class="content-templates-view">
+            <header class="page-header">
+                <h1>{{ currentProject?.name ?? 'Vue d’ensemble du projet' }}</h1>
+                <p v-if="currentProject?.description">{{ currentProject.description }}</p>
+                <img v-if="currentProject?.cover_image" :src="'/storage/' + currentProject.cover_image"
+                    :alt="'Couverture de ' + currentProject.name" width="300" />
+            </header>
+            <p v-if="error" role="alert">{{ error }}</p>
+            <nav aria-label="Accès rapides du projet">
+                <button type="button" :disabled="busy" @click="openTreeItem({})">Catalogue et création de fiche</button>
+                <button type="button" :disabled="busy" @click="openPanel('ideas')">Capturer une idée</button>
+                <button type="button" :disabled="busy" @click="openPanel('connections')">Graphes et connexions</button>
+                <button type="button" :disabled="busy" @click="openPanel('timeline')">Chronologie</button>
+                <button type="button" :disabled="busy" @click="openPanel('narration')">Narration</button>
+            </nav>
+            <h2>Fiches récemment modifiées</h2>
+            <p v-if="busy">Chargement…</p>
+            <p v-else-if="!recentContents.length">Aucune fiche dans ce projet.</p>
+            <ul v-else>
+                <li v-for="item in recentContents" :key="item.public_id">
+                    <button type="button" @click="openPanelContent(item.public_id)">{{ item.title }}</button>
+                    <time v-if="item.updated_at" :datetime="item.updated_at"> · {{ item.updated_at.slice(0, 10) }}</time>
+                </li>
+            </ul>
+        </section>
     <section v-else class="content-templates-view">
         <header class="page-header">
             <h1>{{ projectId ? 'Fiches du projet' : 'Corbeille des projets' }}</h1>
@@ -131,7 +157,7 @@
             <h2>{{ selected.title }}</h2>
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
-                <button type="button" :disabled="busy || saving" @click="openIdeas">Ouvrir les idées du projet</button>
+                <button type="button" :disabled="busy || saving" @click="openPanel('ideas')">Ouvrir les idées du projet</button>
             </p>
             <p v-if="selected.template_assignment">
                 Modèle · Version {{ selected.template_assignment.template_version.version_number }}

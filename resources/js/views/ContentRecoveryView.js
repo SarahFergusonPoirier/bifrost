@@ -16,11 +16,10 @@ export default {
     setup(props) {
         const folders = ref([]);
         const treeContents = ref([]);
-        const settings = ref(false);
-        const timeline = ref(false);
-        const connections = ref(false);
-        const ideas = ref(false);
-        const narration = ref(false);
+        const panel = ref(props.projectId ? 'overview' : 'catalogue');
+        const recentContents = computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
+            .sort((left, right) => String(right.updated_at ?? '').localeCompare(String(left.updated_at ?? '')))
+            .slice(0, 8));
         const sidebarItems = computed(() => {
             const items = [];
             const visit = (parent, depth) => {
@@ -312,7 +311,7 @@ export default {
         return {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
-            sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
+            sidebarItems, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;
@@ -331,95 +330,32 @@ export default {
                 });
                 await open(selected.value.public_id);
             }),
-            timeline, connections, ideas, narration,
-            openNarration: () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la narration ?')) return;
+            panel, recentContents,
+            openPanel: next => {
+                if (dirty.value && !window.confirm('Conserver le brouillon et changer de vue ?')) return;
                 selected.value = null;
                 draft.value = null;
-                settings.value = false;
-                timeline.value = false;
-                connections.value = false;
-                narration.value = false;
-                ideas.value = false;
-                narration.value = true;
+                panel.value = next;
             },
-            openIdeas: () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les idées ?')) return;
-                selected.value = null;
-                draft.value = null;
-                settings.value = false;
-                timeline.value = false;
-                connections.value = false;
-                narration.value = false;
-                ideas.value = true;
-            },
-            openConnections: () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les connexions ?')) return;
-
-                narration.value = false;
-                ideas.value = false;
-                                selected.value = null;
-                draft.value = null;
-                settings.value = false;
-                connections.value = false;
-                timeline.value = false;
-                connections.value = true;
-            },
-            openTimeline: () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la chronologie ?')) return;
-
-                narration.value = false;
-                ideas.value = false;
-                                selected.value = null;
-                draft.value = null;
-                settings.value = false;
-                connections.value = false;
-                timeline.value = true;
-            },
-            openTimelineContent: id => run(async () => {
-                
-                narration.value = false;
-                ideas.value = false;
-                connections.value = false;
-                timeline.value = false;
+            openPanelContent: id => run(async () => {
+                panel.value = 'catalogue';
                 trash.value = false;
                 await loadList();
                 await open(id);
             }),
-            openSettings: () => {
-                
-                narration.value = false;
-                ideas.value = false;
-                connections.value = false;
-                timeline.value = false;
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
-                selected.value = null;
-                draft.value = null;
-                settings.value = true;
-            },
             openProjectTrash: () => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la corbeille ?')) return;
-
-                narration.value = false;
-                ideas.value = false;
-                                settings.value = false;
+                panel.value = 'catalogue';
                 selected.value = null;
                 draft.value = null;
-                connections.value = false;
-                timeline.value = false;
                 trash.value = true;
                 await loadList();
             }),
             openTreeItem: item => run(async () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cet élément ?')) return;
-
-                narration.value = false;
-                ideas.value = false;
-                                settings.value = false;
+                panel.value = 'catalogue';
                 selected.value = null;
                 draft.value = null;
-                connections.value = false;
-                timeline.value = false;
                 trash.value = false;
                 selectFolder(item.folder?.id ?? item.content?.folder_id ?? 0);
                 await loadList();
