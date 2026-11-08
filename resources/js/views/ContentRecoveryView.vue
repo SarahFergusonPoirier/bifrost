@@ -62,7 +62,20 @@
                         <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
                     </select>
                 </label>
-                <button type="submit" :disabled="!projects.length">Créer une fiche</button>
+                <label v-if="templateOptions.length">
+                    Modèle
+                    <select v-model="templateId">
+                        <option value="">Sans modèle</option>
+                        <option v-for="template in templateOptions" :key="template.id" :value="template.id">{{ template.name }}</option>
+                    </select>
+                </label>
+                <label v-if="versions.length">
+                    Version du modèle
+                    <select v-model="versionId">
+                        <option v-for="version in versions" :key="version.id" :value="version.id">Version {{ version.version_number }}</option>
+                    </select>
+                </label>
+                <button type="submit" :disabled="!projects.length || (templateId && !versionId)">Créer une fiche</button>
             </form>
 
             <p v-if="!listing" role="status">Chargement des contenus…</p>
@@ -86,6 +99,9 @@
         <template v-else>
             <button type="button" :disabled="busy || saving" @click="close">Retour aux fiches</button>
             <h2>{{ selected.title }}</h2>
+            <p v-if="selected.template_assignment">
+                {{ selected.template_assignment.template_version.version_number === 1 ? 'Modèle · Version 1' : 'Modèle · Version ' + selected.template_assignment.template_version.version_number }}
+            </p>
             <p role="status">{{ saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : 'Toutes les modifications sont enregistrées.' }}</p>
             <form @submit.prevent="save">
                 <fieldset :disabled="busy || saving">

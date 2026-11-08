@@ -43,3 +43,7 @@ export function getContentTemplates(filters = {}) {
 
     return request(`/api/content-templates?${params.toString()}`);
 }
+
+export function getContentTemplate(id) {
+    return request('/api/content-templates/' + encodeURIComponent(id));
+}

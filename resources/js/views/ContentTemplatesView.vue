@@ -84,6 +84,20 @@
                             {{ template.is_active ? 'Actif' : 'Désactivé' }}
                         </span>
                     </div>
+                    <details @toggle="$event.target.open && loadDetails(template.id)">
+                        <summary>Voir les versions et les champs</summary>
+                        <p v-if="details[template.id]?.loading">Chargement…</p>
+                        <p v-if="details[template.id]?.error" role="alert">{{ details[template.id].error }}</p>
+                        <p v-if="details[template.id]?.versions?.length === 0">Aucune version publiée.</p>
+                        <details v-for="version in details[template.id]?.versions" :key="version.id">
+                            <summary>Version {{ version.version_number }}</summary>
+                            <ul>
+                                <li v-for="field in version.fields" :key="field.id">
+                                    {{ field.section_key }} · {{ field.label_override || field.field_definition?.label }}
+                                </li>
+                            </ul>
+                        </details>
+                    </details>
                 </article>
             </div>
 

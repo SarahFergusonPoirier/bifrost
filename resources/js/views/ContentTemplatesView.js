@@ -1,5 +1,5 @@
 import { computed, onMounted, ref, watch } from 'vue';
-import { getContentTemplates } from '../services/contentTemplate';
+import { getContentTemplate, getContentTemplates } from '../services/contentTemplate';
 
 const scopeLabels = {
     global: 'Global',
@@ -10,6 +10,17 @@ const scopeLabels = {
 export default {
     setup() {
         const templates = ref([]);
+        const details = ref({});
+
+        async function loadDetails(id) {
+            if (details.value[id]?.versions || details.value[id]?.loading) return;
+            details.value[id] = { loading: true };
+            try {
+                details.value[id] = await getContentTemplate(id);
+            } catch (error) {
+                details.value[id] = { error: error.message };
+            }
+        }
         const scopeFilter = ref('all');
         const statusFilter = ref('active');
         const searchQuery = ref('');
@@ -67,7 +78,7 @@ export default {
         onMounted(loadTemplates);
 
         return {
-            templates,
+            templates, details, loadDetails,
             scopeFilter,
             statusFilter,
             searchQuery,

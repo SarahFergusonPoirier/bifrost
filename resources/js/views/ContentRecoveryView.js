@@ -3,6 +3,7 @@ import { onBeforeRouteLeave } from 'vue-router';
 import AppLayout from '../layouts/AppLayout.vue';
 import ProjectDetailsView from './ProjectDetailsView.vue';
 import { contentRequest } from '../services/contentRecovery';
+import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
     components: { AppLayout, ProjectDetailsView },
@@ -59,6 +60,38 @@ export default {
         const types = ref([]);
         const newTitle = ref('');
         const typeId = ref('');
+        const templates = ref([]);
+        const versionId = ref('');
+        const versions = ref([]);
+        const templateId = ref('');
+        const templateOptions = computed(() => templates.value.filter(template =>
+            template.content_type_id === typeId.value && (template.scope_type === 'global'
+                || (template.scope_type === 'project' && String(template.project_id) === props.projectId))
+        ));
+
+        watch(typeId, async id => {
+            templateId.value = '';
+            if (!id || templates.value.length) return;
+            try {
+                templates.value = await getContentTemplates();
+            } catch (failure) {
+                error.value = failure.message;
+            }
+        });
+
+        watch(templateId, async id => {
+            versions.value = [];
+            versionId.value = '';
+            if (!id) return;
+            try {
+                const { data } = await contentRequest('/content-templates/' + id);
+                if (templateId.value !== id) return;
+                versions.value = data.versions;
+                versionId.value = data.versions.at(-1)?.id ?? '';
+            } catch (failure) {
+                error.value = failure.message;
+            }
+        });
         const selected = ref(null);
         const draft = ref(null);
         const baseline = ref('');
@@ -199,7 +232,7 @@ export default {
         });
 
         return {
-            sidebarItems, settings,
+            sidebarItems, settings, templateId, templateOptions, versions, versionId,
             openSettings: () => {
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
                 selected.value = null;
@@ -269,7 +302,7 @@ export default {
                 }
             },
             create: () => run(async () => {
-                const { data } = await contentRequest('/contents', 'POST', { title: newTitle.value, content_type_id: typeId.value, project_id: projectId.value, folder_id: props.projectId ? folderId.value || null : null });
+                const { data } = await contentRequest('/contents', 'POST', { title: newTitle.value, content_type_id: typeId.value, project_id: projectId.value, folder_id: props.projectId ? folderId.value || null : null, template_version_id: versionId.value || null });
                 newTitle.value = '';
                 await loadList();
                 await open(data.public_id);

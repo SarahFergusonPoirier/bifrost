@@ -4,10 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentTemplate;
 use App\Models\ContentType;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ContentTemplateController extends Controller
 {
+    public function show(ContentTemplate $template): JsonResponse
+    {
+        $template->load(['versions' => fn ($query) => $query
+            ->whereNotNull('published_at')->with('fields.fieldDefinition')]);
+
+        return response()->json($template);
+    }
+
     public function types()
     {
         return ContentType::query()
@@ -44,7 +53,7 @@ class ContentTemplateController extends Controller
 
         $search = trim($validated['search'] ?? '');
         if ($search !== '') {
-            $query->where('name', 'like', '%' . addcslashes($search, '%_\\') . '%');
+            $query->where('name', 'like', '%'.addcslashes($search, '%_\\').'%');
         }
 
         return $query->get();

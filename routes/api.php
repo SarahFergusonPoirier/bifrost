@@ -44,3 +44,4 @@ Route::put('/projects/{project}/folders/{folder}', [ProjectFolderController::cla
 Route::delete('/projects/{project}/folders/{folder}', [ProjectFolderController::class, 'destroy'])->whereNumber('folder');
 Route::put('/projects/{project}/contents/{content}/placement', [ProjectFolderController::class, 'place']);
 Route::get('/projects/{project}/tree', [ProjectFolderController::class, 'tree']);
+Route::get('/content-templates/{template}', [ContentTemplateController::class, 'show'])->whereNumber('template');

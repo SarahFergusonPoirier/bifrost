@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Content;
 use App\Models\Project;
+use App\Models\TemplateVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -43,6 +44,7 @@ class ContentRecoveryController extends Controller
             'content_type_id' => ['required', 'integer', 'exists:content_types,id,is_active,1'],
             'project_id' => ['required', 'integer', 'exists:projects,id,deleted_at,NULL'],
             'folder_id' => ['nullable', 'integer'],
+            'template_version_id' => ['nullable', 'integer', 'exists:template_versions,id'],
         ]);
 
         return DB::transaction(function () use ($validated): JsonResponse {
@@ -52,9 +54,21 @@ class ContentRecoveryController extends Controller
                 throw ValidationException::withMessages(['folder_id' => 'Ce dossier est introuvable dans le projet.']);
             }
 
-            $content = Content::create(Arr::except($validated, 'folder_id') + ['scope_type' => 'project']);
+            $content = Content::create(Arr::except($validated, ['folder_id', 'template_version_id']) + ['scope_type' => 'project']);
             if ($folder !== null) {
                 DB::table('content_placements')->insert(['content_id' => $content->id, 'folder_id' => $folder]);
+            }
+
+            if (isset($validated['template_version_id'])) {
+                $version = TemplateVersion::findOrFail($validated['template_version_id']);
+                if (! $version->template?->is_active) {
+                    throw ValidationException::withMessages(['template_version_id' => 'Ce modèle est indisponible.']);
+                }
+
+                $content->templateAssignment()->create([
+                    'template_id' => $version->template_id,
+                    'template_version_id' => $version->id,
+                ]);
             }
 
             return response()->json($content, 201);
@@ -310,7 +324,7 @@ class ContentRecoveryController extends Controller
 
     private function contentResponse(Content $content): JsonResponse
     {
-        return response()->json($content->load('blocks', 'fieldValues'))->header(
+        return response()->json($content->load('blocks', 'fieldValues', 'templateAssignment.templateVersion.fields.fieldDefinition'))->header(
             'ETag',
             '"'.$this->version($this->snapshotData($content, $content->getAttributes())).'"',
         );
