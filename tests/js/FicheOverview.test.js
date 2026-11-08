@@ -95,3 +95,20 @@ it('applies a local title and text limit without changing the shared source', as
     await short.get('button').trigger('click');
     expect(short.get('.fiche-text').text()).toBe(summary);
 });
+
+it('hides only empty fields in the configured placement', () => {
+    const values = ['', 0, false];
+    const fields = ['Vide', 'Quantité', 'Actif'].map((label, id) => ({ id, field_definition_id: id, field_definition: { label } }));
+    const base = { source: 'section:Identité', width: 6, height: 2, hidden: false, collapsed: false };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', fields]]),
+        hiddenFields: [],
+        fieldValue: field => values[field.id],
+        displayValue: field => String(values[field.id]),
+        placements: [{ ...base, id: 'filtered', icon: 'folder', hide_empty: true }, { ...base, id: 'all' }],
+    } });
+    const [filtered, all] = wrapper.findAll('.fiche-block');
+    expect(filtered.findAll('dt').map(item => item.text())).toEqual(['Quantité', 'Actif']);
+    expect(filtered.find('.fi-rr-folder').exists()).toBe(true);
+    expect(all.findAll('dt').map(item => item.text())).toEqual(['Vide', 'Quantité', 'Actif']);
+});

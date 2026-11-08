@@ -1,10 +1,7 @@
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 import { contentRequest } from '../../services/contentRecovery';
 
-const icons = [
-    ['overview', 'Accueil'], ['catalogue', 'Fiche'], ['connections', 'Relations'],
-    ['timeline', 'Chronologie'], ['folder', 'Dossier'], ['narration', 'Texte'], ['ideas', 'Idée'],
-];
+import { icons } from './ficheIcons';
 const optionalTabs = [['capabilities', 'Capacités'], ['equipment', 'Équipements']];
 const fallbackTabs = [
     { id: 'overview', title: 'Vue d’ensemble', icon: 'overview', hidden: false },

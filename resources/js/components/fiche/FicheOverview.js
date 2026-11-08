@@ -1,3 +1,4 @@
+import { icons } from './ficheIcons';
 import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
@@ -22,6 +23,7 @@ export default {
         templateSections: { type: Map, required: true },
         hiddenFields: { type: Array, required: true },
         displayValue: { type: Function, required: true },
+        fieldValue: Function,
         fieldReferences: { type: Function, default: () => [] },
         placements: Array,
         persist: Function,
@@ -30,7 +32,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select'],
-    data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
+    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
     computed: {
         cards() {
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
@@ -41,6 +43,7 @@ export default {
                     id: field.id,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
+                    empty: this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
                 })),
             }));
@@ -81,7 +84,11 @@ export default {
         displayed() {
             const placements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
             return placements.filter(item => !item.hidden && this.bySource.has(item.source))
-                .map(item => ({ placement: item, card: this.bySource.get(item.source) }));
+                .map(item => {
+                    const card = this.bySource.get(item.source);
+                    const fields = item.hide_empty ? card.fields?.filter(field => !field.empty) : card.fields;
+                    return { placement: item, card, fields };
+                });
         },
     },
     methods: {

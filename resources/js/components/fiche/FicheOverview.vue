@@ -40,6 +40,15 @@
                 <label>Hauteur <input v-model.number="placement.height" required type="number" min="1" max="12" /></label>
                 <label>Titre affiché <input v-model.trim="placement.title" maxlength="80"
                     :placeholder="bySource.get(placement.source)?.title" /></label>
+                <label>Icône
+                    <select :value="placement.icon ?? ''" @change="placement.icon = $event.target.value || null">
+                        <option value="">Par défaut</option>
+                        <option v-for="[key, label] in icons" :key="key" :value="key">{{ label }}</option>
+                    </select>
+                </label>
+                <label v-if="placement.source.startsWith('section:')">
+                    <input v-model="placement.hide_empty" type="checkbox" /> Masquer les champs vides
+                </label>
                 <label v-if="placement.source === 'summary' || placement.source.startsWith('text:')">
                     Longueur de l’aperçu (0 pour tout afficher)
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
@@ -73,8 +82,8 @@
         <button type="button" @click="cancel">Annuler</button>
     </form>
     <div ref="grid" class="fiche-grid">
-        <FicheBlock v-for="{ card, placement } in displayed" :key="placement.id" :title="placement.title || card.title"
-            :icon="card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
+        <FicheBlock v-for="{ card, placement, fields } in displayed" :key="placement.id" :title="placement.title || card.title"
+            :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
                     :aria-label="'Redimensionner ' + card.title + ' avec les flèches'"
@@ -90,8 +99,8 @@
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
                 </ul>
-                <dl v-else-if="card.fields?.length" class="fiche-fields">
-                    <div v-for="field in card.fields" :key="field.id">
+                <dl v-else-if="fields?.length" class="fiche-fields">
+                    <div v-for="field in fields" :key="field.id">
                         <dt>{{ field.label }}</dt>
                         <dd>
                             <ul v-if="field.references.length" class="fiche-references">
