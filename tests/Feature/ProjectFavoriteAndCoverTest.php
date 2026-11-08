@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContentType;
 use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -235,7 +236,7 @@ class ProjectFavoriteAndCoverTest extends TestCase
         ]);
     }
 
-    public function test_deleting_a_project_also_deletes_its_cover_image(): void
+    public function test_trashed_project_keeps_its_cover_and_contents_on_recovery(): void
     {
         $coverPath = 'project-covers/cover-to-delete.jpg';
 
@@ -249,6 +250,12 @@ class ProjectFavoriteAndCoverTest extends TestCase
             'cover_image' => $coverPath,
         ]);
 
+        $type = ContentType::create(['key' => 'document', 'name' => 'Document']);
+        $attributes = ['content_type_id' => $type->id, 'scope_type' => 'project'];
+        $content = $project->contents()->create($attributes + ['title' => 'Document']);
+        $deleted = $project->contents()->create($attributes + ['title' => 'Déjà supprimé']);
+        $deleted->delete();
+
         $response = $this->deleteJson(
             "/api/projects/{$project->id}"
         );
@@ -258,10 +265,15 @@ class ProjectFavoriteAndCoverTest extends TestCase
                 'message' => 'Projet supprimé avec succès.',
             ]);
 
-        $this->assertDatabaseMissing('projects', [
-            'id' => $project->id,
-        ]);
+        $this->assertSoftDeleted($project);
+        Storage::disk('public')->assertExists($coverPath);
+        $this->getJson('/api/projects/trash')->assertOk()->assertJsonPath('data.0.id', $project->id);
+        $this->getJson("/api/contents/{$content->public_id}")->assertNotFound();
+        $this->getJson('/api/contents/trash')->assertOk()->assertJsonCount(0, 'data');
 
-        Storage::disk('public')->assertMissing($coverPath);
+        $this->postJson("/api/projects/{$project->id}/recover")->assertOk();
+        $this->assertNotSoftDeleted($project);
+        $this->getJson("/api/contents/{$content->public_id}")->assertOk();
+        $this->assertSoftDeleted($deleted);
     }
 }

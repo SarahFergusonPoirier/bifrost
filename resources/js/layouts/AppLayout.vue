@@ -1,6 +1,7 @@
 <template>
     <div class="app-layout">
         <aside class="app-sidebar" aria-label="Navigation principale">
+            <slot name="sidebar">
             <RouterLink
                 :to="{ name: 'home' }"
                 class="app-logo"
@@ -9,7 +10,7 @@
             </RouterLink>
 
             <nav class="app-navigation" aria-label="Menu principal">
-                <RouterLink
+            <RouterLink
                     :to="{ name: 'home' }"
                     class="app-navigation__link"
                     exact-active-class="app-navigation__link--active"
@@ -18,7 +19,7 @@
                     <span>Accueil</span>
                 </RouterLink>
 
-                <RouterLink
+            <RouterLink
                     :to="{ name: 'projects' }"
                     class="app-navigation__link"
                     active-class="app-navigation__link--active"
@@ -27,13 +28,19 @@
                     <span>Projets</span>
                 </RouterLink>
 
-                <RouterLink
+            <RouterLink
                     :to="{ name: 'content-templates' }"
                     class="app-navigation__link"
                     active-class="app-navigation__link--active"
                 >
                     <span class="app-navigation__icon" aria-hidden="true">▧</span>
                     <span>Modèles</span>
+                </RouterLink>
+
+            <RouterLink :to="{ name: 'contents' }" class="app-navigation__link"
+                    active-class="app-navigation__link--active">
+                    <span class="app-navigation__icon" aria-hidden="true">▤</span>
+                    <span>Corbeille des projets</span>
                 </RouterLink>
 
                 <span
@@ -55,6 +62,7 @@
                     <span>Paramètres</span>
                 </span>
             </nav>
+                    </slot>
         </aside>
 
         <div class="app-main">

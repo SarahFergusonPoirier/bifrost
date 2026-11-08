@@ -198,14 +198,13 @@
                 aria-describedby="delete-modal-description"
             >
                 <h2 id="delete-modal-title">
-                    Supprimer ce projet ?
+                    Mettre ce projet à la corbeille ?
                 </h2>
 
                 <p id="delete-modal-description">
-                    Tu es sur le point de supprimer définitivement
+                    Tu es sur le point de mettre à la corbeille
                     le projet <strong>« {{ project?.name }} »</strong>.
-                    Cette action est irréversible et les données
-                    associées à ce projet seront perdues.
+                    Tu pourras restaurer le projet et ses contenus depuis la corbeille des projets.
                 </p>
 
                 <div class="project-delete-modal__field">
@@ -255,7 +254,7 @@
                     >
                         {{ deleting
                             ? 'Suppression…'
-                            : 'Supprimer définitivement'
+                            : 'Mettre à la corbeille'
                         }}
                     </button>
                 </div>

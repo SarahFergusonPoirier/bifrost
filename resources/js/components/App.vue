@@ -1,5 +1,6 @@
 <template>
-    <AppLayout>
+    <RouterView v-if="$route.meta.workspace" :key="$route.params.id" />
+    <AppLayout v-else>
         <RouterView />
     </AppLayout>
 </template>

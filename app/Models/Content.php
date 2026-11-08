@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +32,12 @@ class Content extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope('active_project', function (Builder $query): void {
+            $query->where(function (Builder $query): void {
+                $query->whereNull('contents.project_id')->orWhereHas('project');
+            });
+        });
+
         static::creating(function (Content $content): void {
             $content->public_id = $content->public_id ?: (string) Str::uuid();
         });
@@ -90,13 +99,78 @@ class Content extends Model
         }
     }
 
-    public function contentType(): BelongsTo { return $this->belongsTo(ContentType::class); }
-    public function project(): BelongsTo { return $this->belongsTo(Project::class); }
-    public function universe(): BelongsTo { return $this->belongsTo(Universe::class); }
-    public function originContent(): BelongsTo { return $this->belongsTo(self::class, 'origin_content_id'); }
-    public function derivedContents(): HasMany { return $this->hasMany(self::class, 'origin_content_id'); }
-    public function blocks(): HasMany { return $this->hasMany(ContentBlock::class)->orderBy('position'); }
-    public function fieldValues(): HasMany { return $this->hasMany(ContentFieldValue::class); }
-    public function templateAssignment(): HasOne { return $this->hasOne(ContentTemplateAssignment::class); }
-    public function templateUpdateEvents(): HasMany { return $this->hasMany(ContentTemplateUpdateEvent::class); }
+    public function contentType(): BelongsTo
+    {
+        return $this->belongsTo(ContentType::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function universe(): BelongsTo
+    {
+        return $this->belongsTo(Universe::class);
+    }
+
+    public function originContent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'origin_content_id');
+    }
+
+    public function derivedContents(): HasMany
+    {
+        return $this->hasMany(self::class, 'origin_content_id');
+    }
+
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(ContentBlock::class)->orderBy('position');
+    }
+
+    public function fieldValues(): HasMany
+    {
+        return $this->hasMany(ContentFieldValue::class);
+    }
+
+    public function templateAssignment(): HasOne
+    {
+        return $this->hasOne(ContentTemplateAssignment::class);
+    }
+
+    public function templateUpdateEvents(): HasMany
+    {
+        return $this->hasMany(ContentTemplateUpdateEvent::class);
+    }
+
+    public function outgoingRelations(): HasMany
+    {
+        return $this->hasMany(ContentRelation::class, 'source_content_id');
+    }
+
+    public function incomingRelations(): HasMany
+    {
+        return $this->hasMany(ContentRelation::class, 'target_content_id');
+    }
+
+    public function externalReferences(): HasMany
+    {
+        return $this->hasMany(ExternalReference::class, 'source_content_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ContentVariant::class, 'base_content_id');
+    }
+
+    public function resources(): BelongsToMany
+    {
+        return $this->belongsToMany(Resource::class);
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
 }

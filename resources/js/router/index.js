@@ -3,10 +3,21 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import ProjectsView from '../views/ProjectsView.vue';
 import ProjectCreateView from '../views/ProjectCreateView.vue';
-import ProjectDetailsView from '../views/ProjectDetailsView.vue';
+
 import ContentTemplatesView from '../views/ContentTemplatesView.vue';
 
+import ContentRecoveryView from '../views/ContentRecoveryView.vue';
+
 const routes = [
+    {
+        path: '/projects/:projectId/contents',
+        redirect: route => ({ name: 'project-details', params: { id: route.params.projectId } }),
+    },
+    {
+        path: '/contents',
+        name: 'contents',
+        component: ContentRecoveryView,
+    },
     {
         path: '/',
         name: 'home',
@@ -25,7 +36,9 @@ const routes = [
     {
         path: '/projects/:id',
         name: 'project-details',
-        component: ProjectDetailsView,
+        component: ContentRecoveryView,
+        props: route => ({ projectId: route.params.id }),
+        meta: { workspace: true },
     },
     {
         path: '/templates',

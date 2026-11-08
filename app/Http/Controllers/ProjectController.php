@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Tag;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -131,17 +132,24 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        if ($project->cover_image) {
-            Storage::disk('public')->delete(
-                $project->cover_image
-            );
-        }
-
         $project->delete();
 
         return response()->json([
             'message' => 'Projet supprimé avec succès.',
         ]);
+    }
+
+    public function trash(): JsonResponse
+    {
+        return response()->json(Project::onlyTrashed()->orderByDesc('deleted_at')->orderBy('id')->paginate());
+    }
+
+    public function recover(int $project): JsonResponse
+    {
+        $record = Project::onlyTrashed()->findOrFail($project);
+        $record->restore();
+
+        return response()->json($record);
     }
 
     private function syncTags(Project $project, array $tagNames): void
@@ -160,7 +168,7 @@ class ProjectController extends Controller
                 [mb_strtolower($name)]
             )->first();
 
-            if (!$tag) {
+            if (! $tag) {
                 $tag = Tag::create([
                     'name' => $name,
                 ]);
