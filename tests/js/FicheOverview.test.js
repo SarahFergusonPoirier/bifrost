@@ -132,3 +132,26 @@ it('renders accessible scale descriptions in numeric mode', () => {
     expect(meter.find('span').exists()).toBe(false);
     expect(wrapper.get('details ol').text()).toContain('Forte');
 });
+
+it('uses different mastery displays for placements of the same capability', () => {
+    const base = { source: 'capabilities', width: 6, height: 2, hidden: false, collapsed: false };
+    const wrapper = mount(FicheOverview, { props: {
+        contentId: 'character',
+        templateSections: new Map([['Capacités', [{
+            id: 1, field_definition_id: 1, format: 'capabilities', field_definition: { label: 'Capacités' },
+        }]]]),
+        hiddenFields: [],
+        fieldValue: () => [{ label: 'Vol', mastery: 3 }],
+        displayValue: () => 'Vol',
+        placements: [
+            { ...base, id: 'badge' },
+            { ...base, id: 'segments', mastery_view: 'segments' },
+            { ...base, id: 'hidden', mastery_view: 'hidden' },
+        ],
+    } });
+    const [badge, segments, hidden] = wrapper.findAll('.fiche-block');
+    expect(badge.get('.fiche-choice-badge').text()).toBe('Maîtrise · 3 / 5');
+    expect(segments.get('[role="meter"]').attributes('aria-valuenow')).toBe('3');
+    expect(hidden.text()).toContain('Vol');
+    expect(hidden.text()).not.toContain('Maîtrise');
+});

@@ -77,6 +77,13 @@
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
                         @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
                 </label>
+                <label v-if="placement.source === 'capabilities'">Affichage de la maîtrise
+                    <select :value="placement.mastery_view ?? 'badge'" @change="placement.mastery_view = $event.target.value">
+                        <option value="badge">Badge</option>
+                        <option value="segments">Échelle segmentée</option>
+                        <option value="hidden">Masqué</option>
+                    </select>
+                </label>
                 <label v-if="placement.source === 'gallery'">Présentation des images
                     <select :value="placement.media_mode ?? 'gallery'" @change="placement.media_mode = $event.target.value">
                         <option value="gallery">Galerie</option>
@@ -131,7 +138,11 @@
                     <li v-for="(entry, index) in card.entries" :key="index">
                         <strong>{{ entry.label }}</strong>
                         <span v-if="entry.category" class="fiche-relation-label">{{ entry.category }}</span>
-                        <p v-if="entry.mastery">Maîtrise · {{ entry.mastery }} / 5</p>
+                        <FicheScale v-if="entry.mastery && placement.mastery_view === 'segments'"
+                            label="Maîtrise" :level="Number(entry.mastery)" :levels="5" mode="segments" />
+                        <span v-else-if="entry.mastery && placement.mastery_view !== 'hidden'" class="fiche-choice-badge">
+                            Maîtrise · {{ entry.mastery }} / 5
+                        </span>
                         <FicheText v-if="entry.description" :text="entry.description" />
                     </li>
                 </ul>
@@ -159,16 +170,8 @@
                                 </li>
                             </ul>
                             <div v-else-if="field.scale">
-                                <div class="fiche-scale" role="meter" :aria-label="field.label"
-                                    aria-valuemin="1" :aria-valuemax="field.scale.levels" :aria-valuenow="field.scale.level"
-                                    :aria-valuetext="field.scale.descriptions[field.scale.level - 1] || field.value">
-                                    <template v-if="field.scale.mode !== 'number'">
-                                        <span v-for="level in field.scale.levels" :key="level" aria-hidden="true"
-                                            :title="field.scale.descriptions[level - 1] || undefined"
-                                            :class="{ 'fiche-scale__filled': level <= field.scale.level }" />
-                                    </template>
-                                    <small v-if="field.scale.mode !== 'segments'" aria-hidden="true">{{ field.value }}</small>
-                                </div>
+                                <FicheScale :label="field.label" :level="Number(field.scale.level)" :levels="field.scale.levels"
+                                    :mode="field.scale.mode" :descriptions="field.scale.descriptions" />
                                 <details v-if="field.scale.descriptions.some(Boolean)">
                                     <summary>Descriptions des niveaux</summary>
                                     <ol>
