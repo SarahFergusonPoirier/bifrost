@@ -4,6 +4,7 @@ use App\Http\Controllers\ContentRecoveryController;
 use App\Http\Controllers\ContentTemplateController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
+use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,3 +49,9 @@ Route::get('/content-templates/{template}', [ContentTemplateController::class, '
 
 Route::put('/projects/{project}/folders/{folder}/contents/{content}', [ProjectFolderController::class, 'addMembership'])->whereNumber('folder');
 Route::delete('/projects/{project}/folders/{folder}/contents/{content}', [ProjectFolderController::class, 'removeMembership'])->whereNumber('folder');
+Route::get('/projects/{project}/timeline', [ProjectTimelineController::class, 'index']);
+
+Route::get('/projects/{project}/timeline/events', [ProjectTimelineController::class, 'events']);
+Route::post('/projects/{project}/timeline/events', [ProjectTimelineController::class, 'store']);
+Route::put('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'update'])->whereNumber('event');
+Route::delete('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'destroy'])->whereNumber('event');

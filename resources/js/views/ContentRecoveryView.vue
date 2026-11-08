@@ -15,10 +15,12 @@
                     {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
                 </button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openProjectTrash">Corbeille des fiches</button>
+                <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openTimeline">Chronologie</button>
                 <button class="app-navigation__link" type="button" :disabled="busy || saving" @click="openSettings">Paramètres du projet</button>
             </nav>
         </template>
         <ProjectDetailsView v-if="settings" />
+        <ProjectTimeline v-else-if="timeline" :project-id="projectId" @open-content="openTimelineContent" />
     <section v-else class="content-templates-view">
         <header class="page-header">
             <h1>{{ projectId ? 'Fiches du projet' : 'Corbeille des projets' }}</h1>

@@ -21,6 +21,14 @@
         <label>Date ou repère <input :value="value?.start ?? ''" maxlength="255" @input="update('start', $event.target.value)" /></label>
         <label v-if="value?.precision === 'range' || value?.end">Fin <input :value="value?.end ?? ''" maxlength="255" @input="update('end', $event.target.value)" /></label>
         <label>Calendrier <input :value="value?.calendar ?? ''" maxlength="255" @input="update('calendar', $event.target.value)" /></label>
+        <label>
+            <input type="checkbox" :checked="Boolean(value?.timeline)" @change="update('timeline', $event.target.checked || '')" />
+            Ajouter à la chronologie
+        </label>
+        <template v-if="value?.timeline">
+            <label>Titre dans la chronologie <input :value="value.timeline_title ?? ''" maxlength="255" @input="update('timeline_title', $event.target.value)" /></label>
+            <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
+        </template>
     </div>
     <label v-else-if="format === 'references'">
         Fiches liées

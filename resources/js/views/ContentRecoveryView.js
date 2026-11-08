@@ -2,17 +2,19 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import StructuredField from '../components/StructuredField.vue';
 import AppLayout from '../layouts/AppLayout.vue';
+import ProjectTimeline from './ProjectTimeline.vue';
 import ProjectDetailsView from './ProjectDetailsView.vue';
 import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { AppLayout, ProjectDetailsView, StructuredField },
+    components: { AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
         const treeContents = ref([]);
         const settings = ref(false);
+        const timeline = ref(false);
         const sidebarItems = computed(() => {
             const items = [];
             const visit = (parent, depth) => {
@@ -280,7 +282,20 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             sidebarItems, settings, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
+            timeline,
+            openTimeline: () => {
+                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la chronologie ?')) return;
+                selected.value = null;
+                draft.value = null;
+                settings.value = false;
+                timeline.value = true;
+            },
+            openTimelineContent: id => run(async () => {
+                timeline.value = false;
+                await open(id);
+            }),
             openSettings: () => {
+                timeline.value = false;
                 if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir les paramètres ?')) return;
                 selected.value = null;
                 draft.value = null;
@@ -291,6 +306,7 @@ export default {
                 settings.value = false;
                 selected.value = null;
                 draft.value = null;
+                timeline.value = false;
                 trash.value = true;
                 await loadList();
             }),
@@ -299,6 +315,7 @@ export default {
                 settings.value = false;
                 selected.value = null;
                 draft.value = null;
+                timeline.value = false;
                 trash.value = false;
                 selectFolder(item.folder?.id ?? item.content?.folder_id ?? 0);
                 await loadList();
