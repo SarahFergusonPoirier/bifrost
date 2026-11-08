@@ -33,7 +33,18 @@ class FicheLayoutTest extends TestCase
         $this->getJson("/api/projects/{$other->id}/contents/{$content->public_id}/fiche-layout")->assertNotFound();
 
         $custom = ['id' => 'notes', 'title' => 'Notes', 'icon' => 'narration', 'hidden' => false];
+        $custom['placements'] = [[
+            'id' => 'bf3c7b23-6268-4185-9d52-ec8428478fb7',
+            'source' => 'summary',
+            'width' => 8,
+            'height' => 3,
+            'hidden' => false,
+            'collapsed' => true,
+        ]];
         $layout['tabs'] = [$custom, ...$layout['tabs']];
+        $invalid = $layout;
+        $invalid['tabs'][0]['placements'][0]['width'] = 13;
+        $this->putJson($url, $invalid)->assertUnprocessable();
         $layout['tabs'][1]['hidden'] = true;
         $this->putJson($url, $layout)->assertOk()->assertJsonPath('version', 1);
         $this->putJson($url, $layout)->assertConflict();

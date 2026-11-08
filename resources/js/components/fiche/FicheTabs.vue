@@ -8,7 +8,7 @@
     <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Réessayer</button></p>
     <details v-if="layout" class="fiche-tab-settings">
         <summary>Gérer les onglets</summary>
-        <form @submit.prevent="save">
+        <form @submit.prevent="save()">
             <fieldset :disabled="saving">
                 <legend>Disposition des onglets</legend>
                 <div v-for="(tab, index) in tabs" :key="tab.id" class="fiche-tab-settings__row">
@@ -31,6 +31,8 @@
             </fieldset>
         </form>
     </details>
+    <slot :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
+        :persist="layout && !saving ? (next, transfers, defaults) => savePlacements(next, transfers, defaults) : null" />
 </template>
 
 <script src="./FicheTabs.js"></script>

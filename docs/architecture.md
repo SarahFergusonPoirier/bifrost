@@ -71,3 +71,14 @@ restent gérés par `ContentRecoveryView`. Les styles des cartes et de la
 navigation de fiche réutilisent les variables du thème dans
 `resources/css/components/fiche.css`. La grille actuelle s’adapte à la largeur
 du panneau. Elle ne persiste pas de dimensions ou de placements.
+
+### Disposition par onglet
+
+L’API fiche-layout versionne la disposition par fiche et vérifie le projet à
+chaque lecture ou écriture. Chaque onglet peut contenir des placements
+ordonnés, avec dimensions, état réduit et visibilité. Une clé source pointe
+vers un résumé, les étiquettes, une section du modèle ou un bloc de texte
+existant. Déplacer ou retirer un placement ne modifie pas cette source.
+Une disposition enregistrée sans placements explicites conserve son aperçu
+par défaut. La grille utilise douze colonnes sur grand écran comme choix
+technique réversible et réduit le nombre de colonnes sur écran étroit.

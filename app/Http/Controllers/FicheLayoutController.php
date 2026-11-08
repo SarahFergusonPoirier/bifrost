@@ -20,11 +20,19 @@ class FicheLayoutController extends Controller
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
-            'tabs.*' => ['required', 'array:id,title,icon,hidden'],
+            'tabs.*' => ['required', 'array:id,title,icon,hidden,placements'],
             'tabs.*.id' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/', 'distinct:strict'],
             'tabs.*.title' => ['required', 'string', 'max:80'],
             'tabs.*.icon' => ['required', 'in:overview,catalogue,connections,timeline,folder,narration,ideas'],
             'tabs.*.hidden' => ['required', 'boolean'],
+            'tabs.*.placements' => ['sometimes', 'array', 'list', 'max:80'],
+            'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed'],
+            'tabs.*.placements.*.id' => ['required', 'uuid', 'distinct:strict'],
+            'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|section:.+|text:[a-f0-9-]+)$/u'],
+            'tabs.*.placements.*.width' => ['required', 'integer', 'between:1,12'],
+            'tabs.*.placements.*.height' => ['required', 'integer', 'between:1,12'],
+            'tabs.*.placements.*.hidden' => ['required', 'boolean'],
+            'tabs.*.placements.*.collapsed' => ['required', 'boolean'],
         ]);
 
         if (collect($input['tabs'])->every(fn (array $tab): bool => (bool) $tab['hidden'])) {
@@ -39,6 +47,16 @@ class FicheLayoutController extends Controller
             $version = $current['version'] + 1;
             $tabs = array_map(function (array $tab): array {
                 $tab['hidden'] = (bool) $tab['hidden'];
+
+                if (isset($tab['placements'])) {
+                    $tab['placements'] = array_map(fn (array $placement): array => [
+                        ...$placement,
+                        'width' => (int) $placement['width'],
+                        'height' => (int) $placement['height'],
+                        'hidden' => (bool) $placement['hidden'],
+                        'collapsed' => (bool) $placement['collapsed'],
+                    ], $tab['placements']);
+                }
 
                 return $tab;
             }, $input['tabs']);

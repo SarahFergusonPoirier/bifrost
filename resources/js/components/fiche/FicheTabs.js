@@ -55,12 +55,20 @@ export default {
                 this.tabs = this.tabs.filter(item => item.id !== tab.id);
             }
         },
-        async save() {
+        savePlacements(next, transfers, defaults) {
+            return this.save(this.layout.tabs.map(tab => {
+                if (tab.id === this.active) return { ...tab, placements: next };
+                const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
+                return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults : [])), ...added] } : tab;
+            }));
+        },
+        async save(tabs = this.tabs) {
             this.saving = true;
             this.error = '';
             try {
-                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs: this.tabs });
+                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs });
                 this.accept(data);
+                return true;
             } catch (error) {
                 this.error = error.message;
             } finally {
