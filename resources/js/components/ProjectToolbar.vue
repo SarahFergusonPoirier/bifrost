@@ -1,10 +1,11 @@
 <template>
     <header class="overview-toolbar">
         <nav aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › <strong>{{ project?.name ?? 'Projet' }}</strong></nav>
-        <form class="overview-search" role="search" @submit.prevent="$emit('search', query)">
-            <WorkspaceIcon name="search" />
-            <input ref="search" v-model="query" type="search" aria-label="Rechercher dans le projet" placeholder="Rechercher dans le projet…" maxlength="255" />
-            <button type="submit" :disabled="busy">Rechercher</button>
+        <form class="overview-search" role="search" @submit.prevent="!busy && $emit('search', query)">
+            <label class="project-search-field">
+                <WorkspaceIcon name="search" />
+                <input ref="search" v-model="query" type="search" aria-label="Rechercher dans le projet" placeholder="Rechercher dans le projet…" maxlength="255" />
+            </label>
         </form>
         <details class="overview-menu">
             <summary aria-label="Notifications"><i class="workspace-icon fi-rr-bell" aria-hidden="true"></i></summary>

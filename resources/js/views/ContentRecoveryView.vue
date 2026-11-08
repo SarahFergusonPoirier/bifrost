@@ -105,8 +105,10 @@
                 <button type="submit" :disabled="!projects.length || (templateId && !versionId)">Créer une fiche</button>
             </form>
             <form v-if="projectId && !trash" class="catalogue-toolbar" @submit.prevent="searchCatalogue">
-                <input v-model="catalogueSearch" type="search" aria-label="Rechercher une fiche" placeholder="Rechercher une fiche…" maxlength="255" />
-                <button type="submit">Rechercher</button>
+                <label class="project-search-field">
+                    <WorkspaceIcon name="search" />
+                    <input v-model="catalogueSearch" type="search" aria-label="Rechercher une fiche" placeholder="Rechercher une fiche…" maxlength="255" />
+                </label>
                 <details>
                     <summary><WorkspaceIcon name="filter" /> Filtres</summary>
                     <label>Type <select v-model="catalogueType">
@@ -125,8 +127,8 @@
                 <label class="catalogue-sort">Trier par <select v-model="catalogueSort" @change="browse(1)">
                     <option value="recent">Dernière modification</option><option value="title">Titre</option>
                 </select></label>
-                <button type="button" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'"><WorkspaceIcon name="grid" /> Grille</button>
-                <button type="button" :aria-pressed="catalogueDisplay === 'list'" @click="catalogueDisplay = 'list'"><WorkspaceIcon name="list" /> Liste</button>
+                <button type="button" aria-label="Grille" title="Grille" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'"><WorkspaceIcon name="grid" /></button>
+                <button type="button" aria-label="Liste" title="Liste" :aria-pressed="catalogueDisplay === 'list'" @click="catalogueDisplay = 'list'"><WorkspaceIcon name="list" /></button>
             </form>
             <div :class="{ 'catalogue-layout': projectId && !trash }">
             <aside v-if="projectId && !trash" class="catalogue-index">
