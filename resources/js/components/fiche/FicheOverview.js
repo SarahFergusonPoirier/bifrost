@@ -59,10 +59,10 @@ export default {
                     levelMode: field.display_options?.repeatable_level_mode,
                     entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
-                    scale: field.format === 'scale' && this.fieldValue?.(field)?.level
+                    scale: field.format === 'scale' && this.fieldValue?.(field)?.level && this.fieldValue(field).level <= (field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5)
                         ? {
                             level: this.fieldValue(field).level,
-                            levels: field.field_definition.options_data?.levels ?? 5,
+                            levels: field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5,
                             descriptions: field.display_options?.level_descriptions ?? [],
                             mode: field.display_options?.scale_display ?? 'both',
                         }

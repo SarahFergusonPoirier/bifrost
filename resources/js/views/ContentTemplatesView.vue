@@ -45,7 +45,7 @@
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
                     <label v-if="field.type === 'scale'">Nombre de niveaux
-                        <input type="number" min="2" max="20" :disabled="Boolean(field.id)" :value="field.levels ?? 5"
+                        <input type="number" min="2" max="20" required :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />
                     </label>
                     <label v-if="field.type === 'repeatable'">Présentation du niveau
@@ -55,6 +55,10 @@
                         </select>
                     </label>
                     <template v-if="field.type === 'scale'">
+                        <label v-if="field.id && field.levels !== field.originalLevels">
+                            <input type="checkbox" v-model="field.preserveScale" required />
+                            Conserver les valeurs existantes, y compris celles au-dessus du nouveau maximum.
+                        </label>
                         <label>Descriptions des niveaux (une ligne par niveau)
                             <textarea v-model="field.levelDescriptions" maxlength="5120" />
                         </label>

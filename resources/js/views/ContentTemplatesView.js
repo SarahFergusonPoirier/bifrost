@@ -71,7 +71,8 @@ export default {
                         label: field.label_override ?? field.field_definition?.label ?? '',
                         section: field.display_options?.section_label ?? field.section_key,
                         type: fieldTypes[field.field_definition?.options_data?.format] ? field.field_definition.options_data.format : field.field_definition?.value_type ?? 'text',
-                        levels: field.field_definition?.options_data?.levels,
+                        levels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels,
+                        originalLevels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels ?? 5,
                         levelDescriptions: (field.display_options?.level_descriptions ?? []).join('\n'),
                         badgeColor: field.display_options?.badge_color ?? '',
                         repeatableLevelMode: field.display_options?.repeatable_level_mode ?? 'text',
@@ -135,12 +136,13 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, ...field }) => ({
                     ...field,
                     ...(field.type === 'repeatable' ? { repeatable_level_mode: repeatableLevelMode ?? 'text' } : {}),
                     ...(field.type === 'choice' ? { badge_color: badgeColor || null } : {}),
                     ...(field.type === 'scale' ? {
                         levels: levels ?? 5,
+                        ...(preserveScale ? { scale_strategy: 'preserve' } : {}),
                         level_descriptions: (levelDescriptions ?? '').split('\n').slice(0, levels ?? 5).map(line => line.trim() || null),
                         scale_display: scaleDisplay ?? 'both',
                     } : {}),

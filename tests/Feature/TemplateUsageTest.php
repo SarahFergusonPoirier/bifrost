@@ -85,6 +85,38 @@ class TemplateUsageTest extends TestCase
             ->assertJsonPath('versions.1.fields.0.field_definition_id', $original['field_definition_id']);
     }
 
+    public function test_scale_reduction_requires_an_explicit_strategy_and_preserves_existing_values(): void
+    {
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $project = Project::create(['name' => 'Projet']);
+        $field = ['label' => 'Force', 'section' => 'Attributs', 'type' => 'scale', 'levels' => 5];
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Échelle', 'content_type_id' => $type->id, 'fields' => [$field],
+        ])->assertCreated()->json();
+        $field['id'] = $this->getJson("/api/content-templates/{$template['id']}")->json('versions.0.fields.0.field_definition_id');
+        $id = $this->postJson('/api/contents', [
+            'title' => 'Fiche', 'content_type_id' => $type->id, 'project_id' => $project->id, 'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $url = "/api/contents/$id";
+        $save = fn (int $level) => $this->patchJson($url, [
+            'title' => 'Fiche', 'summary' => null, 'field_values' => [
+                ['field_definition_id' => $field['id'], 'value_json' => ['level' => $level]],
+            ],
+        ]);
+        $save(5)->assertOk();
+
+        $field['levels'] = 3;
+        $versions = "/api/content-templates/{$template['id']}/versions";
+        $from = ['from_version_id' => $template['version_id']];
+        $this->postJson($versions, $from + ['fields' => [$field]])->assertUnprocessable();
+        $version = $this->postJson($versions, $from + ['fields' => [$field + ['scale_strategy' => 'preserve']]])
+            ->assertCreated()->json('id');
+        $this->postJson("$url/template-versions/$version/apply", $from)->assertOk();
+        $save(5)->assertOk();
+        $save(4)->assertUnprocessable();
+        $save(3)->assertOk();
+    }
+
     public function test_version_adoption_preserves_removed_values_and_rejects_stale_previews(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

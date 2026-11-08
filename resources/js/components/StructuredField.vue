@@ -91,6 +91,7 @@
         Niveau
         <select :value="value?.level ?? ''" @change="update('level', $event.target.value === '' ? '' : Number($event.target.value))">
             <option value="">Non renseigné</option>
+            <option v-if="value?.level > levels" :value="value.level">{{ value.level }} · Valeur conservée</option>
             <option v-for="level in levels" :key="level" :value="level">{{ level }} / {{ levels }}</option>
         </select>
     </label>

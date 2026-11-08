@@ -102,6 +102,18 @@ class ContentFieldValue extends Model
         });
     }
 
+    private function scaleLimit(FieldDefinition $definition, Content $content): int
+    {
+        $display = $content->templateAssignment()->first()?->templateVersion
+            ->fields()->where('field_definition_id', $definition->id)->first()?->display_options;
+        $limit = (int) ($display['scale_levels'] ?? $definition->options_data['levels'] ?? 5);
+        $previous = $this->getOriginal('value_json')['level'] ?? null;
+        $level = $this->value_json['level'] ?? null;
+
+        return $previous !== null && is_numeric($level) && (int) $level === (int) $previous
+            ? max($limit, (int) $previous) : $limit;
+    }
+
     private function validateStructuredValue(FieldDefinition $definition, Content $content): void
     {
         $format = $definition->options_data['format'] ?? null;
@@ -127,7 +139,7 @@ class ContentFieldValue extends Model
             ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],
-                'value_json.level' => ['required', 'integer', 'between:1,'.($definition->options_data['levels'] ?? 5)],
+                'value_json.level' => ['required', 'integer', 'between:1,'.$this->scaleLimit($definition, $content)],
             ],
             'measurement' => [
                 'value_json' => ['array:amount,unit', 'min:1'],

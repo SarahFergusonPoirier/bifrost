@@ -71,13 +71,14 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.scale_strategy' => ['sometimes', 'in:preserve'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
             'fields.*.level_descriptions' => ['sometimes', 'array', 'list', 'max:20'],
             'fields.*.level_descriptions.*' => ['nullable', 'string', 'max:255'],
@@ -120,8 +121,16 @@ class ContentTemplateAuthoringController extends Controller
             }
 
             if (($definition->options_data['format'] ?? null) === 'scale') {
+                $previousLevels = (int) ($display['scale_levels'] ?? $definition->options_data['levels'] ?? 5);
+                $levels = (int) ($field['levels'] ?? $previousLevels);
+                if ($original && $levels !== $previousLevels) {
+                    if (($field['scale_strategy'] ?? null) !== 'preserve') {
+                        throw ValidationException::withMessages(['fields' => 'Confirme la conservation des valeurs avant de modifier le nombre de niveaux.']);
+                    }
+                    $display['scale_levels'] = $levels;
+                }
                 if (array_key_exists('level_descriptions', $field)) {
-                    $display['level_descriptions'] = array_slice($field['level_descriptions'], 0, $definition->options_data['levels'] ?? 5);
+                    $display['level_descriptions'] = array_slice($field['level_descriptions'], 0, $levels);
                 }
                 if (isset($field['scale_display'])) {
                     $display['scale_display'] = $field['scale_display'];
