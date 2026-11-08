@@ -185,7 +185,32 @@
                 </template>
             </details>
             <p role="status">{{ saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : 'Toutes les modifications sont enregistrées.' }}</p>
-            <form @submit.prevent="save">
+            <div aria-label="Présentation de la fiche">
+                <button type="button" :aria-pressed="compact" @click="setCompact(true)">Vue compacte</button>
+                <button type="button" :aria-pressed="!compact" @click="setCompact(false)">Vue complète</button>
+            </div>
+            <section v-if="compact" aria-label="Lecture compacte">
+                <p v-if="draft.summary">{{ draft.summary }}</p>
+                <label v-if="templateSections.size"><input v-model="showHidden" type="checkbox" /> Afficher les champs masqués</label>
+                <details v-for="[section, fields] in templateSections" :key="section" open>
+                    <summary>{{ section }}</summary>
+                    <dl>
+                        <template v-for="field in fields.filter(item => showHidden || !hiddenFields.includes(item.field_definition_id))" :key="field.id">
+                            <dt>{{ field.label_override || field.field_definition.label }}</dt>
+                            <dd>{{ displayValue(field) }}
+                                <button type="button" @click="toggleHidden(field.field_definition_id)">
+                                    {{ hiddenFields.includes(field.field_definition_id) ? 'Réafficher' : 'Masquer' }}
+                                </button>
+                            </dd>
+                        </template>
+                    </dl>
+                </details>
+                <article v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
+                    <h3 v-if="block.title">{{ block.title }}</h3>
+                    <p v-if="block.body" style="white-space: pre-wrap">{{ block.body }}</p>
+                </article>
+            </section>
+            <form v-else @submit.prevent="save">
                 <fieldset :disabled="busy || saving">
                     <legend>Modifier la fiche</legend>
                     <p><label>Titre <input v-model="draft.title" required maxlength="255" /></label></p>

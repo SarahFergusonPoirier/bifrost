@@ -112,6 +112,44 @@ export default {
             }
         });
         const selected = ref(null);
+        const compact = ref(false);
+        const hiddenFields = ref([]);
+        const showHidden = ref(false);
+        const displayKey = () => 'bifrost:content-display:' + selected.value.public_id;
+
+        function loadDisplay() {
+            compact.value = false;
+            hiddenFields.value = [];
+            showHidden.value = false;
+            try {
+                const preference = JSON.parse(localStorage.getItem(displayKey()) ?? '{}');
+                compact.value = preference.compact === true;
+                hiddenFields.value = Array.isArray(preference.hidden) ? preference.hidden : [];
+            } catch {
+                // A missing preference leaves all fields visible.
+            }
+        }
+
+        function rememberDisplay() {
+            try {
+                localStorage.setItem(displayKey(), JSON.stringify({ compact: compact.value, hidden: hiddenFields.value }));
+            } catch {
+                // Display preferences still apply while the fiche is open.
+            }
+        }
+
+        function toggleHidden(id) {
+            hiddenFields.value = hiddenFields.value.includes(id)
+                ? hiddenFields.value.filter(field => field !== id)
+                : [...hiddenFields.value, id];
+            rememberDisplay();
+        }
+
+        function setCompact(value) {
+            compact.value = value;
+            showHidden.value = false;
+            rememberDisplay();
+        }
         const draft = ref(null);
         const baseline = ref('');
         const version = ref('');
@@ -149,6 +187,18 @@ export default {
         const fieldValue = field => draft.value.field_values?.find(value =>
             value.field_definition_id === field.field_definition_id
         )?.[field.column] ?? '';
+        function displayValue(field) {
+            const value = fieldValue(field);
+            if (value === '') return '—';
+            if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+            if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
+            if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');
+            if (field.format === 'temporal') return [value.start, value.end, value.calendar].filter(Boolean).join(' · ') || 'Date inconnue';
+            if (field.format === 'references') return value.map(id =>
+                treeContents.value.find(item => item.public_id === id)?.title ?? 'Fiche indisponible').join(', ');
+            return value;
+        }
+
         function setField(field, value) {
             const values = draft.value.field_values ??= [];
             const index = values.findIndex(item => item.field_definition_id === field.field_definition_id);
@@ -240,6 +290,7 @@ export default {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
+            loadDisplay();
             from.value = '';
             to.value = '';
             comparison.value = null;
@@ -311,6 +362,7 @@ export default {
         return {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
+            compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
             sidebarItems, templateSections, fieldValue, setField, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

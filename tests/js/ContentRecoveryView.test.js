@@ -66,3 +66,38 @@ it('restaure un projet depuis la corbeille globale', async () => {
     expect(wrapper.text()).toContain('La corbeille est vide.');
     wrapper.unmount();
 });
+
+it('masque une valeur en lecture compacte sans la retirer de la fiche', async () => {
+    const content = {
+        public_id: 'fiche', title: 'Original', summary: null, blocks: [],
+        field_values: [{ field_definition_id: 1, value_text: 'Valeur conservée' }],
+        template_assignment: {
+            template_version: { version_number: 1, fields: [{
+                id: 3, field_definition_id: 1, section_key: 'identite',
+                field_definition: { label: 'Origine', value_type: 'text' },
+            }] },
+        },
+    };
+    const page = data => ({ data: { data, current_page: 1, last_page: 1 } });
+    contentRequest.mockImplementation(async path => {
+        if (path === '/contents/fiche') return { data: content, version: 'initial' };
+        if (path === '/projects/1/tree') return { data: [{ public_id: 'fiche', title: 'Original', folder_id: null }] };
+        if (path === '/projects/1/folders' || path === '/projects' || path === '/content-types') return { data: [] };
+        if (path.includes('/revisions')) return page([]);
+        return page([content]);
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    const click = label => wrapper.findAll('button').find(button => button.text() === label).trigger('click');
+
+    await flushPromises();
+    await wrapper.get('nav[aria-label="Arborescence du projet"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
+    await flushPromises();
+    await click('Vue compacte');
+    expect(wrapper.text()).toContain('Valeur conservée');
+    await click('Masquer');
+    expect(wrapper.text()).not.toContain('Valeur conservée');
+    await wrapper.get('section[aria-label="Lecture compacte"] input').setValue(true);
+    expect(wrapper.text()).toContain('Valeur conservée');
+    expect(contentRequest.mock.calls.some(([, method]) => method === 'PATCH')).toBe(false);
+    wrapper.unmount();
+});
