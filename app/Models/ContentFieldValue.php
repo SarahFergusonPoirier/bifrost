@@ -106,6 +106,12 @@ class ContentFieldValue extends Model
     {
         $format = $definition->options_data['format'] ?? null;
         $rules = match ($format) {
+            'keywords' => [
+                'value_json' => ['array', 'list', 'min:1', 'max:100'],
+                'value_json.*' => ['required', 'array:label,description'],
+                'value_json.*.label' => ['required', 'string', 'max:120'],
+                'value_json.*.description' => ['nullable', 'string', 'max:1000'],
+            ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],
                 'value_json.level' => ['required', 'integer', 'between:1,'.($definition->options_data['levels'] ?? 5)],

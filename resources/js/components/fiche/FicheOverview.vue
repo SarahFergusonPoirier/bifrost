@@ -132,6 +132,15 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
+                            <ul v-else-if="field.keywords?.length" class="fiche-tags">
+                                <li v-for="(keyword, index) in field.keywords" :key="index">
+                                    <details v-if="keyword.description">
+                                        <summary>{{ keyword.label }}</summary>
+                                        <p>{{ keyword.description }}</p>
+                                    </details>
+                                    <template v-else>{{ keyword.label }}</template>
+                                </li>
+                            </ul>
                             <div v-else-if="field.scale">
                                 <div class="fiche-scale" role="meter" :aria-label="field.label"
                                     aria-valuemin="1" :aria-valuemax="field.scale.levels" :aria-valuenow="field.scale.level"

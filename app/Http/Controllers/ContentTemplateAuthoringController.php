@@ -75,7 +75,7 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
-            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale'],
+            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
@@ -99,7 +99,7 @@ class ContentTemplateAuthoringController extends Controller
             if (isset($field['id']) && ! $original?->fieldDefinition) {
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
-            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale'], true);
+            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords'], true);
             $definition = $original?->fieldDefinition ?? FieldDefinition::create([
                 'key' => 'custom-'.Str::uuid(),
                 'label' => $field['label'],

@@ -34,6 +34,21 @@
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
         </template>
     </div>
+    <div v-else-if="format === 'keywords'">
+        <ol v-if="value?.length">
+            <li v-for="(entry, index) in value" :key="index">
+                <label>Mot-clé <input :value="entry.label" required maxlength="120"
+                    @change="editKeyword(index, 'label', $event.target.value)" /></label>
+                <label>Description <input :value="entry.description ?? ''" maxlength="1000"
+                    @change="editKeyword(index, 'description', $event.target.value)" /></label>
+                <button type="button" :disabled="index === 0" @click="moveKeyword(index, -1)">Monter</button>
+                <button type="button" :disabled="index === value.length - 1" @click="moveKeyword(index, 1)">Descendre</button>
+                <button type="button" @click="setKeywords(value.filter((item, i) => i !== index))">Retirer</button>
+            </li>
+        </ol>
+        <label>Nouveau mot-clé <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
+        <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
+    </div>
     <label v-else-if="format === 'scale'">
         Niveau
         <select :value="value?.level ?? ''" @change="update('level', $event.target.value === '' ? '' : Number($event.target.value))">

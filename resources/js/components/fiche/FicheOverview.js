@@ -47,6 +47,7 @@ export default {
                     value: this.displayValue(field),
                     empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
+                    keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
                         ? {
                             level: this.fieldValue(field).level,

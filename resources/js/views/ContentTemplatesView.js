@@ -41,7 +41,7 @@ export default {
         const fieldTypes = {
             text: 'Texte', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
             reference: 'Référence', json: 'Données structurées', measurement: 'Mesure', coordinates: 'Coordonnées',
-            temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple', scale: 'Échelle segmentée',
+            temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple', scale: 'Échelle segmentée', keywords: 'Mots-clés libres',
         };
 
         async function editTemplate(template = null, copy = false) {

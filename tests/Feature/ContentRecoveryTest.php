@@ -254,6 +254,24 @@ class ContentRecoveryTest extends TestCase
         $this->getJson($url)->assertOk()->assertJsonPath('field_values.0.value_state', 'unknown');
     }
 
+    public function test_keyword_values_are_ordered_and_do_not_create_project_tags(): void
+    {
+        $content = $this->content();
+        $field = FieldDefinition::create([
+            'key' => 'keywords', 'label' => 'Traits', 'value_type' => 'json', 'options_data' => ['format' => 'keywords'],
+        ]);
+        $url = '/api/contents/'.$content->public_id;
+        $save = fn (array $keywords) => $this->patchJson($url, [
+            'title' => 'Original', 'summary' => null,
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => $keywords]],
+        ]);
+
+        $save([['description' => 'Sans libellé']])->assertUnprocessable();
+        $keywords = [['label' => 'Loyal'], ['label' => 'Curieux', 'description' => 'Pose beaucoup de questions.']];
+        $save($keywords)->assertOk()->assertJsonPath('field_values.0.value_json', $keywords);
+        $this->assertDatabaseMissing('tags', ['name' => 'Loyal']);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);
