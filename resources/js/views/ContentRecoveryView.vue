@@ -1,5 +1,5 @@
 <template>
-    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId, 'project-workspace--catalogue': projectId && panel === 'catalogue' && !trash && !selected }" :workspace="Boolean(projectId)">
+    <component :is="projectId ? 'AppLayout' : 'div'" :class="{ 'project-workspace': projectId, 'project-workspace--catalogue': projectId && panel === 'catalogue' && !trash && !selected, 'project-workspace--overview': projectId && panel === 'overview' }" :workspace="Boolean(projectId)">
         <template #sidebar>
             <header class="workspace-brand">
                 <span class="workspace-brand__mark" aria-hidden="true">
