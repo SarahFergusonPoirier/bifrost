@@ -22,7 +22,7 @@
             <button type="button" :disabled="busy || source.current_page <= 1" @click="load(source.current_page - 1, events.current_page)">Précédent</button>
             <button type="button" :disabled="busy || source.current_page >= source.last_page" @click="load(source.current_page + 1, events.current_page)">Suivant</button>
         </template>
-        <h2>Événements sans fiche</h2>
+        <h2>Événements saisis dans la chronologie</h2>
         <form @submit.prevent="save">
             <fieldset :disabled="busy">
                 <legend>{{ editing ? 'Modifier l’événement' : 'Ajouter un événement' }}</legend>
@@ -50,7 +50,10 @@
         </form>
         <ul v-if="events">
             <li v-for="event in events.data" :key="event.id">
-                <strong>{{ event.title }}</strong> · {{ dateLabel(event) }}
+                <strong>{{ event.content_title ?? event.title }}</strong> · {{ dateLabel(event) }}
+                <button v-if="event.content_public_id" type="button" @click="$emit('open-content', event.content_public_id)">Ouvrir la fiche</button>
+                <span v-else-if="event.content_id">Fiche à la corbeille</span>
+                <button v-else type="button" :disabled="busy" @click="convert(event.id)">Créer une fiche liée</button>
                 <button type="button" :disabled="busy" @click="edit(event)">Modifier</button>
                 <button type="button" :disabled="busy" @click="remove(event.id)">Retirer</button>
             </li>

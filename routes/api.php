@@ -55,3 +55,4 @@ Route::get('/projects/{project}/timeline/events', [ProjectTimelineController::cl
 Route::post('/projects/{project}/timeline/events', [ProjectTimelineController::class, 'store']);
 Route::put('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'update'])->whereNumber('event');
 Route::delete('/projects/{project}/timeline/events/{event}', [ProjectTimelineController::class, 'destroy'])->whereNumber('event');
+Route::post('/projects/{project}/timeline/events/{event}/convert', [ProjectTimelineController::class, 'convert'])->whereNumber('event');

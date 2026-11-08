@@ -292,6 +292,8 @@ export default {
             },
             openTimelineContent: id => run(async () => {
                 timeline.value = false;
+                trash.value = false;
+                await loadList();
                 await open(id);
             }),
             openSettings: () => {

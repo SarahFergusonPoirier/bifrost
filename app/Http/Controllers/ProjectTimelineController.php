@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContentFieldValue;
+use App\Models\ContentType;
 use App\Models\Project;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -41,8 +42,12 @@ class ProjectTimelineController extends Controller
         $filters = $request->validate(['precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown']]);
 
         return response()->json($this->eventQuery($project)
-            ->when(isset($filters['precision']), fn ($query) => $query->where('precision', $filters['precision']))
-            ->orderBy('id')->paginate(50));
+            ->when(isset($filters['precision']), fn ($query) => $query->where('project_timeline_events.precision', $filters['precision']))
+            ->leftJoin('contents', function ($join): void {
+                $join->on('contents.id', '=', 'project_timeline_events.content_id')->whereNull('contents.deleted_at');
+            })
+            ->select('project_timeline_events.*', 'contents.public_id as content_public_id', 'contents.title as content_title')
+            ->orderBy('project_timeline_events.id')->paginate(50));
     }
 
     public function store(Request $request, Project $project): JsonResponse
@@ -64,6 +69,36 @@ class ProjectTimelineController extends Controller
         return response()->json(null, 204);
     }
 
+    public function convert(Project $project, int $event): JsonResponse
+    {
+        return DB::transaction(function () use ($project, $event): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $query = $this->eventQuery($project)->where('id', $event);
+            $record = $query->lockForUpdate()->first();
+            abort_if($record === null, 404);
+
+            if ($record->content_id !== null) {
+                $existing = $project->contents()->withTrashed()->findOrFail($record->content_id);
+
+                return response()->json(['public_id' => $existing->public_id, 'event_id' => $event]);
+            }
+
+            $type = ContentType::firstOrCreate(
+                ['key' => 'evenement-historique', 'scope_type' => 'system'],
+                ['name' => 'Événement', 'is_system' => true],
+            );
+            $content = $project->contents()->create([
+                'content_type_id' => $type->id,
+                'scope_type' => 'project',
+                'title' => $record->title,
+                'summary' => $record->description,
+            ]);
+            $query->update(['content_id' => $content->id, 'updated_at' => now()]);
+
+            return response()->json(['public_id' => $content->public_id, 'event_id' => $event], 201);
+        }, attempts: 3);
+    }
+
     public function destroy(Project $project, int $event): JsonResponse
     {
         abort_unless($this->eventQuery($project)->where('id', $event)->update(['deleted_at' => now()]), 404);
@@ -73,7 +108,7 @@ class ProjectTimelineController extends Controller
 
     private function eventQuery(Project $project): Builder
     {
-        return DB::table('project_timeline_events')->where('project_id', $project->id)->whereNull('deleted_at');
+        return DB::table('project_timeline_events')->where('project_timeline_events.project_id', $project->id)->whereNull('project_timeline_events.deleted_at');
     }
 
     private function validateEvent(Request $request): array

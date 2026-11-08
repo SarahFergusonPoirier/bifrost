@@ -47,6 +47,29 @@ class ProjectTimelineTest extends TestCase
             ->assertJsonPath('data.0.key', $key)->assertJsonPath('data.0.date.start', 'Avant la guerre');
     }
 
+    public function test_conversion_keeps_one_entry_and_one_content_across_retries(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $url = "/api/projects/{$project->id}/timeline/events";
+        $event = [
+            'title' => 'La traversée', 'description' => 'Départ du port', 'precision' => 'approximate',
+            'start' => 'Vers 42', 'end' => null, 'calendar' => 'Calendrier local', 'importance' => 'major',
+        ];
+        $id = $this->postJson($url, $event)->assertCreated()->json('id');
+        $content = $this->postJson("$url/$id/convert")->assertCreated()->assertJsonPath('event_id', $id)->json('public_id');
+        $this->postJson("$url/$id/convert")->assertOk()->assertJsonPath('public_id', $content);
+
+        $this->assertDatabaseCount('contents', 1);
+        $this->assertDatabaseCount('project_timeline_events', 1);
+        $this->getJson($url)->assertOk()->assertJsonPath('data.0.content_public_id', $content)
+            ->assertJsonPath('data.0.start', 'Vers 42')->assertJsonPath('data.0.importance', 'major');
+
+        $this->patchJson("/api/contents/$content", ['title' => 'Nouveau titre', 'summary' => 'Départ du port'])->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.0.content_title', 'Nouveau titre');
+        $this->deleteJson("$url/$id")->assertNoContent();
+        $this->getJson("/api/contents/$content")->assertOk();
+    }
+
     public function test_lightweight_events_can_be_edited_and_removed_within_their_project(): void
     {
         $project = Project::create(['name' => 'Projet']);

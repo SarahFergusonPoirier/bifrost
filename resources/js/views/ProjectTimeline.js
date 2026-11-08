@@ -58,6 +58,12 @@ export default {
                 await this.fetchPages();
             });
         },
+        convert(id) {
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/events/' + id + '/convert', 'POST');
+                await this.fetchPages();
+            });
+        },
         remove(id) {
             if (!window.confirm('Retirer cet événement de la chronologie ?')) return;
             return this.run(async () => {
