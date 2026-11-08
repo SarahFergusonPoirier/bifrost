@@ -4,10 +4,13 @@ const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
 const dateOrder = new Intl.Collator('fr', { numeric: true });
 
 export default {
-    props: { path: String, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
+    props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all'],
-    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4 }; },
+    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', savingLink: false, linkError: '' }; },
     computed: {
+        linkType() {
+            return { equipment: 'equipment', capabilities: 'capability' }[this.kind] ?? this.relationType.trim();
+        },
         items() {
             if (this.kind === 'capabilities') return [...this.localCapabilities, ...(this.data?.capabilities ?? [])];
             if (this.kind === 'equipment') return [...this.localEquipment, ...(this.data?.equipment ?? [])];
@@ -35,6 +38,22 @@ export default {
         if (this.path) this.load();
     },
     methods: {
+        async addLink() {
+            if (!this.target || !this.linkType || this.savingLink) return;
+            this.savingLink = true;
+            this.linkError = '';
+            try {
+                await contentRequest(this.connectionsPath, 'POST', {
+                    source: this.contentId, target: this.target, type_key: this.linkType,
+                });
+                this.target = '';
+                await this.load();
+            } catch (error) {
+                this.linkError = error.message;
+            } finally {
+                this.savingLink = false;
+            }
+        },
         showAll() {
             if (this.hasTab) this.$emit('show-all', this.kind);
             else this.expanded = !this.expanded;

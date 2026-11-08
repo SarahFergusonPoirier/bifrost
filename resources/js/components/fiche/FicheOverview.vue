@@ -132,14 +132,15 @@
                     @keydown="resizeWithKeyboard($event, placement)">↘</button>
             </template>
             <template v-if="!placement.collapsed">
-                <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source" :local-equipment="localEquipment"
+                <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source" :local-equipment="localEquipment" :connections-path="connectionsPath" :content-id="contentId"
+                    :targets="card.source === 'equipment' ? referenceTargets.filter(item => item.content_type_id === equipmentType) : referenceTargets"
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
                 <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image"
                     :select-image="editing && placement.media_mode === 'single'"
                     @select-image="placement.media_image = $event" read-only />
                 <FicheLinkedData v-else-if="card.source === 'capabilities'" :path="linksPath" kind="capabilities"
-                    :local-capabilities="card.entries" view="cards" :full="active === 'capabilities'"
+                    :local-capabilities="card.entries" :connections-path="connectionsPath" :content-id="contentId" :targets="referenceTargets" view="cards" :full="active === 'capabilities'"
                     :has-tab="linkedTabs.includes('capabilities')" @show-all="$emit('select', $event)">
                     <template #entry="{ entry }">
                         <button v-if="entry.public_id" type="button" @click="$emit('open', entry.public_id)">{{ entry.label }}</button>

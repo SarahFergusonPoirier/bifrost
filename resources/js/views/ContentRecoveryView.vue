@@ -245,6 +245,8 @@
                 <template #default="{ tab, tabs, persist }">
                     <FicheOverview v-if="tab" :key="selected.public_id + ':' + ficheTab"
                         :content-id="selected.public_id" :summary="draft.summary" :full-name="draft.title" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab"
+                        :connections-path="projectId ? '/projects/' + projectId + '/connections' : undefined"
+                        :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
                         @open="openPanelContent" @select="selectFicheTab"

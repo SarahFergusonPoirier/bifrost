@@ -50,3 +50,22 @@ it('shows the additional relation details in cards', async () => {
     expect(wrapper.get('.fiche-relations--cards').text()).toContain('Première rencontre');
     expect(wrapper.text()).toContain('2010');
 });
+
+it('creates an equipment relation from the active fiche and reloads the list', async () => {
+    contentRequest.mockReset();
+    contentRequest.mockResolvedValueOnce({ data: { equipment: [] } })
+        .mockResolvedValueOnce({ data: { id: 1 } })
+        .mockResolvedValueOnce({ data: { equipment: [{ id: 1, public_id: 'target', title: 'Épée' }] } });
+    const wrapper = mount(FicheLinkedData, { props: {
+        path: '/links', kind: 'equipment', full: true, contentId: 'source', connectionsPath: '/connections',
+        targets: [{ public_id: 'target', title: 'Épée' }],
+    } });
+    await flushPromises();
+    await wrapper.get('select').setValue('target');
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/connections', 'POST', {
+        source: 'source', target: 'target', type_key: 'equipment',
+    });
+    expect(wrapper.get('li').text()).toBe('Épée');
+});

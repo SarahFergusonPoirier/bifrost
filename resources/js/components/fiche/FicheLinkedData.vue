@@ -28,6 +28,22 @@
     </template>
     <button v-if="data && !full && items.length > previewSize" type="button" :aria-expanded="expanded"
         @click="showAll">{{ expanded ? 'Voir moins' : 'Voir tout' }}</button>
+    <form v-if="full && connectionsPath && kind !== 'timeline' && targets.length" @submit.prevent="addLink">
+        <fieldset :disabled="savingLink">
+            <legend>Lier une fiche</legend>
+            <label>Fiche cible
+                <select v-model="target" required>
+                    <option value="">Choisir une fiche</option>
+                    <option v-for="item in targets" :key="item.public_id" :value="item.public_id">{{ item.title }}</option>
+                </select>
+            </label>
+            <label v-if="kind === 'relations'">Type de relation
+                <input v-model="relationType" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
+            </label>
+            <button type="submit">Créer la relation</button>
+            <p v-if="linkError" role="alert">{{ linkError }}</p>
+        </fieldset>
+    </form>
 </template>
 
 <script src="./FicheLinkedData.js"></script>
