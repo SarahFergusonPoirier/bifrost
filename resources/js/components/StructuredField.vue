@@ -66,6 +66,8 @@
                 </label>
                 <button type="button" :disabled="index === 0" @click="moveKeyword(index, -1)">Monter</button>
                 <button type="button" :disabled="index === value.length - 1" @click="moveKeyword(index, 1)">Descendre</button>
+                <button v-if="['capabilities', 'equipment'].includes(format)" type="button"
+                    :disabled="value.length >= 100" @click="duplicateEntry(index)">Dupliquer indépendamment</button>
                 <button type="button" @click="setKeywords(value.filter((item, i) => i !== index))">Retirer</button>
             </li>
         </ol>

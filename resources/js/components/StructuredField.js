@@ -42,6 +42,12 @@ export default {
             if (key === 'label' && !value) return;
             this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (key === 'mastery' ? Number(value) : value) : null } : entry));
         },
+        duplicateEntry(index) {
+            if (this.value.length >= 100) return;
+            const entries = [...this.value];
+            entries.splice(index + 1, 0, { ...entries[index] });
+            this.setKeywords(entries);
+        },
         moveKeyword(index, offset) {
             const entries = [...this.value];
             const [entry] = entries.splice(index, 1);
