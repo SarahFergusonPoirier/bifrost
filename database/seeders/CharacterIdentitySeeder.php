@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 
 class CharacterIdentitySeeder extends Seeder
 {
+    public const RELEASE = 'Bloc Identité du personnage.';
+
     public function run(): void
     {
         DB::transaction(function (): void {
@@ -16,12 +18,12 @@ class CharacterIdentitySeeder extends Seeder
                 ->whereHas('contentType', fn ($query) => $query->where('key', 'personnage'))
                 ->lockForUpdate()->first();
             $previous = $template?->versions()->where('version_number', 1)->first();
-            if (! $previous || $template->versions()->where('version_number', 2)->exists()) {
+            if (! $previous || $template->versions()->where('change_summary', self::RELEASE)->exists()) {
                 return;
             }
 
             $version = $template->versions()->create([
-                'version_number' => 2, 'change_summary' => 'Bloc Identité du personnage.',
+                'version_number' => (int) $template->versions()->reorder()->max('version_number') + 1, 'change_summary' => self::RELEASE,
             ]);
             $identity = [
                 ['character-age', 'Âge', 'number', null, []],

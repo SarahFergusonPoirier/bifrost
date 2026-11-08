@@ -52,8 +52,13 @@ class WorldbuildingCatalogTest extends TestCase
             'title' => 'Élia', 'project_id' => $project->id, 'content_type_id' => $type->id,
         ])->assertCreated()->json('public_id');
         $response = $this->getJson('/api/contents/'.$id)->assertOk()
-            ->assertJsonPath('template_assignment.template_version.version_number', 2);
-        $fields = collect($response->json('template_assignment.template_version.fields'))->where('section_key', 'identity');
+            ->assertJsonPath('template_assignment.template_version.version_number', 3);
+        $allFields = collect($response->json('template_assignment.template_version.fields'));
+        $fields = $allFields->where('section_key', 'identity');
+        $this->assertSame(['Force', 'Agilité', 'Intelligence', 'Endurance', 'Charisme'],
+            $allFields->where('section_key', 'attributes')->pluck('field_definition.label')->all());
+        $this->assertSame(['Traits', 'Qualités', 'Défauts', 'Valeurs', 'Peurs'],
+            $allFields->where('section_key', 'personality')->pluck('field_definition.label')->all());
         $this->assertSame(['Âge', 'Genre', 'Statut vital', 'Rôle narratif'], $fields->pluck('field_definition.label')->all());
     }
 }

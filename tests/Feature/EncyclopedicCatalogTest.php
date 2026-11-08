@@ -16,7 +16,8 @@ class EncyclopedicCatalogTest extends TestCase
     {
         $this->seed(WorldbuildingCatalogSeeder::class);
         $character = ContentTemplate::where('name', 'Personnage')->sole();
-        $original = $character->versions()->sole();
+        $original = $character->versions()->where('version_number', 1)->sole();
+        $legacyVersionCount = $character->versions()->count();
         $fields = $original->fields()->pluck('id')->all();
 
         $this->seed(EncyclopedicCatalogSeeder::class);
@@ -31,6 +32,6 @@ class EncyclopedicCatalogTest extends TestCase
         }
 
         $this->assertSame($fields, $original->fields()->pluck('id')->all());
-        $this->assertCount(2, $character->versions);
+        $this->assertCount($legacyVersionCount + 1, $character->versions);
     }
 }

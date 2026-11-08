@@ -168,6 +168,6 @@ class WorldbuildingCatalogSeeder extends Seeder
             $version->update(['published_at' => now()]);
         }
 
-        $this->call(CharacterIdentitySeeder::class);
+        $this->call([CharacterIdentitySeeder::class, CharacterBlocksSeeder::class]);
     }
 }
