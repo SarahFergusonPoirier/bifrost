@@ -71,6 +71,14 @@
     white-space: pre-wrap;
 }
 
+.fiche-fields {
+    display: grid;
+    gap: 0 var(--space-4);
+    --fiche-field-gaps: calc((var(--fiche-field-columns) - 1) * var(--space-4));
+    --fiche-field-width: calc((100% - var(--fiche-field-gaps)) / var(--fiche-field-columns));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(14rem, var(--fiche-field-width))), 1fr));
+}
+
 .fiche-fields > div {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);

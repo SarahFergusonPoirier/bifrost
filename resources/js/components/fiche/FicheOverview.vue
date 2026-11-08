@@ -47,7 +47,12 @@
                     </select>
                 </label>
                 <details v-if="bySource.get(placement.source)?.fields?.length">
-                    <summary>Champs affichés et ordre</summary>
+                    <summary>Champs affichés et disposition</summary>
+                    <label>Colonnes internes
+                        <select :value="placement.field_columns ?? 1" @change="placement.field_columns = Number($event.target.value)">
+                            <option v-for="count in 3" :key="count" :value="count">{{ count }}</option>
+                        </select>
+                    </label>
                     <template v-for="fields in [bySource.get(placement.source).fields]" :key="placement.source">
                         <ul>
                             <li v-for="(field, fieldIndex) in orderedFields(placement, fields)" :key="field.definitionId">
@@ -117,7 +122,7 @@
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
                 </ul>
-                <dl v-else-if="fields?.length" class="fiche-fields">
+                <dl v-else-if="fields?.length" class="fiche-fields" :style="{ '--fiche-field-columns': placement.field_columns ?? 1 }">
                     <div v-for="field in fields" :key="field.id">
                         <dt>{{ field.label }}</dt>
                         <dd>
