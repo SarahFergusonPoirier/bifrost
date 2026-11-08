@@ -573,6 +573,9 @@ export default {
             }),
             universeCategories, appliedCatalogueFilters,
             openCategory: id => run(async () => {
+                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cette catégorie ?')) return;
+                selected.value = null;
+                draft.value = null;
                 panel.value = 'catalogue';
                 trash.value = false;
                 catalogueType.value = id ?? '';

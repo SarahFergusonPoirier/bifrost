@@ -17,7 +17,7 @@
                 <p class="workspace-nav__heading">Espace projet</p>
                 <button type="button" class="workspace-link" :aria-current="panel === 'overview' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
-                <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
+                <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash && (selected || !appliedCatalogueFilters.wholeProject || !appliedCatalogueFilters.type) ? 'page' : undefined"
                     :disabled="busy || saving" @click="overviewCatalogue()"><WorkspaceIcon name="catalogue" />Catalogue</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'graphs' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('graphs')"><WorkspaceIcon name="connections" />Graphes</button>
@@ -32,6 +32,13 @@
                 </template>
                 <button type="button" class="workspace-link" :aria-current="trash ? 'page' : undefined"
                     :disabled="busy || saving" @click="openProjectTrash"><WorkspaceIcon name="trash" />Corbeille des fiches</button>
+                <hr />
+                <p class="workspace-nav__heading">Univers</p>
+                <button v-for="category in universeCategories" :key="category.key" type="button" class="workspace-link"
+                    :aria-current="panel === 'catalogue' && !trash && !selected && category.id && appliedCatalogueFilters.wholeProject && appliedCatalogueFilters.type === category.id ? 'page' : undefined"
+                    :disabled="busy || saving || !category.id" @click="openCategory(category.id)">
+                    <WorkspaceIcon :name="category.key" />{{ category.label }}
+                </button>
                 <hr />
                 <RouterLink :to="{ name: 'home' }" class="workspace-link"><WorkspaceIcon name="exit" />Quitter le projet</RouterLink>
                 <button type="button" class="workspace-link" :aria-current="panel === 'settings' ? 'page' : undefined"
