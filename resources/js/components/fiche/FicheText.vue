@@ -1,6 +1,6 @@
 <template>
     <p class="fiche-text">{{ truncated ? text.slice(0, limit).trimEnd() + '…' : text }}</p>
-    <button v-if="text.length > limit" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
+    <button v-if="canTruncate" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
         {{ expanded ? 'Voir moins' : 'Voir plus' }}
     </button>
 </template>
@@ -13,5 +13,6 @@ const props = defineProps({
     limit: { type: Number, default: 320 },
 });
 const expanded = ref(false);
-const truncated = computed(() => !expanded.value && props.text.length > props.limit);
+const canTruncate = computed(() => props.limit > 0 && props.text.length > props.limit);
+const truncated = computed(() => !expanded.value && canTruncate.value);
 </script>

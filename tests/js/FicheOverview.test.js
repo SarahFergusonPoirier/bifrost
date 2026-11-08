@@ -70,3 +70,28 @@ it('opens available references and keeps unavailable references readable', async
     await wrapper.get('.fiche-references button').trigger('click');
     expect(wrapper.emitted('open')).toEqual([['kael-id']]);
 });
+
+it('applies a local title and text limit without changing the shared source', async () => {
+    const summary = 'Un résumé commun aux deux placements.';
+    const placement = { source: 'summary', width: 6, height: 2, hidden: false, collapsed: false };
+    const wrapper = mount(FicheOverview, {
+        props: {
+            summary,
+            templateSections: new Map(),
+            hiddenFields: [],
+            displayValue: () => '',
+            placements: [
+                { ...placement, id: 'short', title: 'Aperçu', text_limit: 10 },
+                { ...placement, id: 'full', title: 'Texte complet', text_limit: 0 },
+            ],
+        },
+    });
+
+    const [short, full] = wrapper.findAll('.fiche-block');
+    expect(short.get('h2').text()).toBe('Aperçu');
+    expect(short.get('.fiche-text').text()).toBe('Un résumé…');
+    expect(full.get('.fiche-text').text()).toBe(summary);
+    expect(full.find('button').exists()).toBe(false);
+    await short.get('button').trigger('click');
+    expect(short.get('.fiche-text').text()).toBe(summary);
+});

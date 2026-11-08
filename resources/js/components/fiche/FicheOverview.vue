@@ -38,6 +38,13 @@
                 <strong>{{ bySource.get(placement.source)?.title ?? 'Bloc indisponible' }}</strong>
                 <label>Largeur <input v-model.number="placement.width" required type="number" min="1" max="12" /></label>
                 <label>Hauteur <input v-model.number="placement.height" required type="number" min="1" max="12" /></label>
+                <label>Titre affiché <input v-model.trim="placement.title" maxlength="80"
+                    :placeholder="bySource.get(placement.source)?.title" /></label>
+                <label v-if="placement.source === 'summary' || placement.source.startsWith('text:')">
+                    Longueur de l’aperçu (0 pour tout afficher)
+                    <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
+                        @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
+                </label>
                 <label v-if="placement.source === 'relations'">Présentation des relations
                     <select :value="placement.view ?? 'list'" @change="placement.view = $event.target.value">
                         <option value="list">Liste compacte</option>
@@ -66,7 +73,7 @@
         <button type="button" @click="cancel">Annuler</button>
     </form>
     <div ref="grid" class="fiche-grid">
-        <FicheBlock v-for="{ card, placement } in displayed" :key="placement.id" :title="card.title"
+        <FicheBlock v-for="{ card, placement } in displayed" :key="placement.id" :title="placement.title || card.title"
             :icon="card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
@@ -79,7 +86,7 @@
                 <FicheLinkedData v-if="card.linked" :path="linksPath" :kind="card.source"
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
-                <FicheText v-else-if="card.text" :text="card.text" />
+                <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>
                 </ul>
