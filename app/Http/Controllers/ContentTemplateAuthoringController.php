@@ -71,13 +71,15 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
-            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references'],
+            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.choices' => ['sometimes', 'array', 'list', 'max:100'],
+            'fields.*.choices.*' => ['required', 'string', 'max:255'],
         ])['fields'];
     }
 
@@ -93,7 +95,7 @@ class ContentTemplateAuthoringController extends Controller
             if (isset($field['id']) && ! $original?->fieldDefinition) {
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
-            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references'], true);
+            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice'], true);
             $definition = $original?->fieldDefinition ?? FieldDefinition::create([
                 'key' => 'custom-'.Str::uuid(),
                 'label' => $field['label'],
@@ -103,11 +105,16 @@ class ContentTemplateAuthoringController extends Controller
                 'project_id' => $template->project_id,
                 'universe_id' => $template->universe_id,
             ]);
+            $display = ['section_label' => $field['section']] + ($original?->display_options ?? []);
+            if (array_key_exists('choices', $field)) {
+                $display['choices'] = array_values(array_unique($field['choices']));
+            }
+
             $version->fields()->create([
                 'field_definition_id' => $definition->id,
                 'label_override' => $field['label'],
                 'section_key' => Str::slug($field['section']) ?: 'general',
-                'display_options' => ['section_label' => $field['section']] + ($original?->display_options ?? []),
+                'display_options' => $display,
                 'position' => $position,
                 'help_text' => $field['help'] ?? null,
                 'is_required' => $field['required'] ?? false,

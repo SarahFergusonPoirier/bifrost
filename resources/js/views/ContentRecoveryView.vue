@@ -239,7 +239,14 @@
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ section }}</summary>
                         <div v-for="field in fields" :key="field.id">
-                            <fieldset v-if="field.column === 'value_json'">
+                            <label v-if="field.format === 'multiple_choice'">
+                                {{ field.label_override || field.field_definition.label }}
+                                <select multiple @change="setMultipleChoice(field, $event)">
+                                    <option v-for="option in choiceOptions(field)" :key="option" :value="option"
+                                        :selected="(fieldValue(field) || []).includes(option)">{{ option }}</option>
+                                </select>
+                            </label>
+                            <fieldset v-else-if="field.column === 'value_json'">
                                 <legend>{{ field.label_override || field.field_definition.label }}</legend>
                                 <StructuredField :format="field.format" :value="fieldValue(field) || null"
                                     :targets="referenceTargets" @change="setField(field, $event)" />
@@ -251,6 +258,11 @@
                                     <option v-if="fieldValue(field) && !allowedTargets(field).some(item => item.id === Number(fieldValue(field)))"
                                         :value="fieldValue(field)">Fiche indisponible</option>
                                     <option v-for="target in allowedTargets(field)" :key="target.id" :value="target.id">{{ target.title }}</option>
+                                </select>
+                                <select v-else-if="field.field_definition.value_type === 'choice' && (field.display_options?.choices ?? field.field_definition.options_data?.choices)?.length"
+                                    :value="fieldValue(field)" @change="setField(field, $event.target.value)">
+                                    <option value="">Vide</option>
+                                    <option v-for="option in choiceOptions(field)" :key="option" :value="option">{{ option }}</option>
                                 </select>
                                 <select v-else-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">
                                     <option value="">Vide</option>

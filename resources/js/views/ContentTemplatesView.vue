@@ -30,6 +30,9 @@
                         <option v-if="!fieldTypes[field.type]" :value="field.type">{{ field.type }}</option>
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
+                    <label v-if="['choice', 'multiple_choice'].includes(field.type)">
+                        Options (une par ligne) <textarea v-model="field.choicesText" maxlength="10000" />
+                    </label>
                     <label>Aide <textarea v-model="field.help" maxlength="10000" /></label>
                     <label><input v-model="field.required" type="checkbox" /> Obligatoire</label>
                     <button type="button" :disabled="index === 0" @click="moveField(index, -1)">Monter</button>

@@ -31,7 +31,7 @@ export default {
         const fieldTypes = {
             text: 'Texte', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
             reference: 'Référence', json: 'Données structurées', measurement: 'Mesure', coordinates: 'Coordonnées',
-            temporal: 'Date ou période fictive', references: 'Références multiples',
+            temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple',
         };
 
         async function editTemplate(template = null, copy = false) {
@@ -60,6 +60,7 @@ export default {
                         label: field.label_override ?? field.field_definition?.label ?? '',
                         section: field.display_options?.section_label ?? field.section_key,
                         type: fieldTypes[field.field_definition?.options_data?.format] ? field.field_definition.options_data.format : field.field_definition?.value_type ?? 'text',
+                        choicesText: (field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? []).join('\n'),
                         help: field.help_text ?? '', required: Boolean(field.is_required),
                     })),
                 };
@@ -81,12 +82,18 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
+                const payloadFields = fields.map(({ choicesText, ...field }) => ({
+                    ...field,
+                    ...(['choice', 'multiple_choice'].includes(field.type)
+                        ? { choices: (choicesText ?? '').split('\n').map(option => option.trim()).filter(Boolean) }
+                        : {}),
+                }));
                 if (id) {
-                    await contentRequest('/content-templates/' + id + '/versions', 'POST', { from_version_id, fields });
+                    await contentRequest('/content-templates/' + id + '/versions', 'POST', { from_version_id, fields: payloadFields });
                     delete details.value[id];
                 } else {
                     await contentRequest('/content-templates', 'POST', {
-                        name, description, project_id: project_id || null, content_type_id, base_version_id, fields,
+                        name, description, project_id: project_id || null, content_type_id, base_version_id, fields: payloadFields,
                     });
                 }
                 editor.value = null;

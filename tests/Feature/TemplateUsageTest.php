@@ -13,6 +13,36 @@ class TemplateUsageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_choice_options_are_versioned_and_validated_for_both_choice_modes(): void
+    {
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $project = Project::create(['name' => 'Projet']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Choix', 'content_type_id' => $type->id,
+            'fields' => [
+                ['label' => 'État', 'section' => 'État', 'type' => 'choice', 'choices' => ['Actif', 'Inactif']],
+                ['label' => 'Couleurs', 'section' => 'État', 'type' => 'multiple_choice', 'choices' => ['Rouge', 'Bleu']],
+            ],
+        ])->assertCreated()->json();
+        $fields = $this->getJson("/api/content-templates/{$template['id']}")->assertOk()->json('versions.0.fields');
+        $id = $this->postJson('/api/contents', [
+            'title' => 'Fiche', 'project_id' => $project->id, 'content_type_id' => $type->id,
+            'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $input = [
+            'title' => 'Fiche', 'summary' => null,
+            'field_values' => [
+                ['field_definition_id' => $fields[0]['field_definition_id'], 'value_text' => 'Actif'],
+                ['field_definition_id' => $fields[1]['field_definition_id'], 'value_json' => ['Rouge', 'Bleu']],
+            ],
+        ];
+
+        $this->patchJson("/api/contents/$id", $input)->assertOk();
+        $input['field_values'][1]['value_json'] = ['Vert'];
+        $this->patchJson("/api/contents/$id", $input)->assertUnprocessable();
+        $this->getJson("/api/contents/$id")->assertOk()->assertJsonPath('field_values.1.value_json', ['Rouge', 'Bleu']);
+    }
+
     public function test_custom_templates_can_be_duplicated_and_versioned_without_mutating_the_source(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

@@ -66,6 +66,18 @@ class ContentFieldValue extends Model
                 throw ValidationException::withMessages(['value' => 'Une seule valeur compatible avec le type du champ doit être renseignée.']);
             }
 
+            $multipleChoice = ($definition->options_data['format'] ?? null) === 'multiple_choice';
+            if ($definition->value_type === 'choice' || $multipleChoice) {
+                $configuration = $content->templateAssignment()->first()?->templateVersion
+                    ->fields()->where('field_definition_id', $definition->id)->first()?->display_options;
+                $choices = $configuration['choices'] ?? $definition->options_data['choices'] ?? [];
+                $selected = $multipleChoice ? $value->value_json : [$value->value_text];
+
+                if (! array_is_list($selected) || collect($selected)->contains(fn ($item) => ! is_string($item) || ($choices !== [] && ! in_array($item, $choices, true)))) {
+                    throw ValidationException::withMessages(['value' => 'Une option choisie ne figure pas dans la liste du champ.']);
+                }
+            }
+
             if ($definition->value_type === 'json') {
                 $value->validateStructuredValue($definition, $content);
             }

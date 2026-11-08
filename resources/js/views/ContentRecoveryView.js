@@ -180,7 +180,7 @@ export default {
             for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
                 const column = fieldColumns[field.field_definition?.value_type];
                 const format = field.field_definition?.options_data?.format;
-                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references'].includes(format))) continue;
+                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice'].includes(format))) continue;
                 const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
                 if (!sections.has(section)) sections.set(section, []);
                 sections.get(section).push({ ...field, column, format });
@@ -200,9 +200,21 @@ export default {
             if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
             if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');
             if (field.format === 'temporal') return [value.start, value.end, value.calendar].filter(Boolean).join(' · ') || 'Date inconnue';
+            if (field.format === 'multiple_choice') return value.join(', ');
             if (field.format === 'references') return value.map(id =>
                 treeContents.value.find(item => item.public_id === id)?.title ?? 'Fiche indisponible').join(', ');
             return value;
+        }
+
+        function choiceOptions(field) {
+            const choices = field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? [];
+            const value = fieldValue(field);
+            return [...new Set([...choices, ...(Array.isArray(value) ? value : value ? [value] : [])])];
+        }
+
+        function setMultipleChoice(field, event) {
+            const values = [...event.target.selectedOptions].map(option => option.value);
+            setField(field, values.length ? values : '');
         }
 
         function allowedTargets(field) {
@@ -378,7 +390,7 @@ export default {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
-            sidebarItems, templateSections, fieldValue, setField, allowedTargets, templateId, templateOptions, versions, versionId,
+            sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;
