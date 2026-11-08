@@ -1,10 +1,11 @@
 export async function contentRequest(path, method = 'GET', body) {
     let response;
+    const multipart = body instanceof FormData;
     try {
         response = await fetch('/api' + path, {
             method,
-            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-            body: body === undefined ? undefined : JSON.stringify(body),
+            headers: { Accept: 'application/json', ...(multipart ? {} : { 'Content-Type': 'application/json' }) },
+            body: multipart || body === undefined ? body : JSON.stringify(body),
         });
     } catch {
         throw new Error('Impossible de contacter le serveur.');

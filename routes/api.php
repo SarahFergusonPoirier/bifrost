@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContentAttachmentController;
 use App\Http\Controllers\ContentRecoveryController;
 use App\Http\Controllers\ContentTemplateAuthoringController;
 use App\Http\Controllers\ContentTemplateController;
@@ -96,3 +97,8 @@ Route::get('/projects/{project}/narration/{work}/choices', [ProjectNarrativeCont
 Route::put('/projects/{project}/narration/{work}/choices', [ProjectNarrativeController::class, 'saveChoice']);
 Route::delete('/projects/{project}/narration/{work}/choices/{choice}', [ProjectNarrativeController::class, 'deleteChoice'])->whereNumber('choice');
 Route::post('/content-types', [ContentTemplateController::class, 'storeType']);
+
+Route::get('/contents/{content}/attachments', [ContentAttachmentController::class, 'index']);
+Route::post('/contents/{content}/attachments', [ContentAttachmentController::class, 'store']);
+Route::get('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'download']);
+Route::delete('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'destroy']);

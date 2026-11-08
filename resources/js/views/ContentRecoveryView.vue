@@ -159,6 +159,7 @@
         <template v-else>
             <button type="button" :disabled="busy || saving" @click="close">Retour aux fiches</button>
             <h2>{{ selected.title }}</h2>
+            <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" />
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
                 <button type="button" :disabled="busy || saving" @click="openPanel('ideas')">Ouvrir les idées du projet</button>

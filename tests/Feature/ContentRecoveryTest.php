@@ -8,7 +8,9 @@ use App\Models\FieldDefinition;
 use App\Models\Project;
 use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -214,6 +216,26 @@ class ContentRecoveryTest extends TestCase
         $this->patchJson($url, $input($target->id))->assertOk()->assertJsonPath('field_values.0.reference_content_id', $target->id);
         $this->patchJson($url, $input($outside->id))->assertUnprocessable();
         $this->assertTrue($source->fieldValues()->sole()->referenceContent->is($target));
+    }
+
+    public function test_attachment_is_downloadable_only_through_its_content_and_can_be_detached(): void
+    {
+        Storage::fake('local');
+        $content = $this->content();
+        $other = $this->content();
+        $url = '/api/contents/'.$content->public_id.'/attachments';
+        $file = UploadedFile::fake()->createWithContent('reference.txt', 'Texte joint');
+
+        $id = $this->post($url, ['file' => $file], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonPath('original_name', 'reference.txt')->json('public_id');
+        $resource = $content->resources()->sole();
+        $this->getJson($url)->assertOk()->assertJsonCount(1)->assertJsonMissingPath('0.location');
+        $this->get("/api/contents/{$other->public_id}/attachments/$id")->assertNotFound();
+        $this->get("$url/$id")->assertDownload('reference.txt')->assertStreamedContent('Texte joint');
+
+        $this->deleteJson("$url/$id")->assertNoContent();
+        $this->getJson($url)->assertOk()->assertJsonCount(0);
+        Storage::disk('local')->assertExists($resource->location);
     }
 
     private function content(): Content
