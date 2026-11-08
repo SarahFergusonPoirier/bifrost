@@ -32,7 +32,7 @@
         </form>
     </details>
     <slot :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
-        :persist="layout && !saving ? (next, transfers, defaults) => savePlacements(next, transfers, defaults) : null" />
+        :persist="layout && !saving ? (next, transfers, defaults, copies) => savePlacements(next, transfers, defaults, copies) : null" />
 </template>
 
 <script src="./FicheTabs.js"></script>

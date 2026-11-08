@@ -439,6 +439,11 @@ export default {
         return {
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
+            refreshFiche: () => run(async () => {
+                const id = selected.value.public_id;
+                const response = await contentRequest('/contents/' + id);
+                if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
+            }),
             ficheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue,
             sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,

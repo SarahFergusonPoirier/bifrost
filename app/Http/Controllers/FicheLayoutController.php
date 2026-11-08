@@ -19,6 +19,10 @@ class FicheLayoutController extends Controller
     {
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
+            'copies' => ['sometimes', 'array', 'list', 'max:80'],
+            'copies.*' => ['required', 'array:id,source'],
+            'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
+            'copies.*.source' => ['required', 'string', 'regex:/^(summary|text:[a-f0-9-]+)$/'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
             'tabs.*' => ['required', 'array:id,title,icon,hidden,placements'],
             'tabs.*.id' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/', 'distinct:strict'],
@@ -60,6 +64,8 @@ class FicheLayoutController extends Controller
 
                 return $tab;
             }, $input['tabs']);
+            $this->copyTextBlocks($record, $input['copies'] ?? [], $tabs);
+
             $values = ['version' => $version, 'tabs' => json_encode($tabs, JSON_THROW_ON_ERROR), 'updated_at' => now()];
             if ($current['version'] === 0) {
                 DB::table('fiche_layouts')->insert($values + ['content_id' => $record->id, 'created_at' => now()]);
@@ -69,6 +75,33 @@ class FicheLayoutController extends Controller
 
             return response()->json(['version' => $version, 'tabs' => $tabs]);
         });
+    }
+
+    private function copyTextBlocks(Content $record, array $copies, array $tabs): void
+    {
+        if ($copies === []) {
+            return;
+        }
+
+        $sources = collect($tabs)->flatMap(fn (array $tab): array => $tab['placements'] ?? [])->pluck('source');
+        $position = (int) $record->blocks()->max('position');
+
+        foreach ($copies as $copy) {
+            if (! $sources->contains('text:'.$copy['id'])) {
+                throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
+            }
+
+            $original = $copy['source'] === 'summary' ? null : $record->blocks()
+                ->where('public_id', substr($copy['source'], 5))->firstOrFail();
+            $block = $record->blocks()->make([
+                'block_type' => $original?->block_type ?? 'text',
+                'title' => $original?->title ?? 'Résumé',
+                'body' => $original ? $original->body : $record->summary,
+                'position' => ++$position,
+            ]);
+            $block->public_id = $copy['id'];
+            $block->save();
+        }
     }
 
     private function content(string $project, string $content, bool $lock = false): Content

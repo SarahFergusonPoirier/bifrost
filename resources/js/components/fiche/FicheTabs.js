@@ -14,7 +14,7 @@ const fallbackTabs = [
 export default {
     components: { WorkspaceIcon },
     props: { path: String, active: String },
-    emits: ['select'],
+    emits: ['select', 'copied'],
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '' }),
     computed: {
         visibleTabs() {
@@ -55,19 +55,20 @@ export default {
                 this.tabs = this.tabs.filter(item => item.id !== tab.id);
             }
         },
-        savePlacements(next, transfers, defaults) {
+        savePlacements(next, transfers, defaults, copies) {
             return this.save(this.layout.tabs.map(tab => {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
                 return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults : [])), ...added] } : tab;
-            }));
+            }), copies);
         },
-        async save(tabs = this.tabs) {
+        async save(tabs = this.tabs, copies = []) {
             this.saving = true;
             this.error = '';
             try {
-                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs });
+                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs, copies });
                 this.accept(data);
+                if (copies.length) this.$emit('copied');
                 return true;
             } catch (error) {
                 this.error = error.message;

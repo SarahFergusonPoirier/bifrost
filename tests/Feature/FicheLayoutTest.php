@@ -94,4 +94,29 @@ class FicheLayoutTest extends TestCase
         $this->getJson("$url/{$target->public_id}/fiche-links")->assertOk()
             ->assertJsonPath('relations.0.label', 'Mentor');
     }
+
+    public function test_text_copy_is_independent_and_committed_with_its_placement(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::firstOrCreate(['key' => 'personnage'], ['name' => 'Personnage']);
+        $content = Content::create([
+            'title' => 'Élia', 'summary' => 'Résumé original', 'content_type_id' => $type->id,
+            'scope_type' => 'project', 'project_id' => $project->id,
+        ]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $layout = $this->getJson($url)->assertOk()->json();
+        $id = '3a83a413-c5c8-422c-8459-032e89bb3bc1';
+        $layout['copies'] = [['id' => $id, 'source' => 'summary']];
+        $this->putJson($url, $layout)->assertUnprocessable();
+        $this->assertSame(0, $content->blocks()->count());
+
+        $layout['tabs'][0]['placements'] = [[
+            'id' => '53cbde0a-d5df-4d20-9611-2af436081194',
+            'source' => 'text:'.$id,
+            'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false,
+        ]];
+        $this->putJson($url, $layout)->assertOk()->assertJsonPath('tabs.0.placements.0.source', 'text:'.$id);
+        $content->update(['summary' => 'Nouveau résumé']);
+        $this->assertSame('Résumé original', $content->blocks()->sole()->body);
+    }
 }

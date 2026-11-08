@@ -240,12 +240,12 @@
             </header>
             <FicheTabs :key="selected.public_id" :active="ficheTab"
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
-                @select="ficheTab = $event">
+                @select="ficheTab = $event" @copied="refreshFiche">
                 <template #default="{ tab, tabs, persist }">
                     <FicheOverview v-if="tab" :key="selected.public_id + ':' + ficheTab"
                         :summary="draft.summary" :tags="selected.tags" :blocks="draft.blocks"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue"
-                        :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
+                        :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
                 </template>
             </FicheTabs>
             <FicheLinkedData v-if="projectId && ['relations', 'timeline'].includes(ficheTab)" :key="selected.public_id"

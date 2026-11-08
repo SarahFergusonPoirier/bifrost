@@ -20,10 +20,11 @@ export default {
         displayValue: { type: Function, required: true },
         placements: Array,
         persist: Function,
+        canCopy: Boolean,
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
-    data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null }),
+    data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [] }),
     computed: {
         cards() {
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
@@ -47,6 +48,7 @@ export default {
                 { source: 'tags', title: 'Étiquettes', tags: this.tags, icon: 'folder' },
                 ...sections,
                 ...texts,
+                ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
             ];
         },
         bySource() {
@@ -68,6 +70,7 @@ export default {
             this.draft = this.placements?.map(item => ({ ...item }))
                 ?? (this.useDefaults ? this.defaults.map(item => placement(item.source)) : []);
             this.transfers = [];
+            this.copies = [];
             this.editing = true;
         },
         add() {
@@ -132,8 +135,23 @@ export default {
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
         },
+        duplicate(index) {
+            const original = this.draft[index];
+            const card = this.bySource.get(original.source);
+            const id = crypto.randomUUID();
+            this.copies.push({ id, source: original.source, card });
+            this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'text:' + id });
+        },
+        cancel() {
+            this.copies = [];
+            this.editing = false;
+        },
         async save() {
-            if (await this.persist(this.draft, this.transfers, this.defaults.map(item => placement(item.source)))) this.editing = false;
+            const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
+            const copies = this.copies.filter(copy => placed.has('text:' + copy.id)).map(({ id, source }) => ({ id, source }));
+            const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === 'text:' + copy.id))
+                .map(item => placement(item.source));
+            if (await this.persist(this.draft, this.transfers, defaults, copies)) this.cancel();
         },
     },
 };
