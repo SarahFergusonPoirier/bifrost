@@ -2,9 +2,9 @@
     <div class="fiche-text">
         <template v-for="(block, index) in blocks" :key="index">
             <ul v-if="block.type === 'ul'" class="fiche-entry-list">
-                <li v-for="(item, itemIndex) in block.items" :key="itemIndex"><FicheInlineText :text="item" /></li>
+                <li v-for="(item, itemIndex) in block.items" :key="itemIndex"><FicheInlineText :text="item" :resolve-reference="resolveReference" @open="$emit('open', $event)" /></li>
             </ul>
-            <component :is="block.type" v-else><FicheInlineText :text="block.text || ' '" /></component>
+            <component :is="block.type" v-else><FicheInlineText :text="block.text || ' '" :resolve-reference="resolveReference" @open="$emit('open', $event)" /></component>
         </template>
     </div>
     <button v-if="canTruncate" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
@@ -20,7 +20,9 @@ import { textBlocks } from './ficheTextFormat';
 const props = defineProps({
     text: { type: String, required: true },
     limit: { type: Number, default: 320 },
+    resolveReference: Function,
 });
+defineEmits(['open']);
 const expanded = ref(false);
 const canTruncate = computed(() => props.limit > 0 && props.text.length > props.limit);
 const truncated = computed(() => !expanded.value && canTruncate.value);

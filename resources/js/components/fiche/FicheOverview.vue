@@ -150,10 +150,10 @@
                         <span v-else-if="entry.mastery && placement.mastery_view !== 'hidden'" class="fiche-choice-badge">
                             Maîtrise · {{ entry.mastery }} / 5
                         </span>
-                        <FicheText v-if="entry.description" :text="entry.description" />
+                        <FicheText v-if="entry.description" :text="entry.description" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                     </template>
                 </FicheLinkedData>
-                <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
+                <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                 <template v-else-if="card.source === 'tags'">
                     <section v-if="card.tags.length">
                         <h3>Étiquettes du projet</h3>
@@ -186,7 +186,7 @@
                                     <FicheScale v-if="field.levelMode === 'segments' && entry.rank"
                                         :label="entry.label + ' · Niveau'" :level="Number(entry.rank)" :levels="5" mode="segments" />
                                     <span v-else-if="entry.level"> · {{ entry.level }}</span>
-                                    <FicheText v-if="entry.description" :text="entry.description" />
+                                    <FicheText v-if="entry.description" :text="entry.description" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                                 </li>
                             </ul>
                             <ul v-else-if="field.keywords?.length" class="fiche-tags">

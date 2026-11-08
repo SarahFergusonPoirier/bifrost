@@ -169,3 +169,18 @@ it('renders supported formatting without interpreting embedded HTML or unsafe li
     expect(text.find('img').exists()).toBe(false);
     expect(text.text()).toContain('javascript:alert(1)');
 });
+
+it('opens a scoped internal text reference and marks missing targets', async () => {
+    const id = '3a83a413-c5c8-422c-8459-032e89bb3bc1';
+    const missing = '53cbde0a-d5df-4d20-9611-2af436081194';
+    const wrapper = mount(FicheOverview, { props: {
+        summary: 'Avec [[' + id + ']] et [[' + missing + '|Une autre fiche]]',
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        resolveReference: candidate => candidate === id ? 'Kael' : undefined,
+    } });
+    expect(wrapper.text()).toContain('Une autre fiche · Fiche indisponible');
+    const link = wrapper.get('.fiche-text button');
+    expect(link.text()).toBe('Kael');
+    await link.trigger('click');
+    expect(wrapper.emitted('open')).toEqual([[id]]);
+});

@@ -19,6 +19,7 @@ export default {
     props: {
         summary: String,
         fullName: String,
+        resolveReference: Function,
         active: String,
         linksPath: String,
         contentId: String,

@@ -248,7 +248,7 @@
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
                         @open="openPanelContent" @select="selectFicheTab"
-                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences"
+                        :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
                 </template>
             </FicheTabs>
@@ -289,7 +289,7 @@
                 <button type="button" :aria-pressed="!compact" @click="setCompact(false)">Vue complète</button>
             </div>
             <section v-if="compact" aria-label="Lecture compacte">
-                <FicheText v-if="draft.summary" :text="draft.summary" :limit="0" />
+                <FicheText v-if="draft.summary" :text="draft.summary" :limit="0" :resolve-reference="resolveFicheReference" @open="openPanelContent" />
                 <p v-if="selected.tags?.length">{{ selected.tags.map(tag => tag.name).join(' · ') }}</p>
                 <label v-if="templateSections.size"><input v-model="showHidden" type="checkbox" /> Afficher les champs masqués</label>
                 <details v-for="[section, fields] in templateSections" :key="section" open>
@@ -307,7 +307,7 @@
                 </details>
                 <article v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                     <h3 v-if="block.title">{{ block.title }}</h3>
-                    <FicheText v-if="block.body" :text="block.body" :limit="0" />
+                    <FicheText v-if="block.body" :text="block.body" :limit="0" :resolve-reference="resolveFicheReference" @open="openPanelContent" />
                 </article>
             </section>
             <form v-else @submit.prevent="save">
@@ -324,7 +324,16 @@
                         </select>
                     </label></p>
                     <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
-                    <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse).</p>
+                    <div v-if="referenceTargets.length">
+                        <label>Fiche à citer dans le résumé
+                            <select v-model="summaryReference">
+                                <option value="">Choisir une fiche</option>
+                                <option v-for="target in referenceTargets" :key="target.public_id" :value="target.public_id">{{ target.title }}</option>
+                            </select>
+                        </label>
+                        <button type="button" :disabled="!summaryReference" @click="insertSummaryReference">Insérer le lien</button>
+                    </div>
+                    <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse). Pour une autre fiche, utilise [[identifiant|libellé]].</p>
                     <fieldset v-if="draft.tag_ids">
                         <legend>Étiquettes</legend>
                         <label>Étiquettes associées

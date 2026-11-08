@@ -163,6 +163,7 @@ export default {
         });
         const selected = ref(null);
         const ficheTab = ref('overview');
+        const summaryReference = ref('');
         const compact = ref(false);
         const hiddenFields = ref([]);
         const showHidden = ref(false);
@@ -271,6 +272,17 @@ export default {
             }
             return index;
         });
+
+        function insertSummaryReference() {
+            if (!resolveFicheReference(summaryReference.value)) return;
+            const marker = '[[' + summaryReference.value + ']]';
+            draft.value.summary = [draft.value.summary, marker].filter(Boolean).join(' ');
+            summaryReference.value = '';
+        }
+
+        function resolveFicheReference(id) {
+            return referenceIndex.value.get(id)?.title;
+        }
 
         function fieldReferences(field) {
             const value = fieldValue(field);
@@ -433,6 +445,7 @@ export default {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
             accept(response.data, response.version);
+            summaryReference.value = '';
             loadDisplay();
             from.value = '';
             to.value = '';
@@ -513,7 +526,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, fieldReferences, fieldState, setFieldState,
+            summaryReference, insertSummaryReference, ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
