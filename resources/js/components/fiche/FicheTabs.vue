@@ -26,6 +26,28 @@
                 <button type="button" :disabled="tabs.length >= 24" @click="add()">Ajouter un onglet</button>
                 <button v-for="[id, title] in optionalTabs" :key="id" type="button"
                     :disabled="tabs.length >= 24 || tabs.some(tab => tab.id === id)" @click="add(id, title)">{{ title }}</button>
+                <details v-if="templatesPath" @toggle="$event.target.open && loadTemplates()">
+                    <summary>Modèles d’onglets</summary>
+                    <label>Modèle
+                        <select v-model="templateId">
+                            <option :value="null">Choisir un modèle</option>
+                            <option v-for="template in templates ?? []" :key="template.id" :value="template.id">
+                                {{ template.name }} · {{ template.scope === 'global' ? 'Global' : 'Projet' }}
+                            </option>
+                        </select>
+                    </label>
+                    <p v-if="selectedTemplate">{{ selectedTemplate.definition.title }} · {{ selectedTemplate.definition.placements.length }} placement(s)</p>
+                    <button type="button" :disabled="!selectedTemplate || tabs.length >= 24" @click="applyTemplate">Ajouter cet onglet à la disposition</button>
+                    <label>Nom du modèle <input v-model.trim="templateName" maxlength="80" /></label>
+                    <label>Portée
+                        <select v-model="templateScope">
+                            <option value="project">Ce projet</option>
+                            <option value="global">Bibliothèque globale</option>
+                        </select>
+                    </label>
+                    <button type="button" :disabled="!templateName || !layout.version" @click="saveTemplate">Enregistrer l’onglet actif comme modèle</button>
+                    <p>Le modèle reprend la disposition enregistrée des blocs réutilisables.</p>
+                </details>
                 <button type="submit">Enregistrer la disposition</button>
                 <button type="button" @click="reset">Annuler les changements</button>
             </fieldset>

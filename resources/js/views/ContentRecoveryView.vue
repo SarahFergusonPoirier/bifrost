@@ -240,6 +240,7 @@
             </header>
             <FicheTabs :key="selected.public_id" :active="ficheTab"
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
+                :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                 @select="ficheTab = $event" @copied="refreshFiche">
                 <template #default="{ tab, tabs, persist }">
                     <FicheOverview v-if="tab" :key="selected.public_id + ':' + ficheTab"

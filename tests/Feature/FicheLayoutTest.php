@@ -129,4 +129,33 @@ class FicheLayoutTest extends TestCase
         $this->assertDatabaseHas('content_blocks', ['public_id' => $blank, 'title' => 'Biographie', 'body' => 'Début de son histoire.']);
         $this->assertDatabaseHas('content_blocks', ['public_id' => $id, 'body' => 'Résumé original']);
     }
+
+    public function test_tab_templates_are_scoped_and_never_include_source_text(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $type = ContentType::firstOrCreate(['key' => 'personnage'], ['name' => 'Personnage']);
+        $content = Content::create([
+            'title' => 'Élia', 'summary' => 'Texte privé', 'content_type_id' => $type->id,
+            'scope_type' => 'project', 'project_id' => $project->id,
+        ]);
+        $base = "/api/projects/{$project->id}/contents/{$content->public_id}";
+        $layout = $this->getJson("$base/fiche-layout")->assertOk()->json();
+        $placement = ['width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false];
+        $layout['tabs'][0]['placements'] = [
+            $placement + ['id' => 'bf3c7b23-6268-4185-9d52-ec8428478fb7', 'source' => 'summary'],
+            $placement + ['id' => '53cbde0a-d5df-4d20-9611-2af436081194', 'source' => 'text:3a83a413-c5c8-422c-8459-032e89bb3bc1'],
+        ];
+        $this->putJson("$base/fiche-layout", $layout)->assertOk();
+
+        $definition = ['name' => 'Aperçu', 'tab' => 'overview', 'version' => 1];
+        $this->postJson("$base/fiche-tab-templates", $definition + ['scope' => 'project'])
+            ->assertCreated()->assertJsonCount(1, 'definition.placements')
+            ->assertJsonPath('definition.placements.0.source', 'summary')
+            ->assertJsonMissingPath('definition.placements.0.id')->assertDontSee('Texte privé');
+        $otherLibrary = "/api/projects/{$other->id}/fiche-tab-templates";
+        $this->getJson($otherLibrary)->assertOk()->assertJsonCount(0);
+        $this->postJson("$base/fiche-tab-templates", $definition + ['scope' => 'global'])->assertCreated();
+        $this->getJson($otherLibrary)->assertOk()->assertJsonCount(1)->assertJsonPath('0.scope', 'global');
+    }
 }

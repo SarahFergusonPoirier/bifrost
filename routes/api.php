@@ -6,6 +6,7 @@ use App\Http\Controllers\ContentTemplateAuthoringController;
 use App\Http\Controllers\ContentTemplateController;
 use App\Http\Controllers\FicheLayoutController;
 use App\Http\Controllers\FicheLinkedDataController;
+use App\Http\Controllers\FicheTabTemplateController;
 use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFolderController;
@@ -108,3 +109,5 @@ Route::delete('/contents/{content}/attachments/{attachment}', [ContentAttachment
 Route::get('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutController::class, 'show'])->whereNumber('project');
 Route::put('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutController::class, 'update'])->whereNumber('project');
 Route::get('/projects/{project}/contents/{content}/fiche-links', [FicheLinkedDataController::class, 'show'])->whereNumber('project');
+Route::get('/projects/{project}/fiche-tab-templates', [FicheTabTemplateController::class, 'index']);
+Route::post('/projects/{project}/contents/{content}/fiche-tab-templates', [FicheTabTemplateController::class, 'store']);

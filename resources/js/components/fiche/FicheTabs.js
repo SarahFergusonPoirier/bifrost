@@ -13,10 +13,13 @@ const fallbackTabs = [
 
 export default {
     components: { WorkspaceIcon },
-    props: { path: String, active: String },
+    props: { path: String, templatesPath: String, active: String },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '' }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null }),
     computed: {
+        selectedTemplate() {
+            return this.templates?.find(template => template.id === this.templateId);
+        },
         visibleTabs() {
             return (this.layout?.tabs ?? fallbackTabs).filter(tab => !tab.hidden);
         },
@@ -39,6 +42,42 @@ export default {
             } catch (error) {
                 this.error = error.message;
             }
+        },
+        async loadTemplates() {
+            if (this.templates) return;
+            this.error = '';
+            try {
+                this.templates = (await contentRequest(this.templatesPath)).data;
+            } catch (error) {
+                this.error = error.message;
+            }
+        },
+        async saveTemplate() {
+            this.saving = true;
+            this.error = '';
+            try {
+                const { data } = await contentRequest(this.path.replace(/fiche-layout$/, 'fiche-tab-templates'), 'POST', {
+                    name: this.templateName, scope: this.templateScope, tab: this.active, version: this.layout.version,
+                });
+                if (this.templates) this.templates.push(data);
+                this.templateName = '';
+                this.templateId = data.id;
+            } catch (error) {
+                this.error = error.message;
+            } finally {
+                this.saving = false;
+            }
+        },
+        applyTemplate() {
+            const definition = this.selectedTemplate?.definition;
+            if (!definition || this.tabs.length >= 24) return;
+            this.tabs.push({
+                id: 'tab-' + crypto.randomUUID(),
+                title: definition.title,
+                icon: definition.icon,
+                hidden: false,
+                placements: definition.placements.map(placement => ({ ...placement, id: crypto.randomUUID() })),
+            });
         },
         reset() {
             this.tabs = this.layout.tabs.map(tab => ({ ...tab }));
