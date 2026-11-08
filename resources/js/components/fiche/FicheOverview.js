@@ -78,10 +78,16 @@ export default {
                     { source: 'equipment', title: 'Équipements', icon: 'folder', linked: true },
                 ] : []),
                 ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }, { source: 'gallery', title: 'Galerie d’images', icon: 'folder' }] : []),
+                ...(this.contentId ? [{ source: 'capabilities', title: 'Capacités', icon: 'ideas', entries: this.localCapabilities }] : []),
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
             ];
+        },
+        localCapabilities() {
+            return [...this.templateSections.values()].flatMap(fields => fields
+                .filter(field => field.format === 'capabilities')
+                .flatMap(field => this.fieldValue?.(field) || []));
         },
         localEquipment() {
             return [...this.templateSections.values()].flatMap(fields => fields
@@ -108,11 +114,11 @@ export default {
         },
         defaults() {
 
-            return this.cards.filter(card => card.linked || card.text || card.tags?.length || card.fields?.length)
+            return this.cards.filter(card => card.linked || card.entries || card.text || card.tags?.length || card.fields?.length)
                 .map(card => placement(card.source, card.source));
         },
         initialPlacements() {
-            if (this.useDefaults) return this.defaults.filter(item => item.source !== 'equipment');
+            if (this.useDefaults) return this.defaults.filter(item => !['equipment', 'capabilities'].includes(item.source));
             return this.defaults.filter(item => item.source === this.active);
         },
         displayed() {

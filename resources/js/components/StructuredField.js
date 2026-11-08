@@ -40,7 +40,7 @@ export default {
         editKeyword(index, key, text) {
             const value = text.trim();
             if (key === 'label' && !value) return;
-            this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value || null } : entry));
+            this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (key === 'mastery' ? Number(value) : value) : null } : entry));
         },
         moveKeyword(index, offset) {
             const entries = [...this.value];

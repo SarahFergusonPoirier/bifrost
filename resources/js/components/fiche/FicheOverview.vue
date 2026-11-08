@@ -127,6 +127,14 @@
                 <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image"
                     :select-image="editing && placement.media_mode === 'single'"
                     @select-image="placement.media_image = $event" read-only />
+                <ul v-else-if="card.entries?.length" class="fiche-relations fiche-relations--cards">
+                    <li v-for="(entry, index) in card.entries" :key="index">
+                        <strong>{{ entry.label }}</strong>
+                        <span v-if="entry.category" class="fiche-relation-label">{{ entry.category }}</span>
+                        <p v-if="entry.mastery">Maîtrise · {{ entry.mastery }} / 5</p>
+                        <FicheText v-if="entry.description" :text="entry.description" />
+                    </li>
+                </ul>
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" />
                 <ul v-else-if="card.tags?.length" class="fiche-tags">
                     <li v-for="tag in card.tags" :key="tag.id ?? tag.name">{{ tag.name }}</li>

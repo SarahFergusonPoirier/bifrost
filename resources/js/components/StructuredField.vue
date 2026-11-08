@@ -40,13 +40,23 @@
         <label>Libellé <input maxlength="255" :disabled="!value?.url" :value="value?.label ?? ''"
             @change="update('label', $event.target.value.trim())" /></label>
     </div>
-    <div v-else-if="['keywords', 'equipment'].includes(format)">
+    <div v-else-if="['keywords', 'equipment', 'capabilities'].includes(format)">
         <ol v-if="value?.length">
             <li v-for="(entry, index) in value" :key="index">
-                <label>{{ format === 'equipment' ? 'Nom de l’objet' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
+                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <label>Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
+                <template v-if="format === 'capabilities'">
+                    <label>Catégorie <input :value="entry.category ?? ''" maxlength="120"
+                        @change="editKeyword(index, 'category', $event.target.value)" /></label>
+                    <label>Maîtrise
+                        <select :value="entry.mastery ?? ''" @change="editKeyword(index, 'mastery', $event.target.value)">
+                            <option value="">Non renseignée</option>
+                            <option v-for="level in 5" :key="level" :value="level">{{ level }} / 5</option>
+                        </select>
+                    </label>
+                </template>
                 <label v-if="format === 'equipment' && contentId">Image jointe
                     <select :value="entry.image ?? ''" @focus="loadImages" @change="editKeyword(index, 'image', $event.target.value)">
                         <option value="">Aucune image</option>
@@ -60,7 +70,7 @@
             </li>
         </ol>
         <p v-if="imageError" role="alert">{{ imageError }}</p>
-        <label>{{ format === 'equipment' ? 'Nouvel équipement' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
+        <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
         <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
     </div>
     <label v-else-if="format === 'scale'">
