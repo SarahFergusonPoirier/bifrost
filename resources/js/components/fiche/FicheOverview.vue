@@ -132,11 +132,23 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
-                            <div v-else-if="field.scale" class="fiche-scale" role="meter"
-                                :aria-label="field.label" aria-valuemin="1" :aria-valuemax="field.scale.levels" :aria-valuenow="field.scale.level">
-                                <span v-for="level in field.scale.levels" :key="level" aria-hidden="true"
-                                    :class="{ 'fiche-scale__filled': level <= field.scale.level }" />
-                                <small aria-hidden="true">{{ field.value }}</small>
+                            <div v-else-if="field.scale">
+                                <div class="fiche-scale" role="meter" :aria-label="field.label"
+                                    aria-valuemin="1" :aria-valuemax="field.scale.levels" :aria-valuenow="field.scale.level"
+                                    :aria-valuetext="field.scale.descriptions[field.scale.level - 1] || field.value">
+                                    <template v-if="field.scale.mode !== 'number'">
+                                        <span v-for="level in field.scale.levels" :key="level" aria-hidden="true"
+                                            :title="field.scale.descriptions[level - 1] || undefined"
+                                            :class="{ 'fiche-scale__filled': level <= field.scale.level }" />
+                                    </template>
+                                    <small v-if="field.scale.mode !== 'segments'" aria-hidden="true">{{ field.value }}</small>
+                                </div>
+                                <details v-if="field.scale.descriptions.some(Boolean)">
+                                    <summary>Descriptions des niveaux</summary>
+                                    <ol>
+                                        <li v-for="(description, index) in field.scale.descriptions" :key="index">{{ description || 'Sans description' }}</li>
+                                    </ol>
+                                </details>
                             </div>
                             <template v-else>{{ field.value }}</template>
                         </dd>

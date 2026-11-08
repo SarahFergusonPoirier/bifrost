@@ -47,7 +47,12 @@ export default {
                     empty: this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level
-                        ? { level: this.fieldValue(field).level, levels: field.field_definition.options_data?.levels ?? 5 }
+                        ? {
+                            level: this.fieldValue(field).level,
+                            levels: field.field_definition.options_data?.levels ?? 5,
+                            descriptions: field.display_options?.level_descriptions ?? [],
+                            mode: field.display_options?.scale_display ?? 'both',
+                        }
                         : null,
                 })),
             }));

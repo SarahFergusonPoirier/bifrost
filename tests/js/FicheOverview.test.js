@@ -113,3 +113,22 @@ it('hides only empty fields in the configured placement', () => {
     expect(all.get('dl').element.style.getPropertyValue('--fiche-field-columns')).toBe('2');
     expect(all.findAll('dt').map(item => item.text())).toEqual(['Actif', 'Quantité']);
 });
+
+it('renders accessible scale descriptions in numeric mode', () => {
+    const field = {
+        id: 1, field_definition_id: 1, format: 'scale',
+        field_definition: { label: 'Force', options_data: { levels: 3 } },
+        display_options: { scale_display: 'number', level_descriptions: ['Faible', 'Moyenne', 'Forte'] },
+    };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Attributs', [field]]]),
+        hiddenFields: [],
+        fieldValue: () => ({ level: 2 }),
+        displayValue: () => '2 / 3',
+    } });
+    const meter = wrapper.get('[role="meter"]');
+    expect(meter.attributes('aria-valuetext')).toBe('Moyenne');
+    expect(meter.text()).toBe('2 / 3');
+    expect(meter.find('span').exists()).toBe(false);
+    expect(wrapper.get('details ol').text()).toContain('Forte');
+});

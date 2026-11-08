@@ -71,6 +71,8 @@ export default {
                         section: field.display_options?.section_label ?? field.section_key,
                         type: fieldTypes[field.field_definition?.options_data?.format] ? field.field_definition.options_data.format : field.field_definition?.value_type ?? 'text',
                         levels: field.field_definition?.options_data?.levels,
+                        levelDescriptions: (field.display_options?.level_descriptions ?? []).join('\n'),
+                        scaleDisplay: field.display_options?.scale_display ?? 'both',
                         choicesText: (field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? []).join('\n'),
                         help: field.help_text ?? '', required: Boolean(field.is_required),
                     })),
@@ -130,9 +132,13 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
-                const payloadFields = fields.map(({ choicesText, levels, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, ...field }) => ({
                     ...field,
-                    ...(field.type === 'scale' ? { levels: levels ?? 5 } : {}),
+                    ...(field.type === 'scale' ? {
+                        levels: levels ?? 5,
+                        level_descriptions: (levelDescriptions ?? '').split('\n').slice(0, levels ?? 5).map(line => line.trim() || null),
+                        scale_display: scaleDisplay ?? 'both',
+                    } : {}),
                     ...(['choice', 'multiple_choice'].includes(field.type)
                         ? { choices: (choicesText ?? '').split('\n').map(option => option.trim()).filter(Boolean) }
                         : {}),

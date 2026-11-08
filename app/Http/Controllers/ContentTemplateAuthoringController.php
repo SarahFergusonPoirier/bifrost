@@ -71,7 +71,7 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
@@ -79,6 +79,9 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
+            'fields.*.level_descriptions' => ['sometimes', 'array', 'list', 'max:20'],
+            'fields.*.level_descriptions.*' => ['nullable', 'string', 'max:255'],
+            'fields.*.scale_display' => ['sometimes', 'in:segments,number,both'],
             'fields.*.choices' => ['sometimes', 'array', 'list', 'max:100'],
             'fields.*.choices.*' => ['required', 'string', 'max:255'],
         ])['fields'];
@@ -112,6 +115,15 @@ class ContentTemplateAuthoringController extends Controller
             $display = ['section_label' => $field['section']] + ($original?->display_options ?? []);
             if (array_key_exists('choices', $field)) {
                 $display['choices'] = array_values(array_unique($field['choices']));
+            }
+
+            if (($definition->options_data['format'] ?? null) === 'scale') {
+                if (array_key_exists('level_descriptions', $field)) {
+                    $display['level_descriptions'] = array_slice($field['level_descriptions'], 0, $definition->options_data['levels'] ?? 5);
+                }
+                if (isset($field['scale_display'])) {
+                    $display['scale_display'] = $field['scale_display'];
+                }
             }
 
             $version->fields()->create([

@@ -48,6 +48,18 @@
                         <input type="number" min="2" max="20" :disabled="Boolean(field.id)" :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />
                     </label>
+                    <template v-if="field.type === 'scale'">
+                        <label>Descriptions des niveaux (une ligne par niveau)
+                            <textarea v-model="field.levelDescriptions" maxlength="5120" />
+                        </label>
+                        <label>Affichage de l’échelle
+                            <select v-model="field.scaleDisplay">
+                                <option value="both">Segments et chiffres</option>
+                                <option value="segments">Segments</option>
+                                <option value="number">Chiffres</option>
+                            </select>
+                        </label>
+                    </template>
                     <label v-if="['choice', 'multiple_choice'].includes(field.type)">
                         Options (une par ligne) <textarea v-model="field.choicesText" maxlength="10000" />
                     </label>
