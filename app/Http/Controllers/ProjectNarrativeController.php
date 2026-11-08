@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -84,6 +85,59 @@ class ProjectNarrativeController extends Controller
 
             return response()->json(null, 204);
         }, attempts: 3);
+    }
+
+    public function choices(Project $project, string $work): JsonResponse
+    {
+        $scenes = $this->sceneKeys($project, $this->work($project, $work))->flip();
+        $choices = DB::table('narrative_choices')->whereIn('source_id', $scenes->keys())
+            ->whereIn('target_id', $scenes->keys())->orderBy('id')->get();
+
+        return response()->json($choices->map(fn (object $choice): array => [
+            'id' => $choice->id,
+            'label' => $choice->label,
+            'source' => $scenes[$choice->source_id],
+            'target' => $scenes[$choice->target_id],
+        ]));
+    }
+
+    public function saveChoice(Request $request, Project $project, string $work): JsonResponse
+    {
+        $input = $request->validate([
+            'source' => ['required', 'uuid'],
+            'target' => ['required', 'uuid'],
+            'label' => ['required', 'string', 'max:255'],
+        ]);
+
+        return DB::transaction(function () use ($project, $work, $input): JsonResponse {
+            $this->lockProject($project);
+            $scenes = $this->sceneKeys($project, $this->work($project, $work));
+            if (! $scenes->has($input['source']) || ! $scenes->has($input['target'])) {
+                throw ValidationException::withMessages(['target' => 'Les deux scènes doivent appartenir à cette œuvre.']);
+            }
+
+            DB::table('narrative_choices')->upsert([[
+                'source_id' => $scenes[$input['source']],
+                'target_id' => $scenes[$input['target']],
+                'label' => $input['label'],
+            ]], ['source_id', 'label'], ['target_id']);
+
+            return response()->json(null, 204);
+        }, attempts: 3);
+    }
+
+    public function deleteChoice(Project $project, string $work, int $choice): JsonResponse
+    {
+        $scenes = $this->sceneKeys($project, $this->work($project, $work));
+        abort_unless(DB::table('narrative_choices')->whereIn('source_id', $scenes->values())->where('id', $choice)->delete(), 404);
+
+        return response()->json(null, 204);
+    }
+
+    private function sceneKeys(Project $project, Content $work): Collection
+    {
+        return $project->contents()->join('project_narrative_scenes', 'scene_id', '=', 'contents.id')
+            ->where('work_id', $work->id)->pluck('contents.id', 'contents.public_id');
     }
 
     public function arcs(Project $project, string $work): JsonResponse

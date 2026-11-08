@@ -9,7 +9,7 @@
 
         <template v-if="work">
             <label>Œuvre
-                <select v-model="workId" :disabled="busy" @change="showArcs">
+                <select v-model="workId" :disabled="busy" @change="showView">
                     <option v-for="item in works" :key="item.public_id" :value="item.public_id">{{ item.title }}</option>
                 </select>
             </label>
@@ -25,15 +25,51 @@
                 <button type="submit" :disabled="busy">Ajouter une scène</button>
             </form>
             <label>Vue
-                <select v-model="view" :disabled="busy" @change="showArcs">
+                <select v-model="view" :disabled="busy" @change="showView">
                     <option value="structure">Ordre du récit</option>
                     <option value="status">Par statut</option>
                     <option value="cards">Cartes de scènes</option>
                     <option value="arcs">Arcs narratifs</option>
+                    <option value="choices">Embranchements</option>
                     <option value="dates">Dates dans l’univers</option>
                 </select>
             </label>
-            <section v-if="view === 'arcs'">
+            <section v-if="view === 'choices'">
+                <h2>Embranchements</h2>
+                <form @submit.prevent="saveChoice">
+                    <fieldset :disabled="busy || !work.scenes.length">
+                        <legend>Ajouter ou réorienter un choix</legend>
+                        <label>Scène source <select v-model="choiceForm.source" required>
+                            <option value="" disabled>Choisir une scène</option>
+                            <option v-for="scene in work.scenes" :key="scene.public_id" :value="scene.public_id">{{ scene.title }}</option>
+                        </select></label>
+                        <label>Libellé du choix <input v-model="choiceForm.label" required maxlength="255" /></label>
+                        <label>Scène cible <select v-model="choiceForm.target" required>
+                            <option value="" disabled>Choisir une scène</option>
+                            <option v-for="scene in work.scenes" :key="scene.public_id" :value="scene.public_id">{{ scene.title }}</option>
+                        </select></label>
+                        <button type="submit">Enregistrer le choix</button>
+                    </fieldset>
+                </form>
+                <ul>
+                    <li v-for="choice in choices" :key="choice.id">
+                        {{ sceneTitleFor(choice.source) }} → {{ choice.label }} → {{ sceneTitleFor(choice.target) }}
+                        <button type="button" :disabled="busy" @click="removeChoice(choice)">Retirer</button>
+                    </li>
+                </ul>
+                <section aria-label="Aperçu du parcours">
+                    <h3>Essayer un parcours</h3>
+                    <label>Scène de départ <select :value="previewScene" @change="startPreview($event.target.value)">
+                        <option value="">Choisir une scène</option>
+                        <option v-for="scene in work.scenes" :key="scene.public_id" :value="scene.public_id">{{ scene.title }}</option>
+                    </select></label>
+                    <p v-if="previewScene">Scène actuelle · {{ sceneTitleFor(previewScene) }}</p>
+                    <p v-if="trail.length">Choix suivis · {{ trail.join(' → ') }}</p>
+                    <button v-for="choice in choices.filter(item => item.source === previewScene)" :key="choice.id"
+                        type="button" @click="follow(choice)">{{ choice.label }}</button>
+                </section>
+            </section>
+            <section v-else-if="view === 'arcs'">
                 <h2>Arcs narratifs</h2>
                 <form @submit.prevent="createArc">
                     <label>Titre de l’arc <input v-model="arcTitle" required maxlength="255" :disabled="busy" /></label>

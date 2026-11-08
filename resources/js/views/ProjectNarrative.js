@@ -4,7 +4,7 @@ export default {
     props: { projectId: { type: String, required: true } },
     emits: ['open-content'],
     data: () => ({
-        works: [], arcs: [], arcTitle: '', includeNotes: false, workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
+        works: [], choices: [], choiceForm: { source: '', target: '', label: '' }, previewScene: '', trail: [], arcs: [], arcTitle: '', includeNotes: false, workId: '', title: '', sceneTitle: '', view: 'structure', busy: false, error: '',
         statuses: { draft: 'Brouillon', in_progress: 'En cours', completed: 'Terminée', abandoned: 'Abandonnée' },
     }),
     computed: {
@@ -60,14 +60,49 @@ export default {
             this.works = (await contentRequest(this.endpoint())).data;
             if (!this.work) this.workId = this.works[0]?.public_id ?? '';
             if (this.view === 'arcs') await this.fetchArcs();
+            if (this.view === 'choices') await this.fetchChoices();
         },
         async fetchArcs() {
             this.arcs = this.workId
                 ? (await contentRequest(this.endpoint() + '/' + this.workId + '/arcs')).data
                 : [];
         },
-        showArcs() {
+        showView() {
+            if (this.view === 'choices') return this.run(() => this.fetchChoices(true));
             if (this.view === 'arcs') return this.run(() => this.fetchArcs());
+        },
+        async fetchChoices(reset = false) {
+            this.choices = this.workId
+                ? (await contentRequest(this.endpoint() + '/' + this.workId + '/choices')).data : [];
+            if (reset) {
+                this.choiceForm = { source: '', target: '', label: '' };
+                this.startPreview(this.work?.scenes[0]?.public_id ?? '');
+            }
+        },
+        saveChoice() {
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/' + this.workId + '/choices', 'PUT', this.choiceForm);
+                this.choiceForm.label = '';
+                await this.fetchChoices();
+            });
+        },
+        removeChoice(choice) {
+            if (!window.confirm('Retirer ce choix du parcours ?')) return;
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/' + this.workId + '/choices/' + choice.id, 'DELETE');
+                await this.fetchChoices();
+            });
+        },
+        sceneTitleFor(id) {
+            return this.work?.scenes.find(scene => scene.public_id === id)?.title ?? 'Scène indisponible';
+        },
+        startPreview(id) {
+            this.previewScene = id;
+            this.trail = [];
+        },
+        follow(choice) {
+            this.previewScene = choice.target;
+            this.trail.push(choice.label);
         },
         createArc() {
             return this.run(async () => {

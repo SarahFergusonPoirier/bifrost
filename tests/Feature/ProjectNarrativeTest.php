@@ -11,6 +11,28 @@ class ProjectNarrativeTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_choices_can_be_reoriented_but_only_between_scenes_of_the_same_work(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $url = "/api/projects/{$project->id}/narration";
+        $work = $this->postJson($url, ['title' => 'Roman'])->assertCreated()->json('public_id');
+        $other = $this->postJson($url, ['title' => 'Autre'])->assertCreated()->json('public_id');
+        $source = $this->postJson("$url/$work/scenes", ['title' => 'Départ'])->assertCreated()->json('public_id');
+        $target = $this->postJson("$url/$work/scenes", ['title' => 'Arrivée'])->assertCreated()->json('public_id');
+        $outside = $this->postJson("$url/$other/scenes", ['title' => 'Extérieure'])->assertCreated()->json('public_id');
+        $choices = "$url/$work/choices";
+        $input = ['source' => $source, 'label' => 'Continuer'];
+        $this->putJson($choices, $input + ['target' => $outside])->assertUnprocessable();
+        $this->putJson($choices, $input + ['target' => $target])->assertNoContent();
+        $this->putJson($choices, $input + ['target' => $source])->assertNoContent();
+
+        $choice = $this->getJson($choices)->assertOk()->assertJsonCount(1)->assertJsonPath('0.target', $source)->json('0.id');
+        $this->deleteJson("$url/$other/choices/$choice")->assertNotFound();
+        $this->deleteJson("$choices/$choice")->assertNoContent();
+        $this->getJson($choices)->assertOk()->assertJsonCount(0);
+        $this->assertDatabaseCount('contents', 5);
+    }
+
     public function test_arcs_share_scene_identity_and_progress_within_their_work(): void
     {
         $project = Project::create(['name' => 'Projet']);

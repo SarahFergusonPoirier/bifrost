@@ -91,3 +91,7 @@ Route::put('/projects/{project}/connections/{relation}', [ProjectConnectionContr
 Route::get('/projects/{project}/narration/{work}/arcs', [ProjectNarrativeController::class, 'arcs']);
 Route::post('/projects/{project}/narration/{work}/arcs', [ProjectNarrativeController::class, 'storeArc']);
 Route::put('/projects/{project}/narration/{work}/arcs/{arc}', [ProjectNarrativeController::class, 'updateArc']);
+
+Route::get('/projects/{project}/narration/{work}/choices', [ProjectNarrativeController::class, 'choices']);
+Route::put('/projects/{project}/narration/{work}/choices', [ProjectNarrativeController::class, 'saveChoice']);
+Route::delete('/projects/{project}/narration/{work}/choices/{choice}', [ProjectNarrativeController::class, 'deleteChoice'])->whereNumber('choice');
