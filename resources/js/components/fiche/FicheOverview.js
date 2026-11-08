@@ -24,7 +24,7 @@ export default {
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
-    data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [] }),
+    data: () => ({ editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
     computed: {
         cards() {
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
@@ -50,6 +50,10 @@ export default {
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
             ];
+        },
+        matchingCards() {
+            const query = this.query.trim().toLocaleLowerCase('fr');
+            return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
         },
         bySource() {
             return new Map(this.cards.map(card => [card.source, card]));
@@ -135,6 +139,15 @@ export default {
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
         },
+        createTextBlock() {
+            const title = this.newTitle.trim();
+            if (!title || this.draft.length >= 80) return;
+            const id = crypto.randomUUID();
+            const card = { title, text: this.newBody, icon: 'narration' };
+            this.copies.push({ id, source: 'blank', title, body: this.newBody, card });
+            this.draft.push(placement('text:' + id));
+            this.newBody = '';
+        },
         duplicate(index) {
             const original = this.draft[index];
             const card = this.bySource.get(original.source);
@@ -148,7 +161,7 @@ export default {
         },
         async save() {
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
-            const copies = this.copies.filter(copy => placed.has('text:' + copy.id)).map(({ id, source }) => ({ id, source }));
+            const copies = this.copies.filter(copy => placed.has('text:' + copy.id)).map(({ card, ...copy }) => copy);
             const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === 'text:' + copy.id))
                 .map(item => placement(item.source));
             if (await this.persist(this.draft, this.transfers, defaults, copies)) this.cancel();

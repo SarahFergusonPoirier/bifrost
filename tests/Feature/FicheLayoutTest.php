@@ -118,5 +118,15 @@ class FicheLayoutTest extends TestCase
         $this->putJson($url, $layout)->assertOk()->assertJsonPath('tabs.0.placements.0.source', 'text:'.$id);
         $content->update(['summary' => 'Nouveau résumé']);
         $this->assertSame('Résumé original', $content->blocks()->sole()->body);
+
+        $layout = $this->getJson($url)->assertOk()->json();
+        $blank = '6911f23b-1a4a-4e65-94b8-2a4ab7dbcb7e';
+        $layout['copies'] = [['id' => $blank, 'source' => 'blank']];
+        $layout['tabs'][0]['placements'][0]['source'] = 'text:'.$blank;
+        $this->putJson($url, $layout)->assertUnprocessable()->assertJsonValidationErrors('copies.0.title');
+        $layout['copies'][0] += ['title' => 'Biographie', 'body' => 'Début de son histoire.'];
+        $this->putJson($url, $layout)->assertOk();
+        $this->assertDatabaseHas('content_blocks', ['public_id' => $blank, 'title' => 'Biographie', 'body' => 'Début de son histoire.']);
+        $this->assertDatabaseHas('content_blocks', ['public_id' => $id, 'body' => 'Résumé original']);
     }
 }

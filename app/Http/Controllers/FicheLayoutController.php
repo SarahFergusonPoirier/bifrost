@@ -20,9 +20,11 @@ class FicheLayoutController extends Controller
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
-            'copies.*' => ['required', 'array:id,source'],
+            'copies.*' => ['required', 'array:id,source,title,body'],
             'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
-            'copies.*.source' => ['required', 'string', 'regex:/^(summary|text:[a-f0-9-]+)$/'],
+            'copies.*.source' => ['required', 'string', 'regex:/^(summary|blank|text:[a-f0-9-]+)$/'],
+            'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank', 'string', 'max:255'],
+            'copies.*.body' => ['nullable', 'string'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
             'tabs.*' => ['required', 'array:id,title,icon,hidden,placements'],
             'tabs.*.id' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/', 'distinct:strict'],
@@ -91,12 +93,12 @@ class FicheLayoutController extends Controller
                 throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
             }
 
-            $original = $copy['source'] === 'summary' ? null : $record->blocks()
-                ->where('public_id', substr($copy['source'], 5))->firstOrFail();
+            $original = str_starts_with($copy['source'], 'text:') ? $record->blocks()
+                ->where('public_id', substr($copy['source'], 5))->firstOrFail() : null;
             $block = $record->blocks()->make([
                 'block_type' => $original?->block_type ?? 'text',
-                'title' => $original?->title ?? 'Résumé',
-                'body' => $original ? $original->body : $record->summary,
+                'title' => $copy['source'] === 'blank' ? $copy['title'] : ($original?->title ?? 'Résumé'),
+                'body' => $copy['source'] === 'blank' ? ($copy['body'] ?? null) : ($original ? $original->body : $record->summary),
                 'position' => ++$position,
             ]);
             $block->public_id = $copy['id'];

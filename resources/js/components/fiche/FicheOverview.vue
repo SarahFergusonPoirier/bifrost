@@ -1,13 +1,30 @@
 <template>
     <button v-if="persist && !editing" type="button" @click="begin">Personnaliser les blocs</button>
     <form v-if="editing" class="fiche-grid-controls" @submit.prevent="save">
-        <label>Bloc à afficher
-            <select v-model="source">
-                <option value="" disabled>Choisir un bloc</option>
-                <option v-for="card in cards" :key="card.source" :value="card.source">{{ card.title }}</option>
-            </select>
-        </label>
-        <button type="button" :disabled="!source || draft.length >= 80" @click="add">Ajouter un placement</button>
+        <details open>
+            <summary>Bibliothèque de blocs</summary>
+            <label>Rechercher un bloc <input v-model="query" type="search" /></label>
+            <label>Bloc à afficher
+                <select v-model="source">
+                    <option value="" disabled>Choisir un bloc</option>
+                    <option v-for="card in matchingCards" :key="card.source" :value="card.source">{{ card.title }}</option>
+                </select>
+            </label>
+            <p v-if="source && bySource.has(source)">Aperçu · {{ bySource.get(source).title }}</p>
+            <button type="button" :disabled="!source || draft.length >= 80" @click="add">Ajouter un placement</button>
+            <fieldset v-if="canCopy">
+                <legend>Nouveau bloc de texte</legend>
+                <label>Titre <input v-model="newTitle" maxlength="255" list="fiche-text-block-types" /></label>
+                <datalist id="fiche-text-block-types">
+                    <option value="Texte" />
+                    <option value="Biographie" />
+                    <option value="Personnalité" />
+                    <option value="Résumé" />
+                </datalist>
+                <label>Texte <textarea v-model="newBody" /></label>
+                <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
+            </fieldset>
+        </details>
         <label v-if="destinations.length">Onglet de destination
             <select v-model="destination">
                 <option value="">Choisir un onglet</option>
