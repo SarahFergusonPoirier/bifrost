@@ -245,6 +245,22 @@ export default {
         const fieldValue = field => draft.value.field_values?.find(value =>
             value.field_definition_id === field.field_definition_id
         )?.[field.column] ?? '';
+        const suggestedFullName = computed(() => {
+            if (!draft.value) return '';
+            const fields = templateSections.value.get('Identité') ?? [];
+            const names = ['Prénom', 'Nom de famille'].map(label => {
+                const field = fields.find(item => item.column === 'value_text' && item.field_definition.label === label);
+                return field ? String(fieldValue(field)).trim() : '';
+            });
+            if (names.some(name => !name)) return '';
+            const fullName = names.join(' ');
+            return fullName.length <= 255 ? fullName : '';
+        });
+
+        function useSuggestedFullName() {
+            if (suggestedFullName.value) draft.value.title = suggestedFullName.value;
+        }
+
         const referenceIndex = computed(() => {
             const index = new Map();
             for (const item of treeContents.value) {
@@ -485,7 +501,7 @@ export default {
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
             ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, fieldReferences, fieldState, setFieldState,
-            sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
+            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;

@@ -314,6 +314,9 @@
                 <fieldset :disabled="busy || saving">
                     <legend>Modifier la fiche</legend>
                     <p><label>Titre <input v-model="draft.title" required maxlength="255" /></label></p>
+                    <button v-if="suggestedFullName && suggestedFullName !== draft.title" type="button" @click="useSuggestedFullName">
+                        Utiliser « {{ suggestedFullName }} » comme nom complet
+                    </button>
                     <p v-if="draft.work_status_key"><label>Statut de travail
                         <select v-model="draft.work_status_key">
                             <option value="draft">Brouillon</option><option value="in_progress">En cours</option>

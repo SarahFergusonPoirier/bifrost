@@ -108,3 +108,37 @@ it('masque une valeur en lecture compacte sans la retirer de la fiche', async ()
     expect(contentRequest.mock.calls.some(([, method]) => method === 'PATCH')).toBe(false);
     wrapper.unmount();
 });
+
+it('suggests the full name without replacing a manually entered title', async () => {
+    const fields = ['Prénom', 'Nom de famille'].map((label, index) => ({
+        id: index + 1, field_definition_id: index + 1, section_key: 'identity',
+        display_options: { section_label: 'Identité' }, field_definition: { label, value_type: 'text' },
+    }));
+    const content = {
+        public_id: 'fiche', title: 'Nom manuel', folder_id: null, summary: null, blocks: [],
+        field_values: [{ field_definition_id: 1, value_text: 'Élia' }, { field_definition_id: 2, value_text: 'Voss' }],
+        template_assignment: { template_version: { version_number: 2, fields } },
+    };
+    contentRequest.mockImplementation(async path => {
+        if (path === '/contents/fiche') return { data: content };
+        if (path.endsWith('/tree')) return { data: [content] };
+        if (path.endsWith('/folders') || ['/content-types', '/projects'].includes(path)) return { data: [] };
+        if (path.endsWith('/fiche-layout')) return { data: { version: 0, tabs: [
+            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
+            { id: 'details', title: 'Informations générales', icon: 'catalogue', hidden: false },
+        ] } };
+        return { data: { data: [content], current_page: 1, last_page: 1 } };
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    await flushPromises();
+    await wrapper.get('nav[aria-label="Navigation du projet"]').findAll('button').find(button => button.text() === 'Catalogue').trigger('click');
+    await flushPromises();
+    await wrapper.get('nav[aria-label="Dossiers et fiches du catalogue"]').findAll('button').find(button => button.text() === 'Nom manuel').trigger('click');
+    await flushPromises();
+
+    const title = wrapper.get('input[required][maxlength="255"]');
+    expect(title.element.value).toBe('Nom manuel');
+    await wrapper.findAll('button').find(button => button.text().includes('Utiliser « Élia Voss »')).trigger('click');
+    expect(title.element.value).toBe('Élia Voss');
+    wrapper.unmount();
+});
