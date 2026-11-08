@@ -244,7 +244,10 @@
             <FicheOverview v-if="ficheTab === 'overview'" :key="selected.public_id" :summary="draft.summary"
                 :tags="selected.tags" :blocks="draft.blocks" :template-sections="templateSections"
                 :hidden-fields="hiddenFields" :display-value="displayValue" />
-            <p v-if="!['overview', 'details'].includes(ficheTab)">Cet onglet ne contient aucun bloc.</p>
+            <FicheLinkedData v-if="projectId && ['relations', 'timeline'].includes(ficheTab)" :key="selected.public_id"
+                :path="'/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links'"
+                :kind="ficheTab" @open="openPanelContent" />
+            <p v-else-if="!['overview', 'details'].includes(ficheTab)">Cet onglet ne contient aucun bloc.</p>
             <div v-show="ficheTab === 'details'">
             <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" />
             <p v-if="selected.origin_idea">
