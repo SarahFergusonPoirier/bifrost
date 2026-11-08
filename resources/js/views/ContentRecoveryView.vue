@@ -18,7 +18,7 @@
                 <button type="button" class="workspace-link" :aria-current="panel === 'overview' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
-                    :disabled="busy || saving" @click="openTreeItem({})"><WorkspaceIcon name="catalogue" />Catalogue</button>
+                    :disabled="busy || saving" @click="overviewCatalogue()"><WorkspaceIcon name="catalogue" />Catalogue</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'graphs' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('graphs')"><WorkspaceIcon name="connections" />Graphes</button>
                 <button v-if="panel === 'graphs' || panel === 'connections'" type="button" class="workspace-link workspace-link--child"
@@ -49,7 +49,12 @@
             @panel="openPanel" @content="openPanelContent" @folder="folder => openTreeItem({ folder })" />
     <section v-else class="content-templates-view">
         <header class="page-header">
-            <h1>{{ projectId ? 'Fiches du projet' : 'Corbeille des projets' }}</h1>
+            <nav v-if="projectId" aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › {{ currentProject?.name }}</nav>
+            <div class="catalogue-heading">
+                <h1>{{ trash ? (projectId ? 'Corbeille des fiches' : 'Corbeille des projets') : 'Catalogue' }}</h1>
+                <button v-if="projectId && !trash && !selected" type="button" :aria-expanded="catalogueCreate"
+                    @click="catalogueCreate = !catalogueCreate">＋ Nouvelle fiche</button>
+            </div>
             <p v-if="currentProject">{{ currentProject.name }}</p>
             <p>{{ projectId ? 'Organise et ouvre les fiches de ce projet.' : 'Restaure un projet et ses contenus.' }}</p>
         </header>
@@ -57,51 +62,9 @@
         <p v-if="error" class="error" role="alert">{{ error }}</p>
 
         <fieldset v-if="!selected" :disabled="busy">
-            <legend>Contenus</legend>
+            <legend class="catalogue-legend">Contenus</legend>
 
-            <section v-if="projectId && !trash" aria-labelledby="universe-categories-heading">
-                <h2 id="universe-categories-heading">Catégories de l’univers</h2>
-                <ul class="catalogue-categories">
-                    <li><button type="button" :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && !appliedCatalogueFilters.type)"
-                        @click="openCategory()">Toutes les fiches</button></li>
-                    <li v-for="category in universeCategories" :key="category.key">
-                        <button type="button" :disabled="!category.id"
-                            :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && appliedCatalogueFilters.type === category.id)"
-                            @click="openCategory(category.id)">{{ category.label }}</button>
-                    </li>
-                </ul>
-            </section>
-            <section v-if="projectId && !trash" aria-labelledby="folder-heading">
-                <h2 id="folder-heading">Dossiers du projet</h2>
-                <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">
-                    <button v-for="item in sidebarItems" :key="item.key" class="catalogue-tree__item"
-                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
-                        :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
-                        @dragstart="item.content && beginDrag($event, item)"
-                        @dragover="item.folder && $event.preventDefault()"
-                        @drop.prevent="item.folder && dropInto($event, item)"
-                        @click="openTreeItem(item)">
-                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
-                    </button>
-                </nav>
-                <template v-if="folderId">
-                    <button type="button" @click="editFolder">Renommer ou déplacer ce dossier</button>
-                    <button type="button" @click="deleteFolder">Supprimer ce dossier</button>
-                </template>
-                <form @submit.prevent="saveFolder">
-                    <label>Nom du dossier <input id="catalogue-folder-name" v-model="folderName" required maxlength="255" /></label>
-                    <label>Dossier parent
-                        <select v-model="folderParent">
-                            <option :value="0">Racine du projet</option>
-                            <option v-for="folder in folderOptions" :key="folder.id" :value="folder.id" :disabled="folderEditing && folder.id === folderId">{{ folder.label }}</option>
-                        </select>
-                    </label>
-                    <button type="submit">{{ folderEditing ? 'Enregistrer le dossier' : 'Créer un dossier' }}</button>
-                    <button v-if="folderEditing" type="button" @click="cancelFolderEdit">Annuler</button>
-                </form>
-            </section>
-
-            <form v-if="!trash" @submit.prevent="create">
+            <form v-if="!trash && catalogueCreate" class="catalogue-create-form" @submit.prevent="create">
                 <label>Titre <input id="catalogue-create-title" v-model="newTitle" required maxlength="255" /></label>
                 <label>
                     Type de fiche
@@ -132,32 +95,100 @@
                 </label>
                 <button type="submit" :disabled="!projects.length || (templateId && !versionId)">Créer une fiche</button>
             </form>
-
-            <form v-if="projectId && !trash" @submit.prevent="searchCatalogue">
-                <fieldset>
-                    <legend>Rechercher dans le catalogue</legend>
-                    <label>Texte <input v-model="catalogueSearch" type="search" maxlength="255" /></label>
+            <form v-if="projectId && !trash" class="catalogue-toolbar" @submit.prevent="searchCatalogue">
+                <input v-model="catalogueSearch" type="search" aria-label="Rechercher une fiche" placeholder="Rechercher une fiche…" maxlength="255" />
+                <button type="submit">Rechercher</button>
+                <details>
+                    <summary>Filtres</summary>
                     <label>Type <select v-model="catalogueType">
-                        <option value="">Tous</option>
-                        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
+                        <option value="">Tous</option><option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
                     </select></label>
                     <label>Statut <select v-model="catalogueStatus">
-                        <option value="">Tous</option><option value="draft">Brouillon</option>
-                        <option value="in_progress">En cours</option><option value="completed">Terminé</option>
-                        <option value="abandoned">Abandonné</option>
+                        <option value="">Tous</option><option value="draft">Brouillon</option><option value="in_progress">En cours</option>
+                        <option value="completed">Terminé</option><option value="abandoned">Abandonné</option>
                     </select></label>
                     <label>Étiquette <select v-model="catalogueTag">
-                        <option value="">Toutes</option>
-                        <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                        <option value="">Toutes</option><option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
                     </select></label>
-                    <label><input v-model="searchWholeProject" type="checkbox" /> Chercher dans tout le projet</label>
-                    <button type="submit">Appliquer les filtres</button>
-                </fieldset>
+                    <label><input v-model="searchWholeProject" type="checkbox" /> Tout le projet</label>
+                    <button type="submit">Appliquer</button>
+                </details>
+                <label>Trier par <select v-model="catalogueSort" @change="browse(1)">
+                    <option value="recent">Dernière modification</option><option value="title">Titre</option>
+                </select></label>
+                <button type="button" :aria-pressed="catalogueDisplay === 'grid'" @click="catalogueDisplay = 'grid'">Grille</button>
+                <button type="button" :aria-pressed="catalogueDisplay === 'list'" @click="catalogueDisplay = 'list'">Liste</button>
             </form>
+            <div :class="{ 'catalogue-layout': projectId && !trash }">
+            <aside v-if="projectId && !trash" class="catalogue-index">
+            <section aria-labelledby="universe-categories-heading">
+                <h2 id="universe-categories-heading">Catégories de l’univers</h2>
+                <ul class="catalogue-categories">
+                    <li><button type="button" :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && !appliedCatalogueFilters.type)"
+                        @click="openCategory()">Toutes les fiches <span>{{ catalogueTotal }}</span></button></li>
+                    <li v-for="category in universeCategories" :key="category.key">
+                        <button type="button" :disabled="!category.id"
+                            :aria-pressed="Boolean(appliedCatalogueFilters.wholeProject && appliedCatalogueFilters.type === category.id)"
+                            @click="openCategory(category.id)">{{ category.label }} <span>{{ category.count }}</span></button>
+                    </li>
+                </ul>
+            </section>
+            <section v-if="projectId && !trash" aria-labelledby="folder-heading">
+                <h2 id="folder-heading">Collections <button type="button" :aria-expanded="catalogueFolder" aria-label="Nouvelle collection" @click="catalogueFolder = !catalogueFolder">＋</button></h2>
+                <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">
+                    <button v-for="item in sidebarItems" :key="item.key" class="catalogue-tree__item"
+                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
+                        :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
+                        @dragstart="item.content && beginDrag($event, item)"
+                        @dragover="item.folder && $event.preventDefault()"
+                        @drop.prevent="item.folder && dropInto($event, item)"
+                        @click="openTreeItem(item)">
+                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
+                    </button>
+                </nav>
+                <template v-if="folderId">
+                    <button type="button" @click="editFolder">Renommer ou déplacer ce dossier</button>
+                    <button type="button" @click="deleteFolder">Supprimer ce dossier</button>
+                </template>
+                <form v-if="catalogueFolder" @submit.prevent="saveFolder">
+                    <label>Nom du dossier <input id="catalogue-folder-name" v-model="folderName" required maxlength="255" /></label>
+                    <label>Dossier parent
+                        <select v-model="folderParent">
+                            <option :value="0">Racine du projet</option>
+                            <option v-for="folder in folderOptions" :key="folder.id" :value="folder.id" :disabled="folderEditing && folder.id === folderId">{{ folder.label }}</option>
+                        </select>
+                    </label>
+                    <button type="submit">{{ folderEditing ? 'Enregistrer le dossier' : 'Créer un dossier' }}</button>
+                    <button v-if="folderEditing" type="button" @click="cancelFolderEdit">Annuler</button>
+                </form>
+            </section>
 
+
+
+
+
+            </aside>
+            <div class="catalogue-results">
             <p v-if="!listing" role="status">Chargement des contenus…</p>
             <template v-else>
                 <p v-if="!listing.data.length">{{ trash ? 'La corbeille est vide.' : 'Aucune fiche active.' }}</p>
+                <div v-else-if="!trash" class="catalogue-groups">
+                    <section v-for="group in catalogueGroups" :key="group.id" class="catalogue-group">
+                        <h2>{{ group.label }}</h2>
+                        <div class="catalogue-cards" :class="{ 'catalogue-cards--list': catalogueDisplay === 'list' }">
+                            <article v-for="item in group.items" :key="item.public_id" class="catalogue-card">
+                                <button type="button" draggable="true" @dragstart="beginDrag($event, { content: item })" @click="openContent(item.public_id)">
+                                    <span class="catalogue-card__image"><WorkspaceIcon name="catalogue" /></span>
+                                    <strong>{{ item.title }}</strong>
+                                    <span v-if="item.summary" class="catalogue-card__summary">{{ item.summary }}</span>
+                                    <span v-if="item.tags?.length" class="catalogue-card__tags">
+                                        <span v-for="tag in item.tags" :key="tag.id">{{ tag.name }}</span>
+                                    </span>
+                                </button>
+                            </article>
+                        </div>
+                    </section>
+                </div>
                 <ul v-else>
                     <li v-for="item in listing.data" :key="item.public_id ?? item.id">
                         <template v-if="trash">
@@ -171,6 +202,8 @@
                 <span> Page {{ listing.current_page }} sur {{ listing.last_page }} </span>
                 <button type="button" :disabled="listing.current_page >= listing.last_page" @click="browse(listing.current_page + 1)">Suivant</button>
             </template>
+            </div>
+            </div>
         </fieldset>
 
         <template v-else>

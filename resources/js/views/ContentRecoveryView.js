@@ -68,6 +68,23 @@ export default {
         const listing = ref(null);
         const catalogueSearch = ref('');
         const catalogueType = ref('');
+        const catalogueSort = ref('recent');
+        const catalogueDisplay = ref('grid');
+        const catalogueCreate = ref(false);
+        const catalogueFolder = ref(false);
+        const catalogueGroups = computed(() => {
+            const groups = new Map();
+            for (const item of listing.value?.data ?? []) {
+                const key = item.content_type_id;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(item);
+            }
+            return [...groups].map(([id, items]) => ({
+                id, items,
+                label: universeCategories.value.find(category => category.id === id)?.label
+                    ?? types.value.find(type => type.id === id)?.name ?? 'Fiches',
+            }));
+        });
         const catalogueStatus = ref('');
         const catalogueTag = ref('');
         const tags = ref([]);
@@ -304,6 +321,7 @@ export default {
             if (props.projectId) {
                 params.set('project_id', props.projectId);
                 if (!trash.value) {
+                    params.set('sort', catalogueSort.value);
                     const filters = appliedCatalogueFilters.value;
                     if (!filters.wholeProject) params.set('folder_id', folderId.value);
                     for (const key of ['search', 'type', 'status', 'tag']) {
@@ -442,7 +460,11 @@ export default {
                     panel.value = 'catalogue';
                     trash.value = false;
                     selectFolder(0);
-                    appliedCatalogueFilters.value = {};
+                    searchWholeProject.value = true;
+                    catalogueType.value = '';
+                    appliedCatalogueFilters.value = { wholeProject: true };
+                    if (focus === 'catalogue-create-title') catalogueCreate.value = true;
+                    if (focus === 'catalogue-folder-name') catalogueFolder.value = true;
                     await loadList();
                 });
                 await nextTick();
@@ -497,6 +519,7 @@ export default {
                 await loadList();
             }),
             editFolder: () => {
+                catalogueFolder.value = true;
                 const folder = folders.value.find(item => item.id === folderId.value);
                 folderEditing.value = true;
                 folderName.value = folder.name;
@@ -538,7 +561,8 @@ export default {
                 await contentRequest(folderPath() + '/' + id + path(), 'DELETE');
                 await loadList(listing.value?.current_page);
             }),
-            catalogueSearch, catalogueType, catalogueStatus, catalogueTag, tags, newTag, searchWholeProject,
+            catalogueTotal: computed(() => new Set(treeContents.value.map(item => item.public_id)).size),
+            catalogueGroups, catalogueSort, catalogueDisplay, catalogueCreate, catalogueFolder, catalogueSearch, catalogueType, catalogueStatus, catalogueTag, tags, newTag, searchWholeProject,
             addTag: () => run(async () => {
                 if (!newTag.value.trim()) return;
                 const { data } = await contentRequest('/tags', 'POST', { name: newTag.value.trim() });

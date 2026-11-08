@@ -20,6 +20,7 @@ class ContentRecoveryController extends Controller
             'project_id' => ['sometimes', 'required', 'integer', 'exists:projects,id,deleted_at,NULL'],
             'folder_id' => ['sometimes', 'required', 'integer', 'min:0'],
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'sort' => ['sometimes', 'in:title,recent'],
             'type' => ['sometimes', 'integer', 'min:1'],
             'tag' => ['sometimes', 'integer', 'min:1'],
             'status' => ['sometimes', 'in:draft,in_progress,completed,abandoned'],
@@ -55,8 +56,9 @@ class ContentRecoveryController extends Controller
                     $query->whereIn('contents.id', $placements->whereIn('folder_id', $descendants));
                 }
             })
+            ->when(($validated['sort'] ?? 'title') === 'recent', fn ($query) => $query->orderByDesc('updated_at'))
             ->orderBy('title')->orderBy('id')
-            ->addSelect(['public_id', 'title', 'scope_type'])
+            ->with('tags:tags.id,name')->addSelect(['id', 'public_id', 'title', 'summary', 'content_type_id', 'scope_type'])
             ->addSelect(['folder_id' => DB::table('content_collection_memberships')->selectRaw('MIN(folder_id)')->whereColumn('content_id', 'contents.id')])
             ->paginate(25));
     }
