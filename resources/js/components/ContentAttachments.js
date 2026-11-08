@@ -1,8 +1,13 @@
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
-    props: { contentId: { type: String, required: true }, readOnly: Boolean },
-    data: () => ({ attachments: [], busy: false, error: '' }),
+    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean },
+    data: () => ({ attachments: [], alt: '', caption: '', busy: false, error: '' }),
+    computed: {
+        images() {
+            return this.attachments.filter(item => item.metadata?.image_mime);
+        },
+    },
     mounted() {
         if (this.readOnly) this.run(() => {});
     },
@@ -32,8 +37,12 @@ export default {
                 const input = this.$refs.file;
                 const data = new FormData();
                 data.set('file', input.files[0]);
+                if (this.alt.trim()) data.set('alt', this.alt.trim());
+                if (this.caption.trim()) data.set('caption', this.caption.trim());
                 await contentRequest(this.endpoint(), 'POST', data);
                 input.value = '';
+                this.alt = '';
+                this.caption = '';
             });
         },
         remove(attachment) {

@@ -14,6 +14,8 @@ use Throwable;
 
 class ContentAttachmentController extends Controller
 {
+    private const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
     public function index(string $content): JsonResponse
     {
         $attachments = $this->content($content)->resources()->where('storage_mode', 'imported')
@@ -26,13 +28,23 @@ class ContentAttachmentController extends Controller
     public function store(Request $request, string $content): JsonResponse
     {
         $record = $this->content($content);
-        $file = $request->validate(['file' => ['required', 'file', 'max:20480']])['file'];
+        $input = $request->validate([
+            'file' => ['required', 'file', 'max:20480'],
+            'alt' => ['nullable', 'string', 'max:255'],
+            'caption' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $file = $input['file'];
+        $mime = $file->getMimeType();
+        $metadata = ['size' => $file->getSize()];
+        if (in_array($mime, self::IMAGE_TYPES, true)) {
+            $metadata += ['image_mime' => $mime, 'alt' => $input['alt'] ?? null, 'caption' => $input['caption'] ?? null];
+        }
         $name = Str::limit(str_replace(["\r", "\n", '\\', '/'], '_', $file->getClientOriginalName()), 255, '');
         $path = $file->storeAs('content-attachments', (string) Str::uuid(), 'local');
         abort_if($path === false, 500, 'Impossible de stocker la pièce jointe.');
 
         try {
-            $attachment = DB::transaction(function () use ($record, $name, $file, $path): Resource {
+            $attachment = DB::transaction(function () use ($record, $name, $metadata, $path): Resource {
                 $active = Content::whereKey($record->id)->lockForUpdate()->firstOrFail();
                 $attachment = Resource::create([
                     'original_name' => $name,
@@ -41,7 +53,7 @@ class ContentAttachmentController extends Controller
                     'scope_type' => $active->scope_type,
                     'project_id' => $active->project_id,
                     'universe_id' => $active->universe_id,
-                    'metadata' => ['size' => $file->getSize()],
+                    'metadata' => $metadata,
                 ]);
                 $active->resources()->attach($attachment);
 
@@ -63,6 +75,19 @@ class ContentAttachmentController extends Controller
 
         return Storage::disk('local')->download($resource->location, $resource->original_name, [
             'Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function preview(string $content, string $attachment): StreamedResponse
+    {
+        $resource = $this->attachment($this->content($content), $attachment);
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($resource->location), 404);
+        $mime = $disk->mimeType($resource->location);
+        abort_unless(in_array($mime, self::IMAGE_TYPES, true), 404);
+
+        return $disk->response($resource->location, $resource->original_name, [
+            'Content-Type' => $mime, 'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

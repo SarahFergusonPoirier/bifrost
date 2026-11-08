@@ -287,6 +287,25 @@ class ContentRecoveryTest extends TestCase
         $save('https://example.test/reference')->assertOk()->assertJsonPath('field_values.0.value_json.label', 'Source');
     }
 
+    public function test_only_raster_attachments_can_be_previewed_through_their_fiche(): void
+    {
+        Storage::fake('local');
+        $content = $this->content();
+        $other = $this->content();
+        $url = '/api/contents/'.$content->public_id.'/attachments';
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aA1sAAAAASUVORK5CYII=');
+        $file = UploadedFile::fake()->createWithContent('portrait.png', $png);
+        $id = $this->post($url, ['file' => $file, 'alt' => 'Portrait', 'caption' => 'Élia'], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonPath('metadata.image_mime', 'image/png')->assertJsonPath('metadata.alt', 'Portrait')->json('public_id');
+        $this->get("$url/$id/preview")->assertOk()->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')->assertStreamedContent($png);
+        $this->get("/api/contents/{$other->public_id}/attachments/$id/preview")->assertNotFound();
+
+        $svg = UploadedFile::fake()->createWithContent('image.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+        $svgId = $this->post($url, ['file' => $svg], ['Accept' => 'application/json'])->assertCreated()->json('public_id');
+        $this->get("$url/$svgId/preview")->assertNotFound();
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

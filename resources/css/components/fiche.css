@@ -213,3 +213,12 @@
 .fiche-choice-badge[data-color="green"] { --fiche-badge-color: #15803d; }
 .fiche-choice-badge[data-color="amber"] { --fiche-badge-color: #b45309; }
 .fiche-choice-badge[data-color="red"] { --fiche-badge-color: #dc2626; }
+
+.fiche-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--space-3);
+}
+
+.fiche-gallery figure { margin: 0; }
+.fiche-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-control); }

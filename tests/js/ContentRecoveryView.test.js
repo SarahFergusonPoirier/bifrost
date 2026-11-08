@@ -36,7 +36,7 @@ it('conserve un brouillon puis transmet sa version lors de l’autosauvegarde', 
     expect(catalogue.attributes('aria-current')).toBe('page');
     await wrapper.get('nav[aria-label="Dossiers et fiches du catalogue"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
     await flushPromises();
-    await wrapper.get('input[maxlength="255"]').setValue('Modifié');
+    await wrapper.get('input[required][maxlength="255"]').setValue('Modifié');
 
     expect(wrapper.text()).toContain('Modifications non enregistrées');
     expect(JSON.parse(localStorage.getItem('bifrost:draft:fiche')).draft.title).toBe('Modifié');

@@ -76,7 +76,7 @@ export default {
                     { source: 'relations', title: 'Relations', icon: 'connections', linked: true },
                     { source: 'timeline', title: 'Chronologie', icon: 'timeline', linked: true },
                 ] : []),
-                ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }] : []),
+                ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }, { source: 'gallery', title: 'Galerie d’images', icon: 'folder' }] : []),
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
