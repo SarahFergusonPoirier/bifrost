@@ -83,6 +83,19 @@ export default {
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
             ];
         },
+        localEquipment() {
+            return [...this.templateSections.values()].flatMap(fields => fields
+                .filter(field => field.format === 'equipment')
+                .flatMap(field => {
+                    const entries = this.fieldValue?.(field);
+                    if (!Array.isArray(entries)) return [];
+                    return entries.map((entry, index) => ({
+                        id: 'local-' + field.field_definition_id + '-' + index,
+                        title: entry.label,
+                        note: entry.description,
+                    }));
+                }));
+        },
         matchingCards() {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));

@@ -111,7 +111,7 @@ class ContentFieldValue extends Model
                 'value_json.url' => ['required', 'string', 'max:2048', 'url:http,https'],
                 'value_json.label' => ['nullable', 'string', 'max:255'],
             ],
-            'keywords' => [
+            'keywords', 'equipment' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label,description'],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
