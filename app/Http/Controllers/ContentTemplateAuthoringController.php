@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ContentTemplate;
+use App\Models\FieldDefinition;
+use App\Models\TemplateVersion;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class ContentTemplateAuthoringController extends Controller
+{
+    public function store(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'content_type_id' => ['required', 'integer', 'exists:content_types,id,is_active,1'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id,deleted_at,NULL'],
+            'base_version_id' => ['nullable', 'integer'],
+        ]);
+        $fields = $this->validateFields($request);
+
+        return DB::transaction(function () use ($input, $fields): JsonResponse {
+            $project = $input['project_id'] ?? null;
+            $base = isset($input['base_version_id'])
+                ? TemplateVersion::whereNotNull('published_at')->findOrFail($input['base_version_id'])
+                : null;
+            $source = $base?->template;
+            if ($base !== null && (! $source || (int) $source->content_type_id !== (int) $input['content_type_id']
+                || ! ($source->scope_type === 'global' || ($source->scope_type === 'project' && (int) $source->project_id === (int) $project)))) {
+                throw ValidationException::withMessages(['base_version_id' => 'Le modèle source est indisponible dans cette portée.']);
+            }
+
+            $template = ContentTemplate::create([
+                'name' => $input['name'],
+                'description' => $input['description'] ?? null,
+                'content_type_id' => $input['content_type_id'],
+                'scope_type' => $project === null ? 'global' : 'project',
+                'project_id' => $project,
+                'base_template_id' => $source?->id,
+                'is_active' => true,
+            ]);
+            $version = $this->publish($template, $fields, $base);
+
+            return response()->json(['id' => $template->id, 'version_id' => $version->id], 201);
+        }, attempts: 3);
+    }
+
+    public function publishVersion(Request $request, ContentTemplate $template): JsonResponse
+    {
+        abort_if($template->is_system, 403, 'Ce modèle système est protégé.');
+        $input = $request->validate(['from_version_id' => ['required', 'integer']]);
+        $fields = $this->validateFields($request);
+
+        return DB::transaction(function () use ($template, $input, $fields): JsonResponse {
+            $record = ContentTemplate::whereKey($template->id)->lockForUpdate()->firstOrFail();
+            $latest = $record->versions()->reorder()->whereNotNull('published_at')->latest('version_number')->firstOrFail();
+            abort_if($latest->id !== (int) $input['from_version_id'], 409, 'Une nouvelle version a été publiée. Recharge le modèle.');
+
+            $version = $this->publish($record, $fields, $latest);
+
+            return response()->json(['id' => $version->id, 'version_number' => $version->version_number], 201);
+        }, attempts: 3);
+    }
+
+    private function validateFields(Request $request): array
+    {
+        return $request->validate([
+            'fields' => ['present', 'array', 'list', 'max:200'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required'],
+            'fields.*.id' => ['nullable', 'integer', 'distinct'],
+            'fields.*.label' => ['required', 'string', 'max:255'],
+            'fields.*.section' => ['required', 'string', 'max:255'],
+            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references'],
+            'fields.*.help' => ['nullable', 'string', 'max:10000'],
+            'fields.*.required' => ['sometimes', 'boolean'],
+        ])['fields'];
+    }
+
+    private function publish(ContentTemplate $template, array $fields, ?TemplateVersion $base): TemplateVersion
+    {
+        $knownFields = $base?->fields()->with('fieldDefinition')->get()->keyBy('field_definition_id') ?? collect();
+        $version = $template->versions()->create([
+            'version_number' => (int) $template->versions()->reorder()->max('version_number') + 1,
+        ]);
+
+        foreach ($fields as $position => $field) {
+            $original = $knownFields->get($field['id'] ?? null);
+            if (isset($field['id']) && ! $original?->fieldDefinition) {
+                throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
+            }
+            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references'], true);
+            $definition = $original?->fieldDefinition ?? FieldDefinition::create([
+                'key' => 'custom-'.Str::uuid(),
+                'label' => $field['label'],
+                'value_type' => $structured ? 'json' : $field['type'],
+                'options_data' => $structured ? ['format' => $field['type']] : null,
+                'scope_type' => $template->scope_type,
+                'project_id' => $template->project_id,
+                'universe_id' => $template->universe_id,
+            ]);
+            $version->fields()->create([
+                'field_definition_id' => $definition->id,
+                'label_override' => $field['label'],
+                'section_key' => Str::slug($field['section']) ?: 'general',
+                'display_options' => ['section_label' => $field['section']] + ($original?->display_options ?? []),
+                'position' => $position,
+                'help_text' => $field['help'] ?? null,
+                'is_required' => $field['required'] ?? false,
+                'default_value' => $original?->default_value,
+            ]);
+        }
+
+        $version->update(['published_at' => now()]);
+
+        return $version;
+    }
+}

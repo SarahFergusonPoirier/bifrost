@@ -5,6 +5,44 @@
             <p>Des structures réutilisables pour organiser tes contenus.</p>
         </header>
 
+        <p v-if="editorError" role="alert">{{ editorError }}</p>
+        <button v-if="!editor" type="button" :disabled="saving" @click="editTemplate()">Créer un modèle</button>
+        <form v-if="editor" @submit.prevent="saveTemplate">
+            <fieldset :disabled="saving">
+                <legend>{{ editor.id ? 'Publier une nouvelle version' : 'Créer un modèle' }}</legend>
+                <template v-if="!editor.id">
+                    <label>Nom <input v-model="editor.name" required maxlength="255" /></label>
+                    <label>Description <textarea v-model="editor.description" maxlength="10000" /></label>
+                    <label>Type de fiche <select v-model="editor.content_type_id" required :disabled="Boolean(editor.base_version_id)">
+                        <option value="" disabled>Choisir un type</option>
+                        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
+                    </select></label>
+                    <label>Portée <select v-model="editor.project_id">
+                        <option value="">Bibliothèque globale</option>
+                        <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+                    </select></label>
+                </template>
+                <fieldset v-for="(field, index) in editor.fields" :key="index">
+                    <legend>Champ {{ index + 1 }}</legend>
+                    <label>Libellé <input v-model="field.label" required maxlength="255" /></label>
+                    <label>Section <input v-model="field.section" required maxlength="255" /></label>
+                    <label>Type <select v-model="field.type" :disabled="Boolean(field.id)">
+                        <option v-if="!fieldTypes[field.type]" :value="field.type">{{ field.type }}</option>
+                        <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
+                    </select></label>
+                    <label>Aide <textarea v-model="field.help" maxlength="10000" /></label>
+                    <label><input v-model="field.required" type="checkbox" /> Obligatoire</label>
+                    <button type="button" :disabled="index === 0" @click="moveField(index, -1)">Monter</button>
+                    <button type="button" :disabled="index === editor.fields.length - 1" @click="moveField(index, 1)">Descendre</button>
+                    <button type="button" @click="editor.fields.splice(index, 1)">Retirer le champ</button>
+                </fieldset>
+                <button type="button" :disabled="editor.fields.length >= 200"
+                    @click="editor.fields.push({ label: '', section: 'Informations', type: 'text', help: '', required: false })">Ajouter un champ</button>
+                <button type="submit">Publier</button>
+                <button type="button" @click="editor = null">Annuler</button>
+            </fieldset>
+        </form>
+
         <section class="content-templates-section">
             <div class="section-heading">
                 <h2>Tous les modèles</h2>
@@ -83,6 +121,10 @@
                         >
                             {{ template.is_active ? 'Actif' : 'Désactivé' }}
                         </span>
+                    </div>
+                    <div>
+                        <button type="button" :disabled="saving" @click="editTemplate(template, true)">Dupliquer</button>
+                        <button v-if="!template.is_system" type="button" :disabled="saving" @click="editTemplate(template)">Nouvelle version</button>
                     </div>
                     <details @toggle="$event.target.open && loadDetails(template.id)">
                         <summary>Voir les versions et les champs</summary>

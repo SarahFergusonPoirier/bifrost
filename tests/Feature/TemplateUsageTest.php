@@ -13,6 +13,31 @@ class TemplateUsageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_custom_templates_can_be_duplicated_and_versioned_without_mutating_the_source(): void
+    {
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $project = Project::create(['name' => 'Projet']);
+        $input = ['name' => 'Modèle', 'content_type_id' => $type->id, 'fields' => [
+            ['label' => 'Nom', 'section' => 'Identité', 'type' => 'text'],
+        ]];
+        $source = $this->postJson('/api/content-templates', $input)->assertCreated()->json();
+        $original = $this->getJson("/api/content-templates/{$source['id']}")->assertOk()->json('versions.0.fields.0');
+        $fields = [['id' => $original['field_definition_id'], 'label' => 'Autre nom', 'section' => 'Identité', 'type' => 'text']];
+        $copy = $this->postJson('/api/content-templates', array_replace($input, [
+            'name' => 'Copie', 'project_id' => $project->id, 'base_version_id' => $source['version_id'], 'fields' => $fields,
+        ]))->assertCreated()->json();
+        $this->getJson("/api/content-templates/{$copy['id']}")->assertOk()
+            ->assertJsonPath('base_template_id', $source['id'])->assertJsonPath('versions.0.fields.0.label_override', 'Autre nom');
+
+        $url = "/api/content-templates/{$source['id']}/versions";
+        $update = ['from_version_id' => $source['version_id'], 'fields' => $fields];
+        $this->postJson($url, $update)->assertCreated()->assertJsonPath('version_number', 2);
+        $this->postJson($url, $update)->assertConflict();
+        $this->getJson("/api/content-templates/{$source['id']}")->assertOk()
+            ->assertJsonPath('versions.0.fields.0.label_override', 'Nom')
+            ->assertJsonPath('versions.1.fields.0.field_definition_id', $original['field_definition_id']);
+    }
+
     public function test_version_adoption_preserves_removed_values_and_rejects_stale_previews(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

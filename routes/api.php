@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContentRecoveryController;
+use App\Http\Controllers\ContentTemplateAuthoringController;
 use App\Http\Controllers\ContentTemplateController;
 use App\Http\Controllers\ProjectConnectionController;
 use App\Http\Controllers\ProjectController;
@@ -82,3 +83,6 @@ Route::get('/projects/{project}/narration/{work}/export', [ProjectNarrativeContr
 
 Route::get('/contents/{content}/template-versions/{version}/preview', [ContentTemplateController::class, 'previewUpgrade'])->whereNumber('version');
 Route::post('/contents/{content}/template-versions/{version}/apply', [ContentTemplateController::class, 'applyUpgrade'])->whereNumber('version');
+
+Route::post('/content-templates', [ContentTemplateAuthoringController::class, 'store']);
+Route::post('/content-templates/{template}/versions', [ContentTemplateAuthoringController::class, 'publishVersion'])->whereNumber('template');
