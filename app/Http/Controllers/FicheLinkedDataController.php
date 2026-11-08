@@ -27,6 +27,7 @@ class FicheLinkedDataController extends Controller
 
             return [
                 'id' => $relation->id,
+                'link_id' => $relation->id,
                 'content_id' => $other->id,
                 'public_id' => $other->public_id,
                 'title' => $other->title,
@@ -43,6 +44,7 @@ class FicheLinkedDataController extends Controller
             && $relation->target->contentType?->key === 'objet-artefact')
             ->unique('target_content_id')->map(fn (ContentRelation $relation): array => [
                 'id' => $relation->id,
+                'link_id' => $relation->id,
                 'public_id' => $relation->target->public_id,
                 'title' => $relation->target->title,
                 'note' => $relation->target->summary,
@@ -52,6 +54,7 @@ class FicheLinkedDataController extends Controller
             && $relation->type_key === 'capability')
             ->unique('target_content_id')->map(fn (ContentRelation $relation): array => [
                 'id' => 'capability-'.$relation->id,
+                'link_id' => $relation->id,
                 'public_id' => $relation->target->public_id,
                 'label' => $relation->target->title,
                 'description' => $relation->target->summary,

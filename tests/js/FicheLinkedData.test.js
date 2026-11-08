@@ -69,3 +69,23 @@ it('creates an equipment relation from the active fiche and reloads the list', a
     });
     expect(wrapper.get('li').text()).toBe('Épée');
 });
+
+it('removes only the relation after confirmation', async () => {
+    contentRequest.mockReset();
+    const item = { id: 'capability-7', link_id: 7, public_id: 'target', label: 'Vol' };
+    contentRequest.mockResolvedValueOnce({ data: { capabilities: [item] } })
+        .mockResolvedValueOnce({ data: null }).mockResolvedValueOnce({ data: { capabilities: [] } });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const wrapper = mount(FicheLinkedData, { props: {
+        path: '/links', connectionsPath: '/connections', kind: 'capabilities', full: true,
+    } });
+    await flushPromises();
+    const remove = () => wrapper.findAll('button').find(button => button.text() === 'Retirer le lien');
+    await remove().trigger('click');
+    expect(contentRequest).toHaveBeenCalledTimes(1);
+    await remove().trigger('click');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/connections/7', 'DELETE');
+    expect(wrapper.find('li').exists()).toBe(false);
+    confirm.mockRestore();
+});

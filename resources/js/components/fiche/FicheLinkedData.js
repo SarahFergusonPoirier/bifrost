@@ -54,6 +54,19 @@ export default {
                 this.savingLink = false;
             }
         },
+        async removeLink(entry) {
+            if (this.savingLink || !window.confirm('Retirer la relation avec « ' + (entry.title || entry.label) + ' » ?')) return;
+            this.savingLink = true;
+            this.linkError = '';
+            try {
+                await contentRequest(this.connectionsPath + '/' + entry.link_id, 'DELETE');
+                await this.load();
+            } catch (error) {
+                this.linkError = error.message;
+            } finally {
+                this.savingLink = false;
+            }
+        },
         showAll() {
             if (this.hasTab) this.$emit('show-all', this.kind);
             else this.expanded = !this.expanded;

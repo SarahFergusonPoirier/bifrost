@@ -16,6 +16,8 @@
                     <p v-if="relation.note">{{ relation.note }}</p>
                 </template>
                 </slot>
+                <button v-if="full && connectionsPath && relation.link_id" type="button" :disabled="savingLink"
+                    @click="removeLink(relation)">Retirer le lien</button>
             </li>
         </ul>
         <p v-else>{{ kind === 'equipment' ? 'Aucun équipement lié à cette fiche.' : kind === 'capabilities' ? 'Aucune capacité.' : 'Aucune relation liée à cette fiche.' }}</p>
@@ -41,9 +43,9 @@
                 <input v-model="relationType" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
             </label>
             <button type="submit">Créer la relation</button>
-            <p v-if="linkError" role="alert">{{ linkError }}</p>
         </fieldset>
     </form>
+    <p v-if="linkError" role="alert">{{ linkError }}</p>
 </template>
 
 <script src="./FicheLinkedData.js"></script>
