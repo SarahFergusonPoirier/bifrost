@@ -235,7 +235,7 @@ export default {
             for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
                 const column = fieldColumns[field.field_definition?.value_type];
                 const format = field.field_definition?.options_data?.format;
-                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'external_link'].includes(format))) continue;
+                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'external_link'].includes(format))) continue;
                 const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
                 if (!sections.has(section)) sections.set(section, []);
                 sections.get(section).push({ ...field, column, format });
@@ -283,7 +283,7 @@ export default {
             }
             if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
             if (field.format === 'external_link') return value.label || value.url;
-            if (['keywords', 'equipment', 'capabilities'].includes(field.format)) return value.map(keyword => keyword.label).join(', ');
+            if (['keywords', 'equipment', 'capabilities', 'repeatable'].includes(field.format)) return value.map(keyword => keyword.label).join(', ');
             if (field.format === 'scale') return value.level + ' / ' + (field.field_definition.options_data?.levels ?? 5);
             if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
             if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');

@@ -40,13 +40,19 @@
         <label>Libellé <input maxlength="255" :disabled="!value?.url" :value="value?.label ?? ''"
             @change="update('label', $event.target.value.trim())" /></label>
     </div>
-    <div v-else-if="['keywords', 'equipment', 'capabilities'].includes(format)">
+    <div v-else-if="['keywords', 'equipment', 'capabilities', 'repeatable'].includes(format)">
         <ol v-if="value?.length">
             <li v-for="(entry, index) in value" :key="index">
-                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
+                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : format === 'repeatable' ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <label>Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
+                <template v-if="format === 'repeatable'">
+                    <label>Période <input :value="entry.period ?? ''" maxlength="255"
+                        @change="editKeyword(index, 'period', $event.target.value)" /></label>
+                    <label>Niveau <input :value="entry.level ?? ''" maxlength="120"
+                        @change="editKeyword(index, 'level', $event.target.value)" /></label>
+                </template>
                 <template v-if="format === 'capabilities'">
                     <label>Catégorie <input :value="entry.category ?? ''" maxlength="120"
                         @change="editKeyword(index, 'category', $event.target.value)" /></label>
@@ -72,7 +78,7 @@
             </li>
         </ol>
         <p v-if="imageError" role="alert">{{ imageError }}</p>
-        <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
+        <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : format === 'repeatable' ? 'Nouvelle entrée' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
         <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
     </div>
     <label v-else-if="format === 'scale'">

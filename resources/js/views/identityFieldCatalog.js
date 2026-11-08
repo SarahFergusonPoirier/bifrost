@@ -155,6 +155,7 @@ export function identityPreset(suggestion) {
     else if (/^(Date |Période )/.test(label)) type = 'temporal';
     else if (/^Âge /.test(label)) type = 'number';
     else if (/^Statut /.test(label) || choiceLabels.has(label)) type = 'choice';
-    else if (['Anciens noms', 'Titres honorifiques', 'Langues parlées', 'Surnoms et alias', 'Nationalité/citoyenneté'].includes(label)) type = 'keywords';
+    else if (['Anciens noms', 'Titres honorifiques', 'Langues parlées', 'Nationalité/citoyenneté'].includes(label)) type = 'repeatable';
+    else if (label === 'Surnoms et alias') type = 'keywords';
     return { label, section: 'Identité', type, help: '', required: false };
 }

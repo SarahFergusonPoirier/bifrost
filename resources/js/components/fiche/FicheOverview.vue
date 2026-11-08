@@ -167,6 +167,14 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
+                            <ul v-else-if="field.entries?.length">
+                                <li v-for="(entry, index) in field.entries" :key="index">
+                                    <strong>{{ entry.label }}</strong>
+                                    <span v-if="entry.period"> · {{ entry.period }}</span>
+                                    <span v-if="entry.level"> · {{ entry.level }}</span>
+                                    <FicheText v-if="entry.description" :text="entry.description" />
+                                </li>
+                            </ul>
                             <ul v-else-if="field.keywords?.length" class="fiche-tags">
                                 <li v-for="(keyword, index) in field.keywords" :key="index">
                                     <details v-if="keyword.description">
