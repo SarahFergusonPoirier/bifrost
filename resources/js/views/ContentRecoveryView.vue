@@ -11,25 +11,14 @@
             </header>
             <details class="workspace-project">
                 <summary><WorkspaceIcon name="project" /><span>{{ currentProject?.name ?? 'Projet' }}</span></summary>
-                <RouterLink :to="{ name: 'home' }" class="workspace-link">← Quitter le projet</RouterLink>
+                <p class="workspace-project__version" aria-current="true">{{ currentProject?.name ?? 'Projet' }}</p>
             </details>
-            <nav class="workspace-nav" aria-label="Arborescence du projet">
+            <nav class="workspace-nav" aria-label="Navigation du projet">
                 <p class="workspace-nav__heading">Espace projet</p>
                 <button type="button" class="workspace-link" :aria-current="panel === 'overview' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('overview')"><WorkspaceIcon name="overview" />Vue d’ensemble</button>
                 <button type="button" class="workspace-link" :aria-current="panel === 'catalogue' && !trash ? 'page' : undefined"
                     :disabled="busy || saving" @click="openTreeItem({})"><WorkspaceIcon name="catalogue" />Catalogue</button>
-                <template v-if="panel === 'catalogue' && !trash">
-                    <button v-for="item in sidebarItems" :key="item.key" class="workspace-link workspace-link--child"
-                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
-                        :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
-                        @dragstart="item.content && beginDrag($event, item)"
-                        @dragover="item.folder && $event.preventDefault()"
-                        @drop.prevent="item.folder && dropInto($event, item)"
-                        @click="openTreeItem(item)">
-                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
-                    </button>
-                </template>
                 <details class="workspace-graphs" open>
                     <summary class="workspace-link"><WorkspaceIcon name="connections" />Graphes</summary>
                     <button type="button" class="workspace-link workspace-link--child"
@@ -43,6 +32,7 @@
                         @click="openPanel(key)"><WorkspaceIcon :name="key" />{{ label }}</button>
                 </template>
                 <hr />
+                <RouterLink :to="{ name: 'home' }" class="workspace-link">← Quitter le projet</RouterLink>
                 <button type="button" class="workspace-link" :aria-current="panel === 'settings' ? 'page' : undefined"
                     :disabled="busy || saving" @click="openPanel('settings')"><WorkspaceIcon name="settings" />Paramètres du projet</button>
                 <button type="button" class="workspace-link workspace-link--child" :aria-current="trash ? 'page' : undefined"
@@ -93,6 +83,17 @@
 
             <section v-if="projectId && !trash" aria-labelledby="folder-heading">
                 <h2 id="folder-heading">Dossiers du projet</h2>
+                <nav class="catalogue-tree" aria-label="Dossiers et fiches du catalogue">
+                    <button v-for="item in sidebarItems" :key="item.key" class="catalogue-tree__item"
+                        type="button" :style="{ paddingInlineStart: (item.depth + 2.5) + 'rem' }"
+                        :disabled="busy || saving" :draggable="Boolean(item.content) && !busy && !saving"
+                        @dragstart="item.content && beginDrag($event, item)"
+                        @dragover="item.folder && $event.preventDefault()"
+                        @drop.prevent="item.folder && dropInto($event, item)"
+                        @click="openTreeItem(item)">
+                        {{ item.folder ? '▸ ' + item.folder.name : item.content.title }}
+                    </button>
+                </nav>
                 <template v-if="folderId">
                     <button type="button" @click="editFolder">Renommer ou déplacer ce dossier</button>
                     <button type="button" @click="deleteFolder">Supprimer ce dossier</button>

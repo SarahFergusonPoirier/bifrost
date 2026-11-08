@@ -313,7 +313,7 @@
     flex-shrink: 0;
 }
 
-.workspace-link:hover:not(:disabled) {
+.workspace-link:hover:not(:disabled):not([aria-current="page"]) {
     background: var(--color-surface-muted);
 }
 
@@ -349,4 +349,22 @@
         max-height: 45vh;
         overflow-y: auto;
     }
+}
+
+.workspace-project__version {
+    margin: 0;
+    padding: 0.65rem 0.9rem;
+    border-top: 1px solid var(--workspace-border);
+    overflow-wrap: anywhere;
+}
+
+.catalogue-tree {
+    display: grid;
+    gap: 0.25rem;
+    margin-block: 0.5rem;
+}
+
+.catalogue-tree__item {
+    text-align: start;
+    overflow-wrap: anywhere;
 }

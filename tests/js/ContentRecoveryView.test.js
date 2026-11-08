@@ -30,11 +30,11 @@ it('conserve un brouillon puis transmet sa version lors de l’autosauvegarde', 
     const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
     await flushPromises();
     expect(wrapper.text()).toContain('Quitter le projet');
-    const catalogue = wrapper.get('nav[aria-label="Arborescence du projet"]').findAll('button').find(button => button.text() === 'Catalogue');
+    const catalogue = wrapper.get('nav[aria-label="Navigation du projet"]').findAll('button').find(button => button.text() === 'Catalogue');
     await catalogue.trigger('click');
     await flushPromises();
     expect(catalogue.attributes('aria-current')).toBe('page');
-    await wrapper.get('nav[aria-label="Arborescence du projet"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
+    await wrapper.get('nav[aria-label="Dossiers et fiches du catalogue"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
     await flushPromises();
     await wrapper.get('input[maxlength="255"]').setValue('Modifié');
 
@@ -93,11 +93,11 @@ it('masque une valeur en lecture compacte sans la retirer de la fiche', async ()
     const click = label => wrapper.findAll('button').find(button => button.text() === label).trigger('click');
 
     await flushPromises();
-    const catalogue = wrapper.get('nav[aria-label="Arborescence du projet"]').findAll('button').find(button => button.text() === 'Catalogue');
+    const catalogue = wrapper.get('nav[aria-label="Navigation du projet"]').findAll('button').find(button => button.text() === 'Catalogue');
     await catalogue.trigger('click');
     await flushPromises();
     expect(catalogue.attributes('aria-current')).toBe('page');
-    await wrapper.get('nav[aria-label="Arborescence du projet"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
+    await wrapper.get('nav[aria-label="Dossiers et fiches du catalogue"]').findAll('button').find(button => button.text() === 'Original').trigger('click');
     await flushPromises();
     await click('Vue compacte');
     expect(wrapper.text()).toContain('Valeur conservée');
