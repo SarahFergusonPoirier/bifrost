@@ -163,7 +163,7 @@ class ContentRecoveryController extends Controller
         return DB::transaction(function () use ($content, $validated): JsonResponse {
             $record = $this->lockContent($content);
             $before = $this->snapshotData($record, $record->getAttributes());
-            abort_if(isset($validated['version']) && $validated['version'] !== $this->version($before), 409, 'Ce contenu a changé depuis son ouverture.');
+            abort_if(isset($validated['version']) && $validated['version'] !== $this->version($record, $before), 409, 'Ce contenu a changé depuis son ouverture.');
             $record->update(Arr::only($validated, ['title', 'summary', 'work_status_key']));
 
             if (array_key_exists('tag_ids', $validated)) {
@@ -402,12 +402,17 @@ class ContentRecoveryController extends Controller
 
         return response()->json($content)->header(
             'ETag',
-            '"'.$this->version($this->snapshotData($content, $content->getAttributes())).'"',
+            '"'.$this->version($content, $this->snapshotData($content, $content->getAttributes())).'"',
         );
     }
 
-    private function version(array $snapshot): string
+    private function version(Content $content, array $snapshot): string
     {
+        $templateVersion = $content->templateAssignment?->template_version_id;
+        if ($templateVersion !== null) {
+            $snapshot['template_version_id'] = $templateVersion;
+        }
+
         return hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR));
     }
 

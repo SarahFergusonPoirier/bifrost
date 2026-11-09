@@ -136,7 +136,9 @@ class TemplateUsageTest extends TestCase
         $content->templateAssignment()->create(['template_id' => $template->id, 'template_version_id' => $first->id]);
         $content->fieldValues()->create(['field_definition_id' => $old->id, 'value_text' => 'À garder']);
 
-        $url = "/api/contents/{$content->public_id}/template-versions/{$second->id}";
+        $ficheUrl = "/api/contents/{$content->public_id}";
+        $oldToken = trim($this->getJson($ficheUrl)->assertOk()->headers->get('ETag'), '"');
+        $url = "$ficheUrl/template-versions/{$second->id}";
         $this->getJson("$url/preview")->assertOk()->assertJsonPath('added.0.id', $new->id)
             ->assertJsonPath('removed.0.id', $old->id);
         $this->postJson("$url/apply", ['from_version_id' => $first->id])->assertOk();
@@ -149,6 +151,7 @@ class TemplateUsageTest extends TestCase
             ->assertJsonPath('archived_field_definitions.0.label', 'Ancien');
 
         $edit = ['title' => 'Fiche éditée', 'summary' => null];
+        $this->patchJson($ficheUrl, $edit + ['version' => $oldToken, 'field_values' => []])->assertConflict();
         $this->patchJson("/api/contents/{$content->public_id}", $edit + [
             'field_values' => [['field_definition_id' => $new->id, 'value_text' => 'Valeur actuelle']],
         ])->assertOk();
