@@ -1,7 +1,10 @@
 import { identityField } from './identitySection';
 
 export function ageFromBirthDate(value, today = new Date()) {
-    if (typeof value === 'string') value = { start: value, precision: 'exact' };
+    if (typeof value === 'string') {
+        const date = /^(\d{4}-\d{2}-\d{2})(?:T00:00:00(?:\.\d+)?Z)?$/.exec(value);
+        value = { start: date?.[1], precision: 'exact' };
+    }
     if (value?.precision !== 'exact' || value.end) return null;
     const calendar = value.calendar?.trim().toLocaleLowerCase('fr');
     if (calendar && !['grégorien', 'gregorian'].includes(calendar)) return null;
