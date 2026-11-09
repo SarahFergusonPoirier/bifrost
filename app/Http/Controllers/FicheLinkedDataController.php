@@ -18,7 +18,7 @@ class FicheLinkedDataController extends Controller
         $relations = ContentRelation::query()
             ->where(fn (Builder $query) => $query->where('source_content_id', $record->id)->orWhere('target_content_id', $record->id))
             ->whereHas('source', $inProject)->whereHas('target', $inProject)
-            ->with(['source:id,public_id,title,project_id', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
+            ->with(['source:id,public_id,title,project_id,content_type_id', 'source.contentType:id,key', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
             ->orderBy('id')->get();
         $linked = $relations->map(function (ContentRelation $relation) use ($record): array {
             $forward = $relation->source_content_id === $record->id;
@@ -65,12 +65,17 @@ class FicheLinkedDataController extends Controller
                 'description' => $relation->target->summary,
             ])->values();
 
-        $dates = ContentFieldValue::query()->where('content_id', $record->id)
+        $eventContentIds = $relations->map(fn (ContentRelation $relation) => $relation->source_content_id === $record->id
+            ? $relation->target : $relation->source)
+            ->filter(fn ($other): bool => $other->contentType?->key === 'evenement-historique')->pluck('id');
+        $datedContentIds = $eventContentIds->push($record->id)->unique()->all();
+
+        $dates = ContentFieldValue::query()->whereIntegerInRaw('content_id', $datedContentIds)
             ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('options_data->format', 'temporal'))
-            ->where('value_json->timeline', true)->with('fieldDefinition:id,label')->get()
+            ->where('value_json->timeline', true)->with(['fieldDefinition:id,label', 'content:id,title,project_id'])->orderBy('id')->get()
             ->map(fn (ContentFieldValue $field): array => [
                 'key' => 'field-'.$field->id,
-                'title' => $field->value_json['timeline_title'] ?? $field->fieldDefinition->label,
+                'title' => $field->value_json['timeline_title'] ?? ($field->content_id === $record->id ? $field->fieldDefinition->label : $field->content->title),
                 'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'precision', 'calendar', 'order'])),
             ]);
 

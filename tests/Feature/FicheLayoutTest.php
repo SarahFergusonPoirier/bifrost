@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Content;
 use App\Models\ContentRelation;
 use App\Models\ContentType;
+use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -184,5 +185,23 @@ class FicheLayoutTest extends TestCase
             ->assertJsonPath('equipment.0.title', 'Épée de voyage')->assertJsonPath('equipment.0.note', 'Lame courte')
             ->assertJsonPath('capabilities.0.label', 'Protection')->assertJsonPath('capabilities.0.description', 'Bloque les sorts');
         $this->getJson("$url/{$object->public_id}/fiche-links")->assertOk()->assertJsonCount(0, 'equipment');
+    }
+
+    public function test_timeline_includes_temporal_fields_from_related_event_fiches(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $characterType = ContentType::create(['key' => 'personnage', 'name' => 'Personnage']);
+        $eventType = ContentType::create(['key' => 'evenement-historique', 'name' => 'Événement']);
+        $character = $project->contents()->create(['title' => 'Élia', 'content_type_id' => $characterType->id, 'scope_type' => 'project']);
+        $event = $project->contents()->create(['title' => 'Rencontre', 'content_type_id' => $eventType->id, 'scope_type' => 'project']);
+        $field = FieldDefinition::create([
+            'key' => 'date-event', 'label' => 'Date', 'value_type' => 'json', 'options_data' => ['format' => 'temporal'],
+        ]);
+        $event->fieldValues()->create([
+            'field_definition_id' => $field->id, 'value_json' => ['start' => '2010', 'timeline' => true],
+        ]);
+        ContentRelation::create(['source_content_id' => $event->id, 'target_content_id' => $character->id, 'type_key' => 'participant']);
+        $this->getJson("/api/projects/{$project->id}/contents/{$character->public_id}/fiche-links")->assertOk()
+            ->assertJsonCount(1, 'timeline')->assertJsonPath('timeline.0.title', 'Rencontre')->assertJsonPath('timeline.0.date.start', '2010');
     }
 }
