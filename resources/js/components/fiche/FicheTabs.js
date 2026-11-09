@@ -154,7 +154,7 @@ export default {
             this.removalDestination = null;
         },
         removalTargets(tab) {
-            const defaults = ['overview', 'relations', 'timeline'];
+            const defaults = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
             return this.tabs.filter(target => target.id !== tab.id
                 && (target.placements || !defaults.includes(target.id))
                 && (target.placements?.length ?? 0) + (tab.placements?.length ?? 0) <= 80);
