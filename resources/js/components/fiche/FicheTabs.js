@@ -1,3 +1,4 @@
+import { defaultPlacementsFor } from './fichePlacementDefaults';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 import { contentRequest } from '../../services/contentRecovery';
 
@@ -172,7 +173,10 @@ export default {
             return this.save(this.layout.tabs.map(tab => {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
-                return added.length ? { ...tab, placements: [...(tab.placements ?? (tab.id === 'overview' ? defaults.filter(placement => !['equipment', 'capabilities'].includes(placement.source)) : defaults.filter(placement => placement.source === tab.id))), ...added] } : tab;
+                if (!added.length) return tab;
+                const existing = tab.placements ?? defaultPlacementsFor(tab.id, defaults)
+                    .filter(placement => !added.some(item => item.source === placement.source));
+                return { ...tab, placements: [...existing, ...added] };
             }), copies);
         },
         saveTabs() {

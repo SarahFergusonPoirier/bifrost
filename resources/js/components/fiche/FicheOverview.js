@@ -1,3 +1,4 @@
+import { defaultPlacementsFor } from './fichePlacementDefaults';
 import FicheFieldHistory from './FicheFieldHistory.vue';
 import FicheTags from './FicheTags.vue';
 import FicheScale from './FicheScale.vue';
@@ -144,14 +145,12 @@ export default {
                 .map(card => placement(card.source, card.source));
         },
         initialPlacements() {
-            if (this.useDefaults) return this.defaults.filter(item => !['equipment', 'capabilities'].includes(item.source));
-            return this.defaults.filter(item => item.source === this.active);
+            return defaultPlacementsFor(this.useDefaults ? 'overview' : this.active, this.defaults);
         },
         sharedSources() {
             const sources = new Set();
             for (const tab of this.destinations) {
-                const placements = tab.placements ?? this.defaults.filter(item =>
-                    tab.id === 'overview' ? !['equipment', 'capabilities'].includes(item.source) : item.source === tab.id);
+                const placements = tab.placements ?? defaultPlacementsFor(tab.id, this.defaults);
                 for (const item of placements) sources.add(item.source);
             }
             for (const transfer of this.transfers) {
