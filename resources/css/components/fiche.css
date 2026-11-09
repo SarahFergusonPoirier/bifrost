@@ -142,6 +142,34 @@
     .fiche-grid {
         grid-template-columns: minmax(0, 1fr);
     }
+
+    .fiche-grid > .fiche-block {
+        min-height: 0;
+    }
+
+    .fiche-grid .fiche-resize {
+        display: none;
+    }
+
+    .fiche-grid-controls > ol {
+        padding-inline-start: 0;
+    }
+
+    .fiche-grid-controls > ol > li {
+        align-items: flex-start;
+        padding: var(--space-3);
+        border: 1px solid var(--workspace-border);
+        border-radius: var(--radius-card);
+    }
+
+    .fiche-grid-controls > ol > li > :is(strong, label, details) {
+        flex: 1 0 100%;
+        min-width: 0;
+    }
+
+    .fiche-grid-controls :is(input, select, textarea) {
+        max-width: 100%;
+    }
 }
 
 .fiche-resize {
