@@ -397,6 +397,9 @@
                                 <input v-else :type="field.column === 'value_number' ? 'number' : field.column === 'value_date' ? 'date' : 'text'"
                                     :step="field.column === 'value_number' ? 'any' : undefined"
                                     :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
+                                <small v-if="field.field_definition.key === 'character-age' && fieldValue(field) === '' && effectiveFieldValue(field) !== ''">
+                                    Âge calculé : {{ effectiveFieldValue(field) }} ans. Une valeur saisie ici est prioritaire.
+                                </small>
                             </label>
                             <FicheReferenceCreate v-if="projectId && field.display_options?.allow_reference_creation && (field.format === 'references' || field.column === 'reference_content_id')"
                                 :key="selected.public_id + ':' + field.id" :project-id="projectId" :types="referenceCreationTypes(field)" :full="referenceFieldIsFull(field)"
