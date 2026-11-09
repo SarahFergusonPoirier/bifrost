@@ -45,6 +45,8 @@ class ProjectConnectionTest extends TestCase
         $input = ['source' => $source->public_id, 'target' => $target->public_id, 'type_key' => 'contient'];
         $edge = $this->postJson($url, $input)->assertCreated()->json('id');
         $this->postJson($url, $input)->assertOk()->assertJsonPath('id', $edge);
+        $this->postJson($url, ['source' => $target->public_id, 'target' => $source->public_id, 'type_key' => 'contient'])
+            ->assertOk()->assertJsonPath('id', $edge)->assertJsonPath('source_content_id', $source->id);
 
         $this->putJson("/api/projects/{$project->id}/graph/positions/{$source->public_id}", ['x' => 0.25, 'y' => 0.75])
             ->assertNoContent();

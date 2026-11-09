@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentRelation;
 use App\Models\Project;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,13 +76,18 @@ class ProjectConnectionController extends Controller
             Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
             $source = $project->contents()->where('public_id', $validated['source'])->firstOrFail();
             $target = $project->contents()->where('public_id', $validated['target'])->firstOrFail();
-            $edge = ContentRelation::firstOrCreate([
+            $edge = $this->matchingRelation($source->id, $target->id, $validated['type_key'])->first();
+            if ($edge) {
+                return response()->json($edge);
+            }
+
+            $edge = ContentRelation::create([
                 'source_content_id' => $source->id,
                 'target_content_id' => $target->id,
                 'type_key' => $validated['type_key'],
             ]);
 
-            return response()->json($edge, $edge->wasRecentlyCreated ? 201 : 200);
+            return response()->json($edge, 201);
         }, attempts: 3);
     }
 
@@ -101,10 +107,9 @@ class ProjectConnectionController extends Controller
         return DB::transaction(function () use ($project, $relation, $input): JsonResponse {
             Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
             $edge = $this->projectRelation($project, $relation);
-            $duplicate = ContentRelation::where('source_content_id', $edge->source_content_id)
-                ->where('target_content_id', $edge->target_content_id)
-                ->where('type_key', $input['type_key'])->whereKeyNot($edge->id)->exists();
-            abort_if($duplicate, 409, 'Une relation de ce type existe déjà entre ces fiches dans ce sens.');
+            $duplicate = $this->matchingRelation($edge->source_content_id, $edge->target_content_id, $input['type_key'])
+                ->whereKeyNot($edge->id)->exists();
+            abort_if($duplicate, 409, 'Une relation de ce type existe déjà entre ces fiches.');
 
             $properties = array_filter(array_replace($edge->properties_data ?? [], $input['properties']),
                 fn ($value) => $value !== null);
@@ -112,6 +117,17 @@ class ProjectConnectionController extends Controller
 
             return response()->json($edge);
         }, attempts: 3);
+    }
+
+    private function matchingRelation(int $source, int $target, string $type): Builder
+    {
+        return ContentRelation::where('type_key', $type)
+            ->where(function ($query) use ($source, $target, $type): void {
+                $query->where(fn ($pair) => $pair->where('source_content_id', $source)->where('target_content_id', $target));
+                if (! in_array($type, ['equipment', 'capability', 'arc_scene'], true)) {
+                    $query->orWhere(fn ($pair) => $pair->where('source_content_id', $target)->where('target_content_id', $source));
+                }
+            });
     }
 
     private function projectRelation(Project $project, int $relation): ContentRelation
