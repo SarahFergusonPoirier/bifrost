@@ -29,6 +29,24 @@ export default {
         else this.ensureVisibleTab();
     },
     methods: {
+        navigateTabs(event) {
+            const index = this.visibleTabs.findIndex(tab => tab.id === event.target.dataset.tab);
+            if (index === -1) return;
+            const count = this.visibleTabs.length;
+            const next = {
+                ArrowLeft: (index - 1 + count) % count,
+                ArrowRight: (index + 1) % count,
+                Home: 0,
+                End: count - 1,
+            }[event.key];
+            if (next === undefined) return;
+
+            event.preventDefault();
+            const button = this.$refs.navigation.querySelectorAll('[data-tab]')[next];
+            button.focus();
+            button.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+            this.$emit('select', this.visibleTabs[next].id);
+        },
         accept(layout) {
             this.layout = layout;
             this.reset();

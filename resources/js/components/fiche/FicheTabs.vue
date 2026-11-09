@@ -1,7 +1,7 @@
 <template>
-    <nav class="fiche-tabs" aria-label="Sections de la fiche">
+    <nav ref="navigation" class="fiche-tabs" @keydown="navigateTabs" aria-label="Sections de la fiche">
         <button v-for="tab in visibleTabs" :key="tab.id" type="button"
-            :aria-pressed="tab.id === active" @click="$emit('select', tab.id)">
+            :data-tab="tab.id" :aria-pressed="tab.id === active" @click="$emit('select', tab.id)">
             <WorkspaceIcon :name="tab.icon" /> {{ tab.title }}
         </button>
     </nav>

@@ -71,3 +71,14 @@ it('moves placements when removing a tab and submits both changes together', asy
     expect(request.tabs[1].placements).toEqual([placement]);
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
+
+it('navigates visible tabs with arrows and boundary keys', async () => {
+    const wrapper = mount(FicheTabs, { props: { active: 'overview' }, attachTo: document.body });
+    const [first, last] = wrapper.findAll('[data-tab]');
+    await first.trigger('keydown', { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(last.element);
+    await last.trigger('keydown', { key: 'Home' });
+    expect(document.activeElement).toBe(first.element);
+    expect(wrapper.emitted('select')).toEqual([['details'], ['overview']]);
+    wrapper.unmount();
+});
