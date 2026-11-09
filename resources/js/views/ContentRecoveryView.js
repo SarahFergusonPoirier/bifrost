@@ -2,7 +2,7 @@ import { identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
 import FicheText from '../components/fiche/FicheText.vue';
-import { ageFromBirthDate } from '../components/fiche/characterAge';
+import { ageFromBirthDate, birthDateField } from '../components/fiche/characterAge';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
 import FicheOverview from '../components/fiche/FicheOverview.vue';
 import ProjectToolbar from '../components/ProjectToolbar.vue';
@@ -300,8 +300,7 @@ export default {
         function effectiveFieldValue(field) {
             const value = fieldValue(field);
             if (value !== '' || fieldState(field) || field.field_definition.key !== 'character-age') return value;
-            const birthField = (templateSections.value.get(identitySectionTitle(templateSections.value)) ?? []).find(item =>
-                item.field_definition.label === 'Date de naissance' && item.format === 'temporal');
+            const birthField = birthDateField(templateSections.value, identitySectionTitle(templateSections.value));
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }
 

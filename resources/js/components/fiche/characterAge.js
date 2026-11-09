@@ -14,3 +14,14 @@ export function ageFromBirthDate(value, today = new Date()) {
     const age = today.getFullYear() - year - Number(!birthdayPassed);
     return age >= 0 ? age : null;
 }
+
+export function birthDateField(sections, identityTitle) {
+    const isBirthDate = field => field.format === 'temporal'
+        && field.field_definition.label === 'Date de naissance';
+    const identityMatches = (sections.get(identityTitle) ?? []).filter(isBirthDate);
+    if (identityMatches.length === 1) return identityMatches[0];
+    if (identityMatches.length > 1) return undefined;
+
+    const matches = [...sections.values()].flat().filter(isBirthDate);
+    return matches.length === 1 ? matches[0] : undefined;
+}
