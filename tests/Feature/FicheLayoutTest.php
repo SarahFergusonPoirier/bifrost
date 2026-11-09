@@ -202,6 +202,7 @@ class FicheLayoutTest extends TestCase
         ]);
         ContentRelation::create(['source_content_id' => $event->id, 'target_content_id' => $character->id, 'type_key' => 'participant']);
         $this->getJson("/api/projects/{$project->id}/contents/{$character->public_id}/fiche-links")->assertOk()
-            ->assertJsonCount(1, 'timeline')->assertJsonPath('timeline.0.title', 'Rencontre')->assertJsonPath('timeline.0.date.start', '2010');
+            ->assertJsonCount(1, 'timeline')->assertJsonPath('timeline.0.title', 'Rencontre')->assertJsonPath('timeline.0.date.start', '2010')
+            ->assertJsonPath('timeline.0.public_id', $event->public_id);
     }
 }

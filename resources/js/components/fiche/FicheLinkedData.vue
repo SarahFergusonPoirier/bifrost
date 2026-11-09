@@ -27,7 +27,15 @@
     </template>
     <template v-else>
         <ol v-if="events.length">
-            <li v-for="event in events.slice(0, limit)" :key="event.key">{{ formatDate(event.date) }} · {{ event.title }}</li>
+            <li v-for="event in events.slice(0, limit)" :key="event.key">
+                {{ formatDate(event.date) }} ·
+                <button v-if="event.public_id" type="button" @click="$emit('open', event.public_id)">{{ event.title }}</button>
+                <template v-else>{{ event.title }}</template>
+                <details v-if="full && event.description">
+                    <summary>Détails de l’événement</summary>
+                    <p>{{ event.description }}</p>
+                </details>
+            </li>
         </ol>
         <p v-else>Aucun événement lié à cette fiche.</p>
     </template>

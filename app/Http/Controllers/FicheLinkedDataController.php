@@ -72,18 +72,23 @@ class FicheLinkedDataController extends Controller
 
         $dates = ContentFieldValue::query()->whereIntegerInRaw('content_id', $datedContentIds)
             ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('options_data->format', 'temporal'))
-            ->where('value_json->timeline', true)->with(['fieldDefinition:id,label', 'content:id,title,project_id'])->orderBy('id')->get()
+            ->where('value_json->timeline', true)->with(['fieldDefinition:id,label', 'content:id,public_id,title,project_id'])->orderBy('id')->get()
             ->map(fn (ContentFieldValue $field): array => [
                 'key' => 'field-'.$field->id,
+                'public_id' => $field->content_id === $record->id ? null : $field->content->public_id,
+                'description' => $field->value_json['timeline_description'] ?? null,
                 'title' => $field->value_json['timeline_title'] ?? ($field->content_id === $record->id ? $field->fieldDefinition->label : $field->content->title),
                 'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'precision', 'calendar', 'order'])),
             ]);
 
+        $linkedPublicIds = $linked->pluck('public_id', 'content_id');
         $events = DB::table('project_timeline_events')->where('project_id', $project->id)->whereNull('deleted_at')
             ->whereIntegerInRaw('content_id', $linked->pluck('content_id')->push($record->id)->unique()->all())
             ->orderBy('id')->get()
             ->map(fn (object $event): array => [
                 'key' => 'event-'.$event->id,
+                'public_id' => $linkedPublicIds->get($event->content_id),
+                'description' => $event->description,
                 'importance' => $event->importance,
                 'title' => $event->title,
                 'date' => ['start' => $event->start, 'end' => $event->end, 'precision' => $event->precision, 'calendar' => $event->calendar],
