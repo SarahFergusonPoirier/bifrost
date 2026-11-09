@@ -77,10 +77,10 @@ export default {
                         : null,
                 })),
             }));
-            const texts = this.blocks.filter(block => block.public_id && typeof block.body === 'string').map(block => ({
+            const texts = this.blocks.filter(block => block.public_id).map(block => ({
                 source: 'text:' + block.public_id,
                 title: block.title || 'Texte',
-                text: block.body,
+                text: block.body ?? '',
                 icon: 'narration',
             }));
             return [
@@ -160,9 +160,9 @@ export default {
         },
         displayed() {
             const placements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
-            return placements.filter(item => !item.hidden && this.bySource.has(item.source))
+            return placements.filter(item => !item.hidden)
                 .map(item => {
-                    const card = this.bySource.get(item.source);
+                    const card = this.bySource.get(item.source) ?? { title: 'Bloc indisponible', icon: 'catalogue', unavailable: true };
                     const ordered = this.orderedFields(item, card.fields);
                     const fields = item.hide_empty ? ordered.filter(field => !field.empty) : ordered;
                     return { placement: item, card, fields };

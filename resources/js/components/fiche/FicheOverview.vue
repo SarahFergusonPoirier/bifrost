@@ -119,7 +119,7 @@
                 <button type="button" :disabled="index === draft.length - 1" @click="move(index, index + 1)">Descendre</button>
                 <button v-if="destination" type="button" @click="transfer(index, false)">Déplacer vers l’onglet</button>
                 <button v-if="destination" type="button" @click="transfer(index, true)">Afficher aussi (données partagées)</button>
-                <button v-if="canCopy && draft.length < 80 && (placement.source === 'summary' || placement.source.startsWith('text:')) && !copies.some(copy => placement.source === 'text:' + copy.id)"
+                <button v-if="canCopy && draft.length < 80 && (placement.source === 'summary' || placement.source.startsWith('text:')) && bySource.has(placement.source) && !copies.some(copy => placement.source === 'text:' + copy.id)"
                     type="button" @click="duplicate(index)">Dupliquer indépendamment</button>
                 <button type="button" @click="draft.splice(index, 1)">Retirer</button>
             </li>
@@ -226,6 +226,7 @@
                         </dd>
                     </div>
                 </dl>
+                <p v-else-if="card.unavailable">La source de ce placement est indisponible.</p>
                 <p v-else>Ce bloc est vide.</p>
             </template>
         </FicheBlock>

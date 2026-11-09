@@ -184,3 +184,16 @@ it('opens a scoped internal text reference and marks missing targets', async () 
     await link.trigger('click');
     expect(wrapper.emitted('open')).toEqual([[id]]);
 });
+
+it('shows empty template text blocks and distinguishes unavailable sources', () => {
+    const base = { width: 6, height: 2, hidden: false, collapsed: false };
+    const wrapper = mount(FicheOverview, { props: {
+        blocks: [{ public_id: 'empty', title: 'Texte à compléter', body: null }],
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        placements: [{ ...base, id: 'one', source: 'text:empty' }, { ...base, id: 'two', source: 'text:missing' }],
+    } });
+    const [empty, missing] = wrapper.findAll('.fiche-block');
+    expect(empty.text()).toContain('Texte à compléter');
+    expect(empty.text()).toContain('Ce bloc est vide');
+    expect(missing.text()).toContain('La source de ce placement est indisponible');
+});
