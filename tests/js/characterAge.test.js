@@ -24,3 +24,10 @@ it('finds a moved birth date without guessing between duplicate sources', () => 
     sections.set('Identité', [duplicate]);
     expect(birthDateField(sections, 'Identité')).toBe(duplicate);
 });
+
+it('accepts a native date field as the birth date', () => {
+    const field = { column: 'value_date', field_definition: { label: 'Date de naissance' } };
+    expect(birthDateField(new Map([['Identité', [field]]]), 'Identité')).toBe(field);
+    expect(ageFromBirthDate('2000-06-15', new Date(2026, 5, 15))).toBe(26);
+    expect(ageFromBirthDate('2001-02-29')).toBeNull();
+});

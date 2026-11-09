@@ -1,4 +1,5 @@
 export function ageFromBirthDate(value, today = new Date()) {
+    if (typeof value === 'string') value = { start: value, precision: 'exact' };
     if (value?.precision !== 'exact' || value.end) return null;
     const calendar = value.calendar?.trim().toLocaleLowerCase('fr');
     if (calendar && !['grégorien', 'gregorian'].includes(calendar)) return null;
@@ -16,7 +17,7 @@ export function ageFromBirthDate(value, today = new Date()) {
 }
 
 export function birthDateField(sections, identityTitle) {
-    const isBirthDate = field => field.format === 'temporal'
+    const isBirthDate = field => (field.format === 'temporal' || field.column === 'value_date')
         && field.field_definition.label === 'Date de naissance';
     const identityMatches = (sections.get(identityTitle) ?? []).filter(isBirthDate);
     if (identityMatches.length === 1) return identityMatches[0];
