@@ -74,6 +74,7 @@ export default {
                         levels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels,
                         originalLevels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels ?? 5,
                         levelDescriptions: (field.display_options?.level_descriptions ?? []).join('\n'),
+                        calculation: field.display_options?.calculation ?? (field.field_definition?.key === 'character-age' ? 'age' : 'none'),
                         historyView: field.display_options?.history_view ?? 'current',
                         badgeColor: field.display_options?.badge_color ?? '',
                         repeatableLevelMode: field.display_options?.repeatable_level_mode ?? 'text',
@@ -139,10 +140,11 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, historyView, referenceTypes, allowReferenceCreation, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, ...field }) => ({
                     ...field,
                     ...(['reference', 'references'].includes(field.type) ? { allow_reference_creation: Boolean(allowReferenceCreation) } : {}),
                     ...(!field.id && ['reference', 'references'].includes(field.type) ? { reference_types: referenceTypes ?? [] } : {}),
+                    ...(field.type === 'number' ? { calculation: calculation ?? 'none' } : {}),
                     ...(historyView === 'history' ? { history_view: 'history' } : historyView === 'current' ? { history_view: 'current' } : {}),
                     ...(field.type === 'repeatable' ? { repeatable_level_mode: repeatableLevelMode ?? 'text' } : {}),
                     ...(field.type === 'choice' ? { badge_color: badgeColor || null } : {}),

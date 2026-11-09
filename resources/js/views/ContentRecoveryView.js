@@ -290,7 +290,9 @@ export default {
 
         function effectiveFieldValue(field) {
             const value = fieldValue(field);
-            if (value !== '' || fieldState(field) || field.field_definition.key !== 'character-age') return value;
+            const calculation = field.display_options?.calculation
+                ?? (field.field_definition.key === 'character-age' ? 'age' : 'none');
+            if (value !== '' || fieldState(field) || calculation !== 'age') return value;
             const birthField = birthDateField(templateSections.value, identitySectionTitle(templateSections.value));
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }

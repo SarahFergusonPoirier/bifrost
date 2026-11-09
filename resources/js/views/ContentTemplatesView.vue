@@ -44,6 +44,13 @@
                         <option v-if="!fieldTypes[field.type]" :value="field.type">{{ field.type }}</option>
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
+                    <label v-if="field.type === 'number'">Calcul automatique
+                        <select v-model="field.calculation">
+                            <option :value="undefined" disabled>Choisir un calcul</option>
+                            <option value="none">Aucun</option>
+                            <option value="age">Âge à partir de la date de naissance</option>
+                        </select>
+                    </label>
                     <label v-if="field.type === 'scale'">Nombre de niveaux
                         <input type="number" min="2" max="20" required :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />

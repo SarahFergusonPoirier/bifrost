@@ -72,7 +72,7 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view,reference_types,allow_reference_creation'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
@@ -82,6 +82,7 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.allow_reference_creation' => ['sometimes', 'boolean'],
             'fields.*.reference_types' => ['sometimes', 'array', 'list', 'max:100'],
             'fields.*.reference_types.*' => ['required', 'integer', 'exists:content_types,id'],
+            'fields.*.calculation' => ['sometimes', 'nullable', 'in:none,age'],
             'fields.*.history_view' => ['sometimes', 'in:current,history'],
             'fields.*.scale_strategy' => ['sometimes', 'in:preserve'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
@@ -165,6 +166,12 @@ class ContentTemplateAuthoringController extends Controller
                 $display['repeatable_level_mode'] = $field['repeatable_level_mode'];
             }
 
+            if (isset($field['calculation'])) {
+                if ($field['type'] !== 'number') {
+                    throw ValidationException::withMessages(['fields' => 'Le calcul exige un champ numérique.']);
+                }
+                $display['calculation'] = $field['calculation'];
+            }
             if (isset($field['history_view'])) {
                 $display['history_view'] = $field['history_view'];
             }

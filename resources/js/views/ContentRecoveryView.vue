@@ -397,7 +397,7 @@
                                 <input v-else :type="field.column === 'value_number' ? 'number' : field.column === 'value_date' ? 'date' : 'text'"
                                     :step="field.column === 'value_number' ? 'any' : undefined"
                                     :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
-                                <small v-if="field.field_definition.key === 'character-age' && fieldValue(field) === '' && effectiveFieldValue(field) !== ''">
+                                <small v-if="fieldValue(field) === '' && effectiveFieldValue(field) !== ''">
                                     Âge calculé : {{ effectiveFieldValue(field) }} ans. Une valeur saisie ici est prioritaire.
                                 </small>
                             </label>
