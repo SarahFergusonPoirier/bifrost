@@ -1,3 +1,4 @@
+import { formatTemporalDate } from '../components/fiche/formatFieldValue';
 import { contentRequest } from '../services/contentRecovery';
 
 const emptyEvent = () => ({
@@ -73,8 +74,7 @@ export default {
             });
         },
         dateLabel(date) {
-            return [date.start, date.end, date.calendar].filter(Boolean).join(' · ')
-                || this.precisions[date.precision] || 'Date inconnue';
+            return formatTemporalDate(date, this.precisions[date?.precision]);
         },
     },
 };

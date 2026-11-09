@@ -21,8 +21,8 @@ export function formatFieldValue(field, value, state, fieldReferences) {
     return value;
 }
 
-export function formatTemporalDate(date) {
+export function formatTemporalDate(date, emptyLabel = 'Date inconnue') {
     const value = [date?.start, date?.end, date?.calendar].filter(Boolean).join(' · ');
-    if (!value) return 'Date inconnue';
+    if (!value) return emptyLabel;
     return date.precision === 'approximate' ? 'Vers ' + value : value;
 }
