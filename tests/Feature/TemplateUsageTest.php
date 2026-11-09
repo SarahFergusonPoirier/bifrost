@@ -144,6 +144,13 @@ class TemplateUsageTest extends TestCase
         $this->assertSame('À garder', $content->fieldValues()->sole()->value_text);
         $this->assertEquals($second->id, $content->templateAssignment()->sole()->template_version_id);
         $this->assertDatabaseCount('content_template_update_events', 1);
+
+        $edit = ['title' => 'Fiche éditée', 'summary' => null];
+        $this->patchJson("/api/contents/{$content->public_id}", $edit + [
+            'field_values' => [['field_definition_id' => $new->id, 'value_text' => 'Valeur actuelle']],
+        ])->assertOk();
+        $this->patchJson("/api/contents/{$content->public_id}", $edit + ['field_values' => []])->assertOk();
+        $this->assertSame('À garder', $content->fieldValues()->sole()->value_text);
     }
 
     public function test_only_published_versions_can_be_used_when_creating_a_content(): void

@@ -312,7 +312,12 @@ class ContentRecoveryController extends Controller
             }
         }
 
-        $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'))->delete();
+        $omitted = $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'));
+        $assignment = $content->templateAssignment()->first();
+        if ($assignment) {
+            $omitted->whereIn('field_definition_id', $assignment->templateVersion->fields()->select('field_definition_id'));
+        }
+        $omitted->delete();
     }
 
     private function applySnapshot(Content $content, array $snapshot): void
