@@ -15,3 +15,10 @@ it('preserves approximate dates in field display', () => {
     expect(formatFieldValue(field, { start: 'An 498', precision: 'approximate' })).toBe('Vers An 498');
     expect(formatFieldValue(field, { start: 'An 498', end: 'An 500' })).toBe('An 498 · An 500');
 });
+
+it('keeps older list snapshots readable when their shape differs', () => {
+    const field = { format: 'bullets' };
+    expect(formatFieldValue(field, null)).toBe('—');
+    expect(formatFieldValue(field, ['Ancienne entrée', { label: 'Nouvelle entrée' }])).toBe('Ancienne entrée, Nouvelle entrée');
+    expect(formatFieldValue(field, { label: 'Entrée unique' })).toBe('{"label":"Entrée unique"}');
+});
