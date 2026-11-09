@@ -16,7 +16,13 @@ export function formatFieldValue(field, value, state, fieldReferences) {
     }
     if (field.format === 'measurement') return [value.amount, value.unit].filter(part => part != null).join(' ');
     if (field.format === 'coordinates') return [value.x, value.y].filter(part => part != null).join(' · ');
-    if (field.format === 'temporal') return [value.start, value.end, value.calendar].filter(Boolean).join(' · ') || 'Date inconnue';
+    if (field.format === 'temporal') return formatTemporalDate(value);
     if (field.format === 'multiple_choice') return value.join(', ');
     return value;
+}
+
+export function formatTemporalDate(date) {
+    const value = [date?.start, date?.end, date?.calendar].filter(Boolean).join(' · ');
+    if (!value) return 'Date inconnue';
+    return date.precision === 'approximate' ? 'Vers ' + value : value;
 }

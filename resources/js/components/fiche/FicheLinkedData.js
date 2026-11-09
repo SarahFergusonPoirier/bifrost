@@ -1,3 +1,4 @@
+import { formatTemporalDate } from './formatFieldValue';
 import { contentRequest } from '../../services/contentRecovery';
 
 const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
@@ -120,10 +121,6 @@ export default {
                 this.error = error.message;
             }
         },
-        formatDate(date) {
-            const value = [date.start, date.end, date.calendar].filter(Boolean).join(' · ');
-            if (!value) return 'Date inconnue';
-            return date.precision === 'approximate' ? 'Vers ' + value : value;
-        },
+        formatDate: formatTemporalDate,
     },
 };
