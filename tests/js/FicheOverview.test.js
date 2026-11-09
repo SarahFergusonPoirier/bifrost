@@ -208,3 +208,14 @@ it('combines canonical fields from multiple sections in a custom block', () => {
     expect(wrapper.findAll('dt').map(item => item.text())).toEqual(['Origine', 'Nom']);
     expect(wrapper.findAll('dd').map(item => item.text())).toEqual(['Montréal', 'Élia']);
 });
+
+it('resolves an existing section placement after a model renames the section', () => {
+    const field = { id: 1, field_definition_id: 1, field_definition: { label: 'Nom' },
+        display_options: { section_aliases: ['Identité'] } };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité civile', [field]]]), hiddenFields: [], displayValue: () => 'Élia',
+        placements: [{ id: 'identity', source: 'section:Identité', width: 6, height: 2 }],
+    } });
+    expect(wrapper.get('h2').text()).toBe('Identité civile');
+    expect(wrapper.get('dd').text()).toBe('Élia');
+});

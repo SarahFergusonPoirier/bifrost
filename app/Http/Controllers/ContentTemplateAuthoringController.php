@@ -132,6 +132,10 @@ class ContentTemplateAuthoringController extends Controller
                 'universe_id' => $template->universe_id,
             ]);
             $display = ['section_label' => $field['section']] + ($original?->display_options ?? []);
+            $oldLabel = $original?->display_options['section_label'] ?? $original?->section_key;
+            if ($oldLabel && $oldLabel !== $field['section']) {
+                $display['section_aliases'] = array_values(array_unique([$oldLabel, ...($display['section_aliases'] ?? [])]));
+            }
             if (array_key_exists('choices', $field)) {
                 $display['choices'] = array_values(array_unique($field['choices']));
             }

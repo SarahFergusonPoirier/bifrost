@@ -50,6 +50,7 @@ export default {
         cards() {
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
                 source: 'section:' + title,
+                aliases: [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
                 fullName: title === 'Identité' ? this.fullName : null,
                 title,
                 icon: 'catalogue',
@@ -139,7 +140,18 @@ export default {
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
         },
         bySource() {
-            return new Map(this.cards.map(card => [card.source, card]));
+            const index = new Map(this.cards.map(card => [card.source, card]));
+            const aliases = new Map();
+            for (const card of this.cards) {
+                for (const label of card.aliases ?? []) {
+                    const source = 'section:' + label;
+                    aliases.set(source, aliases.has(source) ? null : card);
+                }
+            }
+            for (const [source, card] of aliases) {
+                if (card && !index.has(source)) index.set(source, card);
+            }
+            return index;
         },
         defaults() {
 
