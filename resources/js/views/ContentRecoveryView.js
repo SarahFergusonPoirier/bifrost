@@ -1,3 +1,4 @@
+import { fieldColumns, groupTemplateFields } from '../components/fiche/templateFields';
 import { identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
@@ -231,22 +232,9 @@ export default {
         const path = () => '/contents/' + selected.value.public_id;
         const draftKey = () => 'bifrost:draft:' + selected.value.public_id;
 
-        const fieldColumns = {
-            text: 'value_text', choice: 'value_text', number: 'value_number',
-            boolean: 'value_boolean', date: 'value_date', json: 'value_json', reference: 'reference_content_id',
-        };
-        const templateSections = computed(() => {
-            const sections = new Map();
-            for (const field of selected.value?.template_assignment?.template_version?.fields ?? []) {
-                const column = fieldColumns[field.field_definition?.value_type];
-                const format = field.field_definition?.options_data?.format;
-                if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link'].includes(format))) continue;
-                const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
-                if (!sections.has(section)) sections.set(section, []);
-                sections.get(section).push({ ...field, column, format });
-            }
-            return sections;
-        });
+        const templateSections = computed(() => groupTemplateFields(
+            selected.value?.template_assignment?.template_version?.fields ?? [],
+        ));
         const fieldValue = field => draft.value.field_values?.find(value =>
             value.field_definition_id === field.field_definition_id
         )?.[field.column] ?? '';
