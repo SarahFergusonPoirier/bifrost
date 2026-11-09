@@ -243,3 +243,7 @@
     padding-inline-start: var(--space-5);
     list-style: disc;
 }
+
+.fiche-template-preview > .fiche-block {
+    min-height: calc(var(--fiche-height, 2) * var(--space-4));
+}

@@ -12,10 +12,15 @@ export default {
     components: { WorkspaceIcon },
     props: { path: String, templatesPath: String, active: String, canCopy: Boolean },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, removalId: null, removalDestination: null, revisions: null }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
     computed: {
         hasPendingText() {
             return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
+        },
+        filteredTemplates() {
+            const query = this.templateQuery.trim().toLocaleLowerCase('fr');
+            return (this.templates ?? []).filter(template =>
+                [template.name, template.definition.title].some(text => text.toLocaleLowerCase('fr').includes(query)));
         },
         selectedTemplate() {
             return this.templates?.find(template => template.id === this.templateId);
@@ -29,6 +34,15 @@ export default {
         else this.ensureVisibleTab();
     },
     methods: {
+        placementLabel(placement) {
+            if (placement.title) return placement.title;
+            if (placement.source.startsWith('section:')) return placement.source.slice(8);
+            if (placement.source.startsWith('blank:')) return 'Bloc de texte vide';
+            return {
+                summary: 'Résumé', tags: 'Étiquettes', relations: 'Relations', timeline: 'Chronologie',
+                equipment: 'Équipements', capabilities: 'Capacités', gallery: 'Galerie', attachments: 'Pièces jointes',
+            }[placement.source] ?? placement.source;
+        },
         navigateTabs(event) {
             const index = this.visibleTabs.findIndex(tab => tab.id === event.target.dataset.tab);
             if (index === -1) return;

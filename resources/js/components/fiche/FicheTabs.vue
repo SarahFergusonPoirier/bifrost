@@ -42,15 +42,27 @@
                     :disabled="tabs.length >= 24 || tabs.some(tab => tab.id === id)" @click="add(id, title)">{{ title }}</button>
                 <details v-if="templatesPath" @toggle="$event.target.open && loadTemplates()">
                     <summary>Modèles d’onglets</summary>
+                    <label>Rechercher un modèle <input v-model="templateQuery" type="search" /></label>
                     <label>Modèle
                         <select v-model="templateId">
                             <option :value="null">Choisir un modèle</option>
-                            <option v-for="template in templates ?? []" :key="template.id" :value="template.id">
+                            <option v-for="template in filteredTemplates" :key="template.id" :value="template.id">
                                 {{ template.name }} · {{ template.scope === 'global' ? 'Global' : 'Projet' }}
                             </option>
                         </select>
                     </label>
-                    <p v-if="selectedTemplate">{{ selectedTemplate.definition.title }} · {{ selectedTemplate.definition.placements.length }} placement(s)</p>
+                    <section v-if="selectedTemplate" aria-label="Aperçu du modèle">
+                        <p>{{ selectedTemplate.definition.title }} · {{ selectedTemplate.definition.placements.length }} placement(s)</p>
+                        <div class="fiche-grid fiche-template-preview">
+                            <article v-for="(placement, index) in selectedTemplate.definition.placements" :key="index"
+                                class="fiche-block" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.height }">
+                                <strong>{{ placementLabel(placement) }}</strong>
+                                <p>{{ placement.width }} × {{ placement.height }}</p>
+                                <p v-if="placement.hidden">Masqué</p>
+                                <p v-else-if="placement.collapsed">Réduit</p>
+                            </article>
+                        </div>
+                    </section>
                     <button type="button" :disabled="!selectedTemplate || tabs.length >= 24" @click="applyTemplate">Ajouter cet onglet à la disposition</button>
                     <label>Nom du modèle <input v-model.trim="templateName" maxlength="80" /></label>
                     <label>Portée
