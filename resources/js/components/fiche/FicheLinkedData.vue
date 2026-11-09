@@ -11,6 +11,7 @@
                 <strong v-else>{{ relation.title }}</strong>
                 <span v-if="relation.label" class="fiche-relation-label">{{ relation.label }}</span>
                 <template v-if="view === 'cards'">
+                    <p v-if="relation.status">{{ relation.status }}</p>
                     <p v-if="relation.role">{{ relation.role }}</p>
                     <p v-if="relation.start || relation.end">{{ [relation.start, relation.end].filter(Boolean).join(' – ') }}</p>
                     <p v-if="relation.note">{{ relation.note }}</p>
@@ -53,6 +54,7 @@
             <label>Type <input v-model="editingLink.type" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
             <label>Libellé depuis cette fiche <input v-model="editingLink.outgoing" maxlength="255" /></label>
             <label>Libellé depuis l’autre fiche <input v-model="editingLink.incoming" maxlength="255" /></label>
+<label>Statut <input v-model="editingLink.status" maxlength="80" /></label>
             <label>Rôle <input v-model="editingLink.role" maxlength="255" /></label>
             <label>Début <input v-model="editingLink.start" maxlength="255" /></label>
             <label>Fin <input v-model="editingLink.end" maxlength="255" /></label>

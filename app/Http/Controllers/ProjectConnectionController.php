@@ -95,9 +95,10 @@ class ProjectConnectionController extends Controller
     {
         $input = $request->validate([
             'type_key' => ['required', 'alpha_dash:ascii', 'max:80'],
-            'properties' => ['present', 'array:forward_label,inverse_label,role,start,end,note'],
+            'properties' => ['present', 'array:forward_label,inverse_label,role,start,end,note,status'],
             'properties.forward_label' => ['nullable', 'string', 'max:255'],
             'properties.inverse_label' => ['nullable', 'string', 'max:255'],
+            'properties.status' => ['nullable', 'string', 'max:80'],
             'properties.role' => ['nullable', 'string', 'max:255'],
             'properties.start' => ['nullable', 'string', 'max:255'],
             'properties.end' => ['nullable', 'string', 'max:255'],

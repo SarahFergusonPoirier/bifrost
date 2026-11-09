@@ -107,6 +107,6 @@ it('saves directional labels in canonical order from the inverse fiche', async (
     await flushPromises();
     expect(contentRequest).toHaveBeenCalledWith('/connections/7', 'PUT', {
         type_key: 'mentoring',
-        properties: { role: null, start: null, end: null, note: null, forward_label: 'Élève', inverse_label: 'Guide' },
+        properties: { role: null, status: null, start: null, end: null, note: null, forward_label: 'Élève', inverse_label: 'Guide' },
     });
 });

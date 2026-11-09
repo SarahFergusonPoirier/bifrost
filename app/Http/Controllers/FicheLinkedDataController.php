@@ -37,6 +37,7 @@ class FicheLinkedDataController extends Controller
                 'outgoing_label' => $properties[$forward ? 'forward_label' : 'inverse_label'] ?? null,
                 'incoming_label' => $properties[$forward ? 'inverse_label' : 'forward_label'] ?? null,
                 'note' => $properties['note'] ?? null,
+                'status' => $properties['status'] ?? null,
                 'role' => $properties['role'] ?? null,
                 'start' => $properties['start'] ?? null,
                 'end' => $properties['end'] ?? null,

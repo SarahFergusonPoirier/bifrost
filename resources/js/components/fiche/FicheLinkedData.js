@@ -63,6 +63,7 @@ export default {
                 outgoing: entry.outgoing_label ?? '',
                 incoming: entry.incoming_label ?? '',
                 role: entry.role ?? '',
+                status: entry.status ?? '',
                 start: entry.start ?? '',
                 end: entry.end ?? '',
                 note: entry.note ?? '',

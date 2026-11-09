@@ -54,13 +54,13 @@ class ProjectConnectionTest extends TestCase
             ->assertJsonPath('edges.0.source_content_id', $source->id)->assertJsonPath('edges.0.target_content_id', $target->id);
         $this->assertSame(0.25, collect($graph->json('nodes'))->firstWhere('id', $source->id)['x']);
 
-        $properties = ['forward_label' => 'contient', 'inverse_label' => 'se situe dans', 'role' => 'Capitale'];
+        $properties = ['forward_label' => 'contient', 'inverse_label' => 'se situe dans', 'role' => 'Capitale', 'status' => 'Actif'];
         $this->putJson("/api/projects/{$other->id}/connections/$edge", ['type_key' => 'contient', 'properties' => $properties])
             ->assertNotFound();
         $this->putJson("$url/$edge", ['type_key' => 'abrite', 'properties' => $properties])
             ->assertOk()->assertJsonPath('properties_data.inverse_label', 'se situe dans');
         $this->getJson($url)->assertOk()->assertJsonCount(1, 'edges')
-            ->assertJsonPath('edges.0.properties_data.role', 'Capitale');
+            ->assertJsonPath('edges.0.properties_data.role', 'Capitale')->assertJsonPath('edges.0.properties_data.status', 'Actif');
 
         $this->deleteJson("/api/projects/{$other->id}/connections/$edge")->assertNotFound();
         $this->deleteJson("$url/$edge")->assertNoContent();
