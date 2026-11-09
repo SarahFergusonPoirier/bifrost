@@ -172,7 +172,10 @@ export default {
             if (this.removalDestination) {
                 const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
                 if (!target) return;
-                target.placements = this.mergePlacements(target, this.placementsForRemoval(tab), this.getDefaultPlacements?.() ?? []);
+                const materialize = placements => placements.map(placement => ({ ...placement, id: crypto.randomUUID() }));
+                const added = tab.placements ?? materialize(this.placementsForRemoval(tab));
+                const defaults = materialize(this.getDefaultPlacements?.() ?? []);
+                target.placements = this.mergePlacements(target, added, defaults);
             }
 
             this.tabs = this.tabs.filter(item => item.id !== tab.id);

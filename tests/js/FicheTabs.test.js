@@ -69,7 +69,7 @@ it('moves placements into an implicit layout when removing a tab and submits bot
 
     const [, , request] = contentRequest.mock.lastCall;
     expect(request.tabs.map(tab => tab.id)).toEqual(['overview', 'details']);
-    expect(request.tabs[0].placements).toEqual([relations, placement]);
+    expect(request.tabs[0].placements).toEqual([{ ...relations, id: expect.stringMatching(/^[a-f0-9-]{36}$/) }, placement]);
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
 
