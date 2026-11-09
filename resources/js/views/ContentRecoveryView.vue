@@ -251,7 +251,7 @@
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
                         @open="openPanelContent" @select="selectFicheTab"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :format-historical-value="formatHistoricalValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
-                        :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab && item.id !== 'details' && item.id !== 'overview')" />
+                        :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab)" />
                 </template>
             </FicheTabs>
             <div v-show="ficheTab === 'details'">
