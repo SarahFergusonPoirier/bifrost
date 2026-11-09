@@ -69,7 +69,7 @@
                         <button v-if="placement.field_order" type="button" @click="placement.field_order = null">Rétablir tous les champs</button>
                     </template>
                 </details>
-                <label v-if="placement.source.startsWith('section:')">
+                <label v-if="placement.source === 'fields' || placement.source.startsWith('section:')">
                     <input v-model="placement.hide_empty" type="checkbox" /> Masquer les champs vides
                 </label>
                 <label v-if="placement.source === 'summary' || placement.source.startsWith('text:')">

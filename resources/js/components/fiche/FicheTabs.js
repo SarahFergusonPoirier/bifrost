@@ -40,7 +40,7 @@ export default {
             if (placement.source.startsWith('section:')) return placement.source.slice(8);
             if (placement.source.startsWith('blank:')) return 'Bloc de texte vide';
             return {
-                summary: 'Résumé', tags: 'Étiquettes', relations: 'Relations', timeline: 'Chronologie',
+                summary: 'Résumé', tags: 'Étiquettes', fields: 'Bloc de champs personnalisé', relations: 'Relations', timeline: 'Chronologie',
                 equipment: 'Équipements', capabilities: 'Capacités', gallery: 'Galerie', attachments: 'Pièces jointes',
             }[placement.source] ?? placement.source;
         },

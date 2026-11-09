@@ -197,3 +197,14 @@ it('shows empty template text blocks and distinguishes unavailable sources', () 
     expect(empty.text()).toContain('Ce bloc est vide');
     expect(missing.text()).toContain('La source de ce placement est indisponible');
 });
+
+it('combines canonical fields from multiple sections in a custom block', () => {
+    const field = (id, label) => ({ id, field_definition_id: id, field_definition: { label } });
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', [field(1, 'Nom')]], ['Détails', [field(2, 'Origine')]]]),
+        hiddenFields: [], displayValue: item => ({ 1: 'Élia', 2: 'Montréal' })[item.id],
+        placements: [{ id: 'custom', source: 'fields', field_order: [2, 1], width: 6, height: 2 }],
+    } });
+    expect(wrapper.findAll('dt').map(item => item.text())).toEqual(['Origine', 'Nom']);
+    expect(wrapper.findAll('dd').map(item => item.text())).toEqual(['Montréal', 'Élia']);
+});

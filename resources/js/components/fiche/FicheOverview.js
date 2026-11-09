@@ -93,6 +93,8 @@ export default {
                 ] : []),
                 ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }, { source: 'gallery', title: 'Galerie d’images', icon: 'folder' }] : []),
                 ...(this.contentId ? [{ source: 'capabilities', title: 'Capacités', icon: 'ideas', entries: this.localCapabilities }] : []),
+                { source: 'fields', title: 'Bloc de champs personnalisé', icon: 'catalogue',
+                    fields: [...new Map(sections.flatMap(section => section.fields).map(field => [field.definitionId, field])).values()] },
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
@@ -141,7 +143,8 @@ export default {
         },
         defaults() {
 
-            return this.cards.filter(card => card.linked || card.entries || card.text || card.tags?.length || card.keywords?.length || card.fields?.length)
+            return this.cards.filter(card => card.source !== 'fields'
+                && (card.linked || card.entries || card.text || card.tags?.length || card.keywords?.length || card.fields?.length))
                 .map(card => placement(card.source, card.source));
         },
         initialPlacements() {
@@ -206,7 +209,9 @@ export default {
             this.$nextTick(() => this.$refs.blockSearch?.focus());
         },
         add() {
-            this.draft.push(placement(this.source));
+            const item = placement(this.source);
+            if (item.source === 'fields') item.field_order = [];
+            this.draft.push(item);
             this.source = '';
         },
         move(from, to) {
