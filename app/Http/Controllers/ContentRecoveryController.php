@@ -315,7 +315,7 @@ class ContentRecoveryController extends Controller
         $omitted = $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'));
         $assignment = $content->templateAssignment()->first();
         if ($assignment) {
-            $omitted->whereIn('field_definition_id', $assignment->templateVersion->fields()->select('field_definition_id'));
+            $omitted->whereIn('field_definition_id', $assignment->templateVersion->fields()->whereHas('fieldDefinition')->select('field_definition_id'));
         }
         $omitted->delete();
     }

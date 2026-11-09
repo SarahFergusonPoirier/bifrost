@@ -393,6 +393,13 @@ export default {
             else values.push(entry);
         }
 
+        function currentTemplateValues(values) {
+            const fields = selected.value?.template_assignment?.template_version?.fields;
+            if (!fields) return values;
+            const ids = new Set(fields.filter(field => field.field_definition).map(field => field.field_definition_id));
+            return values.filter(value => ids.has(value.field_definition_id));
+        }
+
         function accept(data, token) {
             selected.value = data;
             const editable = {
@@ -405,7 +412,7 @@ export default {
                 })),
             };
             if (templateSections.value.size) {
-                editable.field_values = (data.field_values ?? []).map(({ id, content_id, created_at, updated_at, value_state, ...value }) => ({
+                editable.field_values = currentTemplateValues(data.field_values ?? []).map(({ id, content_id, created_at, updated_at, value_state, ...value }) => ({
                     ...value,
                     ...(value_state ? { value_state } : {}),
                     ...(value.value_date ? { value_date: value.value_date.slice(0, 10) } : {}),
@@ -484,6 +491,9 @@ export default {
                 if (window.confirm('Un brouillon local est disponible. Veux-tu le reprendre ?')) {
                     version.value = recovered.version;
                     draft.value = recovered.draft;
+                    if (Array.isArray(draft.value.field_values)) {
+                        draft.value.field_values = currentTemplateValues(draft.value.field_values);
+                    }
                 } else {
                     localStorage.removeItem(draftKey());
                 }
