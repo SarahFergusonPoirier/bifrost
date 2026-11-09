@@ -1,6 +1,6 @@
 import { formatFieldValue } from '../components/fiche/formatFieldValue';
 import { fieldColumns, groupTemplateFields } from '../components/fiche/templateFields';
-import { identitySectionTitle } from '../components/fiche/identitySection';
+import { identityField, identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
 import FicheText from '../components/fiche/FicheText.vue';
@@ -241,9 +241,11 @@ export default {
         )?.[field.column] ?? '';
         const suggestedFullName = computed(() => {
             if (!draft.value) return '';
-            const fields = templateSections.value.get(identitySectionTitle(templateSections.value)) ?? [];
+            const sections = templateSections.value;
+            const identityTitle = identitySectionTitle(sections);
             const names = ['Prénom', 'Nom de famille'].map(label => {
-                const field = fields.find(item => item.column === 'value_text' && item.field_definition.label === label);
+                const field = identityField(sections, identityTitle, item => item.column === 'value_text'
+                    && [item.field_definition.label, item.label_override].includes(label));
                 return field ? String(fieldValue(field)).trim() : '';
             });
             if (names.some(name => !name)) return '';
