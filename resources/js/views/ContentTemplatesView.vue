@@ -49,6 +49,10 @@
                             <option value="none">Aucun</option>
                             <option value="age">Âge à partir de la date de naissance</option>
                         </select>
+                        <small v-if="field.calculation === 'age'">
+                            Ajoutez un champ de date nommé « Date de naissance ». Le calcul utilise une date grégorienne exacte.
+                            Une valeur saisie dans la fiche est prioritaire.
+                        </small>
                     </label>
                     <label v-if="field.type === 'scale'">Nombre de niveaux
                         <input type="number" min="2" max="20" required :value="field.levels ?? 5"
