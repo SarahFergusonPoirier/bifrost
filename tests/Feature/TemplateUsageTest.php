@@ -184,4 +184,27 @@ class TemplateUsageTest extends TestCase
         $this->getJson("/api/contents/$id")->assertOk()
             ->assertJsonPath('template_assignment.template_version.id', $published->id);
     }
+
+    public function test_number_calculation_is_versioned_and_rejects_text_fields(): void
+    {
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $field = ['label' => 'Âge', 'section' => 'Identité', 'type' => 'number', 'calculation' => 'age'];
+        $payload = ['name' => 'Personnage', 'content_type_id' => $type->id, 'fields' => [$field]];
+        $template = $this->postJson('/api/content-templates', $payload)->assertCreated()->json();
+        $url = "/api/content-templates/{$template['id']}";
+        $definitionId = $this->getJson($url)->assertOk()
+            ->assertJsonPath('versions.0.fields.0.display_options.calculation', 'age')
+            ->json('versions.0.fields.0.field_definition_id');
+
+        $this->postJson("$url/versions", [
+            'from_version_id' => $template['version_id'],
+            'fields' => [array_replace($field, ['id' => $definitionId, 'calculation' => 'none'])],
+        ])->assertCreated();
+        $this->getJson($url)->assertOk()
+            ->assertJsonPath('versions.0.fields.0.display_options.calculation', 'age')
+            ->assertJsonPath('versions.1.fields.0.display_options.calculation', 'none');
+
+        $payload['fields'][0]['type'] = 'text';
+        $this->postJson('/api/content-templates', $payload)->assertUnprocessable()->assertJsonValidationErrors('fields');
+    }
 }
