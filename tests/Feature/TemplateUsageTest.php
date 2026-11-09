@@ -111,6 +111,8 @@ class TemplateUsageTest extends TestCase
         $this->postJson($versions, $from + ['fields' => [$field]])->assertUnprocessable();
         $version = $this->postJson($versions, $from + ['fields' => [$field + ['scale_strategy' => 'preserve']]])
             ->assertCreated()->json('id');
+        $this->getJson("$url/template-versions/$version/preview")->assertOk()
+            ->assertJsonPath('changed.0.scale_change', ['from' => 5, 'to' => 3, 'preserved_level' => 5]);
         $this->postJson("$url/template-versions/$version/apply", $from)->assertOk();
         $save(5)->assertOk();
         $save(4)->assertUnprocessable();

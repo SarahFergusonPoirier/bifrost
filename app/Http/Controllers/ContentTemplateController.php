@@ -28,7 +28,7 @@ class ContentTemplateController extends Controller
         $assignment = $record->templateAssignment()->firstOrFail();
         $target = $this->publishedVersion($assignment, $version);
 
-        return response()->json($this->versionChanges($assignment, $target));
+        return response()->json($this->versionChanges($record, $assignment, $target));
     }
 
     public function applyUpgrade(Request $request, string $content, int $version): JsonResponse
@@ -42,7 +42,7 @@ class ContentTemplateController extends Controller
             abort_if((int) $assignment->template_version_id !== (int) $validated['from_version_id'], 409, 'La version de la fiche a changé.');
             abort_if((int) $assignment->template_version_id === $target->id, 422, 'Cette version est déjà utilisée.');
 
-            $changes = $this->versionChanges($assignment, $target);
+            $changes = $this->versionChanges($record, $assignment, $target);
             $record->templateUpdateEvents()->create([
                 'template_id' => $assignment->template_id,
                 'from_template_version_id' => $assignment->template_version_id,
@@ -61,9 +61,9 @@ class ContentTemplateController extends Controller
             ->whereNotNull('published_at')->findOrFail($version);
     }
 
-    private function versionChanges(ContentTemplateAssignment $assignment, TemplateVersion $target): array
+    private function versionChanges(Content $content, ContentTemplateAssignment $assignment, TemplateVersion $target): array
     {
-        $fields = fn (TemplateVersion $version) => $version->fields()->with('fieldDefinition:id,label')->get()
+        $fields = fn (TemplateVersion $version) => $version->fields()->with('fieldDefinition:id,label,options_data')->get()
             ->keyBy('field_definition_id')->map(fn ($field): array => [
                 'id' => $field->field_definition_id,
                 'label' => $field->label_override ?? $field->fieldDefinition?->label,
@@ -73,17 +73,32 @@ class ContentTemplateController extends Controller
                 'default' => $field->default_value,
                 'help' => $field->help_text,
                 'display' => $field->display_options,
+                'scale_levels' => ($field->fieldDefinition?->options_data['format'] ?? null) === 'scale'
+                    ? (int) ($field->display_options['scale_levels'] ?? $field->fieldDefinition->options_data['levels'] ?? 5)
+                    : null,
             ]);
         $from = $fields($assignment->templateVersion);
         $to = $fields($target);
+        $changed = $to->intersectByKeys($from)->filter(fn (array $field, int $id): bool => $field !== $from[$id]);
+        $scales = $changed->filter(fn (array $field, int $id): bool => $field['scale_levels'] !== null
+            && $from[$id]['scale_levels'] !== null && $field['scale_levels'] !== $from[$id]['scale_levels']);
+        if ($scales->isNotEmpty()) {
+            $values = $content->fieldValues()->whereIntegerInRaw('field_definition_id', $scales->keys()->all())
+                ->get(['field_definition_id', 'value_json'])->keyBy('field_definition_id');
+            foreach ($scales as $id => $field) {
+                $level = $values->get($id)?->value_json['level'] ?? null;
+                $changed[$id] = $field + ['scale_change' => [
+                    'from' => $from[$id]['scale_levels'], 'to' => $field['scale_levels'], 'preserved_level' => $level,
+                ]];
+            }
+        }
 
         return [
             'from_version_id' => $assignment->template_version_id,
             'to_version_id' => $target->id,
             'added' => $to->diffKeys($from)->values(),
             'removed' => $from->diffKeys($to)->values(),
-            'changed' => $to->intersectByKeys($from)
-                ->filter(fn (array $field, int $id): bool => $field !== $from[$id])->values(),
+            'changed' => $changed->values(),
         ];
     }
 

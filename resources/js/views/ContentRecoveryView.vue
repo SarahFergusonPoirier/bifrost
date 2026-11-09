@@ -287,7 +287,13 @@
                     <section v-for="[key, label] in [['added', 'Champs ajoutés'], ['removed', 'Champs retirés'], ['changed', 'Champs modifiés']]" :key="key">
                         <h3>{{ label }}</h3>
                         <ul v-if="upgradePreview[key].length">
-                            <li v-for="field in upgradePreview[key]" :key="field.id">{{ field.label || 'Champ ' + field.id }}</li>
+                            <li v-for="field in upgradePreview[key]" :key="field.id">
+                                {{ field.label || 'Champ ' + field.id }}
+                                <template v-if="field.scale_change">
+                                    · Échelle de {{ field.scale_change.from }} à {{ field.scale_change.to }} niveaux
+                                    <span v-if="field.scale_change.preserved_level != null"> · Valeur conservée : {{ field.scale_change.preserved_level }}</span>
+                                </template>
+                            </li>
                         </ul>
                         <p v-else>Aucun</p>
                     </section>
