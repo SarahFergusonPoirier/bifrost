@@ -31,3 +31,12 @@ it('accepts a native date field as the birth date', () => {
     expect(ageFromBirthDate('2000-06-15', new Date(2026, 5, 15))).toBe(26);
     expect(ageFromBirthDate('2001-02-29')).toBeNull();
 });
+
+it('recognizes a birth date named on the template field', () => {
+    const field = {
+        column: 'value_date',
+        field_definition: { label: 'Date' },
+        label_override: 'Date de naissance',
+    };
+    expect(birthDateField(new Map([['Identité', [field]]]), 'Identité')).toBe(field);
+});

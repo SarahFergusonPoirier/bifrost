@@ -18,7 +18,7 @@ export function ageFromBirthDate(value, today = new Date()) {
 
 export function birthDateField(sections, identityTitle) {
     const isBirthDate = field => (field.format === 'temporal' || field.column === 'value_date')
-        && field.field_definition.label === 'Date de naissance';
+        && [field.field_definition.label, field.label_override].includes('Date de naissance');
     const identityMatches = (sections.get(identityTitle) ?? []).filter(isBirthDate);
     if (identityMatches.length === 1) return identityMatches[0];
     if (identityMatches.length > 1) return undefined;
