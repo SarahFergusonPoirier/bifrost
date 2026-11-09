@@ -24,8 +24,8 @@
                     <button type="button" @click="requestRemoval(tab)" :aria-label="`Supprimer « ${tab.title} »`">Supprimer</button>
                     <div v-if="removalId === tab.id" class="fiche-tab-removal">
                         <p>Retirer « {{ tab.title }} » de la fiche ?</p>
-                        <p>{{ tab.placements?.length ?? 0 }} placement(s) personnalisé(s). Les données enregistrées sont conservées.</p>
-                        <label v-if="tab.placements?.length">Placements personnalisés
+                        <p>{{ placementsForRemoval(tab).length }} placement(s). Les données enregistrées sont conservées.</p>
+                        <label v-if="placementsForRemoval(tab).length">Placements
                             <select v-model="removalDestination">
                                 <option :value="null">Retirer les placements</option>
                                 <option v-for="target in removalTargets(tab)" :key="target.id" :value="target.id">

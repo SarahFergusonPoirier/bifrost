@@ -153,6 +153,9 @@ export default {
             this.removalId = null;
             this.removalDestination = null;
         },
+        placementsForRemoval(tab, defaults = this.getDefaultPlacements?.() ?? []) {
+            return tab.placements ?? defaultPlacementsFor(tab.id, defaults);
+        },
         mergePlacements(target, added, defaults) {
             const existing = target.placements ?? defaultPlacementsFor(target.id, defaults)
                 .filter(placement => !added.some(item => item.source === placement.source));
@@ -163,13 +166,13 @@ export default {
             const defaultTabs = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
             return this.tabs.filter(target => target.id !== tab.id
                 && (target.placements || defaults || !defaultTabs.includes(target.id))
-                && this.mergePlacements(target, tab.placements ?? [], defaults ?? []).length <= 80);
+                && this.mergePlacements(target, this.placementsForRemoval(tab), defaults ?? []).length <= 80);
         },
         remove(tab) {
             if (this.removalDestination) {
                 const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
                 if (!target) return;
-                target.placements = this.mergePlacements(target, tab.placements ?? [], this.getDefaultPlacements?.() ?? []);
+                target.placements = this.mergePlacements(target, this.placementsForRemoval(tab), this.getDefaultPlacements?.() ?? []);
             }
 
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
