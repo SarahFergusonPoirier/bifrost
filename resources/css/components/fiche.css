@@ -151,6 +151,16 @@
         display: none;
     }
 
+    .fiche-tab-settings__row > :is(label, .fiche-tab-removal) {
+        flex: 1 1 100%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .fiche-tab-settings :is(input, select) {
+        max-inline-size: 100%;
+    }
+
     .fiche-grid-controls > ol {
         padding-inline-start: 0;
     }
