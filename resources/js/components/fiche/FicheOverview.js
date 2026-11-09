@@ -147,6 +147,18 @@ export default {
             if (this.useDefaults) return this.defaults.filter(item => !['equipment', 'capabilities'].includes(item.source));
             return this.defaults.filter(item => item.source === this.active);
         },
+        sharedSources() {
+            const sources = new Set();
+            for (const tab of this.destinations) {
+                const placements = tab.placements ?? this.defaults.filter(item =>
+                    tab.id === 'overview' ? !['equipment', 'capabilities'].includes(item.source) : item.source === tab.id);
+                for (const item of placements) sources.add(item.source);
+            }
+            for (const transfer of this.transfers) {
+                if (this.editing) sources.add(transfer.placement.source);
+            }
+            return sources;
+        },
         displayed() {
             const placements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
             return placements.filter(item => !item.hidden && this.bySource.has(item.source))

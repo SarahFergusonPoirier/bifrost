@@ -247,3 +247,8 @@
 .fiche-template-preview > .fiche-block {
     min-height: calc(var(--fiche-height, 2) * var(--space-4));
 }
+
+.fiche-shared-label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-small);
+}

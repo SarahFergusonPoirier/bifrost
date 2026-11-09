@@ -131,6 +131,7 @@
         <FicheBlock v-for="{ card, placement, fields } in displayed" :key="placement.id" :title="placement.title || card.title"
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
+                <small v-if="sharedSources.has(placement.source)" class="fiche-shared-label">Données partagées</small>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
                     :aria-label="'Redimensionner ' + card.title + ' avec les flèches'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"
