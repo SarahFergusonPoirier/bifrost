@@ -203,6 +203,7 @@ export default {
             this.transfers = [];
             this.copies = [];
             this.editing = true;
+            this.$nextTick(() => this.$refs.blockSearch?.focus());
         },
         add() {
             this.draft.push(placement(this.source));
@@ -285,6 +286,7 @@ export default {
         cancel() {
             this.copies = [];
             this.editing = false;
+            this.$nextTick(() => this.$refs.editButton?.focus());
         },
         async save() {
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));

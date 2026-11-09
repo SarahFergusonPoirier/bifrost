@@ -1,9 +1,9 @@
 <template>
-    <button v-if="persist && !editing" type="button" @click="begin">Personnaliser les blocs</button>
+    <button v-if="persist && !editing" ref="editButton" type="button" @click="begin">Personnaliser les blocs</button>
     <form v-if="editing" class="fiche-grid-controls" @submit.prevent="save">
         <details open>
             <summary>Bibliothèque de blocs</summary>
-            <label>Rechercher un bloc <input v-model="query" type="search" /></label>
+            <label>Rechercher un bloc <input ref="blockSearch" v-model="query" type="search" /></label>
             <label>Bloc à afficher
                 <select v-model="source">
                     <option value="" disabled>Choisir un bloc</option>
@@ -124,8 +124,10 @@
                 <button type="button" @click="draft.splice(index, 1)">Retirer</button>
             </li>
         </ol>
-        <button type="submit" :disabled="!persist || (copies.length > 0 && !canCopy)">Enregistrer les blocs</button>
-        <button type="button" @click="cancel">Annuler</button>
+        <div class="fiche-grid-actions">
+            <button type="submit" :disabled="!persist || (copies.length > 0 && !canCopy)">Enregistrer les blocs</button>
+            <button type="button" @click="cancel">Annuler</button>
+        </div>
     </form>
     <div ref="grid" class="fiche-grid">
         <FicheBlock v-for="{ card, placement, fields } in displayed" :key="placement.id" :title="placement.title || card.title"
