@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,17 +38,32 @@ class FicheTabTemplateController extends Controller
 
         $tab = collect(json_decode($layout->tabs, true, flags: JSON_THROW_ON_ERROR))->firstWhere('id', $input['tab']);
         abort_if(! $tab, 404);
+        $placements = $tab['placements'] ?? [];
+        $globalFields = [];
+        if ($input['scope'] === 'global') {
+            $ids = collect($placements)->flatMap(fn (array $placement): array => $placement['field_order'] ?? [])->unique()->all();
+            $globalFields = FieldDefinition::whereKey($ids)->where('scope_type', 'global')->pluck('id')->all();
+        }
+
         $textSlots = [];
-        $placements = array_map(function (array $placement) use (&$textSlots): array {
+        $placements = array_map(function (array $placement) use (&$textSlots, $globalFields, $input): array {
             $source = $placement['source'];
             if (str_starts_with($source, 'text:')) {
                 $textSlots[$source] ??= 'blank:'.count($textSlots);
                 $placement['source'] = $textSlots[$source];
             }
             unset($placement['id'], $placement['media_image']);
+            if ($input['scope'] === 'global' && ! empty($placement['field_order'])) {
+                $ordered = array_values(array_intersect($placement['field_order'], $globalFields));
+                if ($ordered === []) {
+                    unset($placement['field_order']);
+                } else {
+                    $placement['field_order'] = $ordered;
+                }
+            }
 
             return $placement;
-        }, $tab['placements'] ?? []);
+        }, $placements);
         $definition = ['title' => $tab['title'], 'icon' => $tab['icon'], 'placements' => $placements];
         $id = DB::table('fiche_tab_templates')->insertGetId([
             'project_id' => $input['scope'] === 'project' ? $project->id : null,
