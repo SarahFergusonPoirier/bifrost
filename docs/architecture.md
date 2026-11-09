@@ -69,8 +69,7 @@ les valeurs du brouillon et du modèle dans ces cartes sans les dupliquer.
 L’éditeur, l’enregistrement du brouillon, la récupération et l’historique
 restent gérés par `ContentRecoveryView`. Les styles des cartes et de la
 navigation de fiche réutilisent les variables du thème dans
-`resources/css/components/fiche.css`. La grille actuelle s’adapte à la largeur
-du panneau. Elle ne persiste pas de dimensions ou de placements.
+`resources/css/components/fiche.css`. La grille adapte son affichage à la largeur du panneau. Les dimensions et les placements sont enregistrés dans la disposition de chaque onglet.
 
 ### Disposition par onglet
 
@@ -82,3 +81,23 @@ existant. Déplacer ou retirer un placement ne modifie pas cette source.
 Une disposition enregistrée sans placements explicites conserve son aperçu
 par défaut. La grille utilise douze colonnes sur grand écran comme choix
 technique réversible et réduit le nombre de colonnes sur écran étroit.
+
+### Champs et modèles
+
+Les définitions et les versions du modèle décrivent les champs. Les valeurs
+appartiennent à la fiche et sont associées aux identifiants des définitions.
+Dans Vue, `templateFields.js` associe les types à leurs colonnes de valeur et
+groupe les champs par section. `formatFieldValue.js` donne une présentation
+commune à la lecture et à l’historique, y compris pour les dates approximatives.
+Les états vide, inconnu et non applicable restent distincts.
+
+Les placements de section existants peuvent retrouver une section renommée
+par ses anciens libellés. En cas de correspondances multiples, la résolution
+exige une correspondance unique. Le nom complet et l’âge dérivé utilisent
+également cette convention pour retrouver la section Identité.
+
+`FicheTabs` gère la navigation, l’édition et les modèles réutilisables
+d’onglets. Ces modèles enregistrent une disposition dans la bibliothèque du
+projet ou dans la bibliothèque globale. Le contenu métier demeure dans les
+fiches. Les styles de la grille et des blocs réutilisent les variables de
+`resources/css/base/tokens.css` pour suivre le thème actif.
