@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use App\Models\FieldDefinition;
 use App\Models\Project;
 use App\Models\Tag;
 use App\Models\TemplateVersion;
@@ -390,6 +391,14 @@ class ContentRecoveryController extends Controller
             ->join('project_ideas', 'project_ideas.id', '=', 'project_idea_conversions.idea_id')
             ->first(['project_ideas.id', 'project_ideas.title', 'project_ideas.archived_at']);
         $content->setAttribute('origin_idea', $origin);
+
+        if ($content->templateAssignment) {
+            $current = $content->templateAssignment->templateVersion->fields
+                ->filter(fn ($field) => $field->fieldDefinition !== null)->pluck('field_definition_id');
+            $archived = $content->fieldValues->pluck('field_definition_id')->diff($current);
+            $content->setAttribute('archived_field_definitions', $archived->isEmpty() ? [] :
+                FieldDefinition::withTrashed()->whereKey($archived->all())->get(['id', 'label', 'value_type', 'options_data']));
+        }
 
         return response()->json($content)->header(
             'ETag',

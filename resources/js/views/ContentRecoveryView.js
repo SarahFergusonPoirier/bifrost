@@ -304,6 +304,19 @@ export default {
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }
 
+        const archivedFields = computed(() => {
+            const values = new Map((selected.value?.field_values ?? []).map(value => [value.field_definition_id, value]));
+            return (selected.value?.archived_field_definitions ?? []).map(definition => ({
+                id: definition.id,
+                label: definition.label,
+                value: formatHistoricalValue({
+                    column: fieldColumns[definition.value_type],
+                    format: definition.options_data?.format,
+                    field_definition: definition,
+                }, values.get(definition.id)),
+            }));
+        });
+
         function formatHistoricalValue(field, entry) {
             let value = entry?.[field.column] ?? '';
             if (field.column === 'value_json' && typeof value === 'string' && value !== '') {
@@ -561,7 +574,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

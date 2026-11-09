@@ -263,6 +263,15 @@
             <p v-if="selected.template_assignment">
                 Modèle · Version {{ selected.template_assignment.template_version.version_number }}
             </p>
+            <details v-if="archivedFields.length">
+                <summary>Valeurs des champs retirés ({{ archivedFields.length }})</summary>
+                <dl>
+                    <template v-for="field in archivedFields" :key="field.id">
+                        <dt>{{ field.label }}</dt>
+                        <dd>{{ field.value }}</dd>
+                    </template>
+                </dl>
+            </details>
             <details v-if="selected.template_assignment">
                 <summary>Changer de version du modèle</summary>
                 <button type="button" :disabled="busy || saving || dirty" @click="loadUpgradeVersions">Rechercher les versions publiées</button>

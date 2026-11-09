@@ -144,6 +144,9 @@ class TemplateUsageTest extends TestCase
         $this->assertSame('À garder', $content->fieldValues()->sole()->value_text);
         $this->assertEquals($second->id, $content->templateAssignment()->sole()->template_version_id);
         $this->assertDatabaseCount('content_template_update_events', 1);
+        $this->getJson("/api/contents/{$content->public_id}")->assertOk()
+            ->assertJsonPath('archived_field_definitions.0.id', $old->id)
+            ->assertJsonPath('archived_field_definitions.0.label', 'Ancien');
 
         $edit = ['title' => 'Fiche éditée', 'summary' => null];
         $this->patchJson("/api/contents/{$content->public_id}", $edit + [
