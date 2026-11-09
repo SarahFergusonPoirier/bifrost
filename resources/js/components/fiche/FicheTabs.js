@@ -11,7 +11,7 @@ const fallbackTabs = [
 
 export default {
     components: { WorkspaceIcon },
-    props: { path: String, templatesPath: String, active: String, canCopy: Boolean },
+    props: { path: String, templatesPath: String, active: String, canCopy: Boolean, getDefaultPlacements: Function },
     emits: ['select', 'copied'],
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
     computed: {
@@ -153,17 +153,24 @@ export default {
             this.removalId = null;
             this.removalDestination = null;
         },
+        removalPlacements(target, source) {
+            const added = source.placements ?? [];
+            const defaults = this.getDefaultPlacements?.() ?? [];
+            const existing = target.placements ?? defaultPlacementsFor(target.id, defaults)
+                .filter(placement => !added.some(item => item.source === placement.source));
+            return [...existing, ...added];
+        },
         removalTargets(tab) {
-            const defaults = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
+            const defaultTabs = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
             return this.tabs.filter(target => target.id !== tab.id
-                && (target.placements || !defaults.includes(target.id))
-                && (target.placements?.length ?? 0) + (tab.placements?.length ?? 0) <= 80);
+                && (target.placements || this.getDefaultPlacements || !defaultTabs.includes(target.id))
+                && this.removalPlacements(target, tab).length <= 80);
         },
         remove(tab) {
             if (this.removalDestination) {
                 const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
                 if (!target) return;
-                target.placements = [...(target.placements ?? []), ...(tab.placements ?? [])];
+                target.placements = this.removalPlacements(target, tab);
             }
 
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
