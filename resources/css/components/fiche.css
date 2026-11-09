@@ -151,6 +151,21 @@
         display: none;
     }
 
+    .fiche-tabs button {
+        flex: 0 0 auto;
+        max-inline-size: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .fiche-block__header {
+        flex-wrap: wrap;
+    }
+
+    .fiche-block__header h2 {
+        min-inline-size: min(8rem, 100%);
+    }
+
     .fiche-tab-settings__row > :is(label, .fiche-tab-removal) {
         flex: 1 1 100%;
         min-width: 0;
