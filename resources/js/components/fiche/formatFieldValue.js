@@ -1,6 +1,9 @@
 export function formatFieldValue(field, value, state, fieldReferences) {
     if (state) return state === 'unknown' ? 'Inconnu' : 'Non applicable';
     if (value === '') return '—';
+    if (field.column === 'value_date' && typeof value === 'string') {
+        return /^(\d{4}-\d{2}-\d{2})(?:T|$)/.exec(value)?.[1] ?? value;
+    }
     if (field.column === 'reference_content_id' || field.format === 'references') {
         return fieldReferences(field, value).map(item => item.title).join(', ') || '—';
     }
