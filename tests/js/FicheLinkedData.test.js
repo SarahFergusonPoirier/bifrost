@@ -23,7 +23,7 @@ it('shows a compact preview, expanding only if there is no complete tab', async 
 
 it('sorts timeline entries by date or importance and keeps approximate dates labelled', async () => {
     contentRequest.mockResolvedValue({ data: { timeline: [
-        { key: 'unknown', title: 'Inconnu', date: {} },
+        { key: 'unknown', title: 'Inconnu', date: null },
         { key: 'recent', title: 'Retour', importance: 'minor', date: { start: '2020' } },
         { key: 'early', title: 'Rencontre', importance: 'major', date: { start: '2000', precision: 'approximate' } },
     ] } });

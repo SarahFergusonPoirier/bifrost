@@ -27,8 +27,8 @@ export default {
                     if (difference) return difference;
                 }
 
-                const start = a.date.start || a.date.end;
-                const end = b.date.start || b.date.end;
+                const start = a.date?.start || a.date?.end;
+                const end = b.date?.start || b.date?.end;
                 if (!start || !end) return Number(Boolean(end)) - Number(Boolean(start));
                 const calendarOrder = dateOrder.compare(a.date.calendar ?? '', b.date.calendar ?? '');
                 if (calendarOrder) return calendarOrder;
