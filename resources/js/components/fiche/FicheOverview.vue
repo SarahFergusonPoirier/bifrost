@@ -115,13 +115,13 @@
                 </label>
                 <label><input v-model="placement.hidden" type="checkbox" /> Masqué</label>
                 <label><input v-model="placement.collapsed" type="checkbox" /> Réduit</label>
-                <button type="button" :disabled="index === 0" @click="move(index, index - 1)">Monter</button>
-                <button type="button" :disabled="index === draft.length - 1" @click="move(index, index + 1)">Descendre</button>
+                <button type="button" :disabled="index === 0" @click="move(index, index - 1)" :aria-label="'Monter ' + (placement.title || bySource.get(placement.source)?.title || 'le bloc')">Monter</button>
+                <button type="button" :disabled="index === draft.length - 1" @click="move(index, index + 1)" :aria-label="'Descendre ' + (placement.title || bySource.get(placement.source)?.title || 'le bloc')">Descendre</button>
                 <button v-if="destination" type="button" @click="transfer(index, false)">Déplacer vers l’onglet</button>
                 <button v-if="destination" type="button" @click="transfer(index, true)">Afficher aussi (données partagées)</button>
                 <button v-if="canCopy && draft.length < 80 && (placement.source === 'summary' || placement.source.startsWith('text:')) && bySource.has(placement.source) && !copies.some(copy => placement.source === 'text:' + copy.id)"
                     type="button" @click="duplicate(index)">Dupliquer indépendamment</button>
-                <button type="button" @click="draft.splice(index, 1)">Retirer</button>
+                <button type="button" @click="draft.splice(index, 1)" :aria-label="'Retirer ' + (placement.title || bySource.get(placement.source)?.title || 'le bloc')">Retirer</button>
             </li>
         </ol>
         <div class="fiche-grid-actions">
