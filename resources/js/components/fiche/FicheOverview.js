@@ -1,3 +1,4 @@
+import { identitySectionTitle } from './identitySection';
 import { defaultPlacementsFor } from './fichePlacementDefaults';
 import FicheFieldHistory from './FicheFieldHistory.vue';
 import FicheTags from './FicheTags.vue';
@@ -48,10 +49,11 @@ export default {
     data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
     computed: {
         cards() {
+            const identityTitle = identitySectionTitle(this.templateSections);
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
                 source: 'section:' + title,
                 aliases: [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
-                fullName: title === 'Identité' ? this.fullName : null,
+                fullName: title === identityTitle ? this.fullName : null,
                 title,
                 icon: 'catalogue',
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({

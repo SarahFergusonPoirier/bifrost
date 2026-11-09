@@ -1,3 +1,4 @@
+import { identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
 import FicheText from '../components/fiche/FicheText.vue';
@@ -251,7 +252,7 @@ export default {
         )?.[field.column] ?? '';
         const suggestedFullName = computed(() => {
             if (!draft.value) return '';
-            const fields = templateSections.value.get('Identité') ?? [];
+            const fields = templateSections.value.get(identitySectionTitle(templateSections.value)) ?? [];
             const names = ['Prénom', 'Nom de famille'].map(label => {
                 const field = fields.find(item => item.column === 'value_text' && item.field_definition.label === label);
                 return field ? String(fieldValue(field)).trim() : '';
@@ -299,7 +300,7 @@ export default {
         function effectiveFieldValue(field) {
             const value = fieldValue(field);
             if (value !== '' || fieldState(field) || field.field_definition.key !== 'character-age') return value;
-            const birthField = (templateSections.value.get('Identité') ?? []).find(item =>
+            const birthField = (templateSections.value.get(identitySectionTitle(templateSections.value)) ?? []).find(item =>
                 item.field_definition.label === 'Date de naissance' && item.format === 'temporal');
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }
