@@ -67,6 +67,22 @@
             </fieldset>
         </form>
     </details>
+    <details v-if="layout?.version" class="fiche-tab-settings" @toggle="$event.target.open && !revisions && loadRevisions()">
+        <summary>Historique des dispositions</summary>
+        <button v-if="!revisions" type="button" @click="loadRevisions()">Charger les versions</button>
+        <template v-else>
+            <p v-if="!revisions.data.length">Aucune disposition antérieure.</p>
+            <ul v-else>
+                <li v-for="revision in revisions.data" :key="revision.version">
+                    Version {{ revision.version }} · {{ revision.tabs.map(tab => tab.title).join(', ') }}
+                    <time :datetime="revision.created_at">{{ revision.created_at }}</time>
+                    <button type="button" :disabled="saving" @click="restoreRevision(revision)">Restaurer</button>
+                </li>
+            </ul>
+            <button type="button" :disabled="revisions.current_page <= 1" @click="loadRevisions(revisions.current_page - 1)">Page précédente</button>
+            <button type="button" :disabled="revisions.current_page >= revisions.last_page" @click="loadRevisions(revisions.current_page + 1)">Page suivante</button>
+        </template>
+    </details>
     <slot :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
         :persist="layout && !saving ? (next, transfers, defaults, copies) => savePlacements(next, transfers, defaults, copies) : null" />
 </template>

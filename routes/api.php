@@ -112,3 +112,4 @@ Route::get('/projects/{project}/contents/{content}/fiche-links', [FicheLinkedDat
 Route::get('/projects/{project}/fiche-tab-templates', [FicheTabTemplateController::class, 'index']);
 Route::post('/projects/{project}/contents/{content}/fiche-tab-templates', [FicheTabTemplateController::class, 'store']);
 Route::get('/contents/{content}/attachments/{attachment}/preview', [ContentAttachmentController::class, 'preview']);
+Route::get('/projects/{project}/contents/{content}/fiche-layout/revisions', [FicheLayoutController::class, 'history'])->whereNumber('project');

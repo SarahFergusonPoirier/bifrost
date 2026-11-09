@@ -54,6 +54,11 @@ class FicheLayoutTest extends TestCase
         $this->putJson($url, ['version' => 1, 'tabs' => [$layout['tabs'][1]]])->assertUnprocessable();
         $this->putJson($url, ['version' => 1, 'tabs' => [$custom]])->assertOk();
         $this->assertSame('Un résumé', $content->fresh()->summary);
+        $history = $this->getJson("$url/revisions")->assertOk()->assertJsonPath('data.0.version', 1)
+            ->assertJsonPath('data.1.version', 0)->json('data.0.tabs');
+        $this->putJson($url, ['version' => 2, 'tabs' => $history])->assertOk()
+            ->assertJsonPath('version', 3)->assertJsonPath('tabs', $layout['tabs']);
+        $this->assertSame('Un résumé', $content->fresh()->summary);
     }
 
     public function test_linked_tabs_use_directional_labels_and_project_timeline_sources(): void

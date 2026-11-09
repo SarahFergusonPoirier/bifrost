@@ -15,6 +15,20 @@ class FicheLayoutController extends Controller
         return response()->json($this->layout($this->content($project, $content)));
     }
 
+    public function history(string $project, string $content): JsonResponse
+    {
+        $record = $this->content($project, $content);
+        $revisions = DB::table('fiche_layout_revisions')->where('content_id', $record->id)
+            ->orderByDesc('version')->paginate(20)
+            ->through(fn (object $revision): array => [
+                'version' => (int) $revision->version,
+                'tabs' => json_decode($revision->tabs, true, flags: JSON_THROW_ON_ERROR),
+                'created_at' => $revision->created_at,
+            ]);
+
+        return response()->json($revisions);
+    }
+
     public function update(Request $request, string $project, string $content): JsonResponse
     {
         $input = $request->validate([
@@ -63,6 +77,13 @@ class FicheLayoutController extends Controller
             $record = $this->content($project, $content, lock: true);
             $current = $this->layout($record);
             abort_if((int) $input['version'] !== $current['version'], 409, 'La disposition a changé depuis son ouverture.');
+
+            DB::table('fiche_layout_revisions')->insert([
+                'content_id' => $record->id,
+                'version' => $current['version'],
+                'tabs' => json_encode($current['tabs'], JSON_THROW_ON_ERROR),
+                'created_at' => now(),
+            ]);
 
             $version = $current['version'] + 1;
             $tabs = array_map(function (array $tab): array {

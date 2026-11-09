@@ -12,7 +12,7 @@ export default {
     components: { WorkspaceIcon },
     props: { path: String, templatesPath: String, active: String, canCopy: Boolean },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, removalId: null, removalDestination: null }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, removalId: null, removalDestination: null, revisions: null }),
     computed: {
         hasPendingText() {
             return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
@@ -64,6 +64,18 @@ export default {
             } catch (error) {
                 this.error = error.message;
             }
+        },
+        async loadRevisions(page = 1) {
+            this.error = '';
+            try {
+                this.revisions = (await contentRequest(this.path + '/revisions?page=' + page)).data;
+            } catch (error) {
+                this.error = error.message;
+            }
+        },
+        async restoreRevision(revision) {
+            if (this.saving || !window.confirm('Restaurer la disposition de la version ' + revision.version + ' ?')) return;
+            if (await this.save(revision.tabs)) await this.loadRevisions();
         },
         async loadTemplates() {
             if (this.templates) return;
@@ -171,6 +183,7 @@ export default {
             try {
                 const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs, copies });
                 this.accept(data);
+                this.revisions = null;
                 if (copies.length) this.$emit('copied');
                 return true;
             } catch (error) {
