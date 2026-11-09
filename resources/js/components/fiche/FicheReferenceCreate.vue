@@ -1,7 +1,8 @@
 <template>
     <details v-if="types.length">
         <summary>Créer une fiche liée</summary>
-        <fieldset :disabled="busy">
+        <p v-if="full">Ce champ contient déjà le maximum de 200 références.</p>
+        <fieldset :disabled="busy || full">
             <legend>Nouvelle fiche</legend>
             <label>Nom <input v-model.trim="title" maxlength="255" @keydown.enter.prevent="create" /></label>
             <label>Type
@@ -20,7 +21,7 @@
 import { ref } from 'vue';
 import { contentRequest } from '../../services/contentRecovery';
 
-const props = defineProps({ projectId: String, types: { type: Array, required: true } });
+const props = defineProps({ projectId: String, full: Boolean, types: { type: Array, required: true } });
 const emit = defineEmits(['created']);
 const title = ref('');
 const typeId = ref(null);
@@ -28,7 +29,7 @@ const busy = ref(false);
 const error = ref('');
 
 async function create() {
-    if (busy.value || !title.value || !props.types.some(type => type.id === typeId.value)) return;
+    if (busy.value || props.full || !title.value || !props.types.some(type => type.id === typeId.value)) return;
     busy.value = true;
     error.value = '';
     try {

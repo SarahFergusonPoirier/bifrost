@@ -384,7 +384,7 @@
                                     :value="fieldValue(field)" @input="setField(field, $event.target.value)" />
                             </label>
                             <FicheReferenceCreate v-if="projectId && field.display_options?.allow_reference_creation && (field.format === 'references' || field.column === 'reference_content_id')"
-                                :key="selected.public_id + ':' + field.id" :project-id="projectId" :types="referenceCreationTypes(field)"
+                                :key="selected.public_id + ':' + field.id" :project-id="projectId" :types="referenceCreationTypes(field)" :full="referenceFieldIsFull(field)"
                                 @created="useCreatedReference(field, $event)" />
                             <small v-if="field.help_text">{{ field.help_text }}</small>
                             </template>
