@@ -29,7 +29,12 @@ export default {
                 const start = a.date.start || a.date.end;
                 const end = b.date.start || b.date.end;
                 if (!start || !end) return Number(Boolean(end)) - Number(Boolean(start));
-                const order = dateOrder.compare(start, end);
+                const calendarOrder = dateOrder.compare(a.date.calendar ?? '', b.date.calendar ?? '');
+                if (calendarOrder) return calendarOrder;
+                const firstOrder = a.date.order == null ? null : Number(a.date.order);
+                const secondOrder = b.date.order == null ? null : Number(b.date.order);
+                if ((firstOrder === null) !== (secondOrder === null)) return firstOrder === null ? 1 : -1;
+                const order = (firstOrder !== null ? firstOrder - secondOrder : 0) || dateOrder.compare(start, end);
                 return this.sort === 'recent' ? -order : order;
             });
         },

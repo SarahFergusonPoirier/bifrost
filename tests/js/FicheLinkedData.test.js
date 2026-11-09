@@ -110,3 +110,15 @@ it('saves directional labels in canonical order from the inverse fiche', async (
         properties: { role: null, status: null, start: null, end: null, note: null, forward_label: 'Élève', inverse_label: 'Guide' },
     });
 });
+
+it('uses explicit calendar positions ahead of labels for fictional dates', async () => {
+    contentRequest.mockResolvedValue({ data: { timeline: [
+        { key: 'a', title: 'Après', date: { start: 'Aube', calendar: 'Brumes', order: 10 } },
+        { key: 'b', title: 'Avant', date: { start: 'Crépuscule', calendar: 'Brumes', order: 0 } },
+    ] } });
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'timeline', full: true } });
+    await flushPromises();
+    expect(wrapper.findAll('li')[0].text()).toContain('Avant');
+    await wrapper.setProps({ sort: 'recent' });
+    expect(wrapper.findAll('li')[0].text()).toContain('Après');
+});

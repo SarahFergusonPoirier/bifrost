@@ -71,7 +71,7 @@ class FicheLinkedDataController extends Controller
             ->map(fn (ContentFieldValue $field): array => [
                 'key' => 'field-'.$field->id,
                 'title' => $field->value_json['timeline_title'] ?? $field->fieldDefinition->label,
-                'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'precision', 'calendar'])),
+                'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'precision', 'calendar', 'order'])),
             ]);
 
         $events = DB::table('project_timeline_events')->where('project_id', $project->id)->whereNull('deleted_at')
