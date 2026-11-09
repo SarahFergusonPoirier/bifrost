@@ -1,3 +1,4 @@
+import { fieldCalculation } from '../components/fiche/characterAge';
 import { identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getContentTemplate, getContentTemplates } from '../services/contentTemplate';
@@ -74,7 +75,7 @@ export default {
                         levels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels,
                         originalLevels: field.display_options?.scale_levels ?? field.field_definition?.options_data?.levels ?? 5,
                         levelDescriptions: (field.display_options?.level_descriptions ?? []).join('\n'),
-                        calculation: field.display_options?.calculation ?? (field.field_definition?.key === 'character-age' ? 'age' : 'none'),
+                        calculation: fieldCalculation(field),
                         historyView: field.display_options?.history_view ?? 'current',
                         badgeColor: field.display_options?.badge_color ?? '',
                         repeatableLevelMode: field.display_options?.repeatable_level_mode ?? 'text',

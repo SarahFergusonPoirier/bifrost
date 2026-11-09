@@ -23,3 +23,8 @@ export function birthDateField(sections, identityTitle) {
         && [field.field_definition.label, field.label_override].includes('Date de naissance');
     return identityField(sections, identityTitle, isBirthDate);
 }
+
+export function fieldCalculation(field) {
+    return field.display_options?.calculation
+        ?? (field.field_definition?.key === 'character-age' ? 'age' : 'none');
+}

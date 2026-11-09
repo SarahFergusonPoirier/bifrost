@@ -45,8 +45,7 @@
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
                     <label v-if="field.type === 'number'">Calcul automatique
-                        <select v-model="field.calculation">
-                            <option :value="undefined" disabled>Choisir un calcul</option>
+                        <select :value="field.calculation ?? 'none'" @change="field.calculation = $event.target.value">
                             <option value="none">Aucun</option>
                             <option value="age">Âge à partir de la date de naissance</option>
                         </select>
