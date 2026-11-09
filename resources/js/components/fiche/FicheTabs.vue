@@ -11,7 +11,7 @@
         <form @submit.prevent="saveTabs">
             <fieldset :disabled="saving">
                 <legend>Disposition des onglets</legend>
-                <div v-for="(tab, index) in tabs" :key="tab.id" class="fiche-tab-settings__row">
+                <div v-for="(tab, index) in tabs" :key="tab.id" class="fiche-tab-settings__row" role="group" :aria-label="tab.title || 'Nouvel onglet'">
                     <label>Titre <input v-model.trim="tab.title" required maxlength="80" /></label>
                     <label>Icône
                         <select v-model="tab.icon">
@@ -19,9 +19,9 @@
                         </select>
                     </label>
                     <label><input v-model="tab.hidden" type="checkbox" /> Masqué</label>
-                    <button type="button" :disabled="index === 0" @click="move(index, -1)">Monter</button>
-                    <button type="button" :disabled="index === tabs.length - 1" @click="move(index, 1)">Descendre</button>
-                    <button type="button" @click="requestRemoval(tab)">Supprimer</button>
+                    <button type="button" :disabled="index === 0" @click="move(index, -1)" :aria-label="`Monter « ${tab.title} »`">Monter</button>
+                    <button type="button" :disabled="index === tabs.length - 1" @click="move(index, 1)" :aria-label="`Descendre « ${tab.title} »`">Descendre</button>
+                    <button type="button" @click="requestRemoval(tab)" :aria-label="`Supprimer « ${tab.title} »`">Supprimer</button>
                     <div v-if="removalId === tab.id" class="fiche-tab-removal">
                         <p>Retirer « {{ tab.title }} » de la fiche ?</p>
                         <p>{{ tab.placements?.length ?? 0 }} placement(s) personnalisé(s). Les données enregistrées sont conservées.</p>
