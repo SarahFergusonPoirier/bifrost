@@ -36,8 +36,8 @@
             <li v-for="(placement, index) in draft" :key="placement.id"
                 draggable="true" @dragstart="startDrag($event, index)" @dragover.prevent @drop.prevent="drop(index)" @dragend="dragged = null">
                 <strong>{{ bySource.get(placement.source)?.title ?? 'Bloc indisponible' }}</strong>
-                <label>Largeur <input v-model.number="placement.width" required type="number" min="1" max="12" /></label>
-                <label>Hauteur <input v-model.number="placement.height" required type="number" min="1" max="12" /></label>
+                <label>Largeur en colonnes <input v-model.number="placement.width" required type="number" min="1" max="12" /></label>
+                <label>Hauteur en rangées <input v-model.number="placement.height" required type="number" min="1" max="12" /></label>
                 <label>Titre affiché <input v-model.trim="placement.title" maxlength="80"
                     :placeholder="bySource.get(placement.source)?.title" /></label>
                 <label>Icône
