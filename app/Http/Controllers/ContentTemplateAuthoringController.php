@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContentTemplate;
+use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\TemplateVersion;
 use Illuminate\Http\JsonResponse;
@@ -71,13 +72,15 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view,reference_types'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.reference_types' => ['sometimes', 'array', 'list', 'max:100'],
+            'fields.*.reference_types.*' => ['required', 'integer', 'exists:content_types,id'],
             'fields.*.history_view' => ['sometimes', 'in:current,history'],
             'fields.*.scale_strategy' => ['sometimes', 'in:preserve'],
             'fields.*.levels' => ['sometimes', 'integer', 'between:2,20'],
@@ -104,14 +107,25 @@ class ContentTemplateAuthoringController extends Controller
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
             $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link'], true);
+            $options = $structured ? ['format' => $field['type']] : [];
+            if ($field['type'] === 'scale') {
+                $options['levels'] = (int) ($field['levels'] ?? 5);
+            }
+            if (in_array($field['type'], ['reference', 'references'], true) && ! empty($field['reference_types'])) {
+                $ids = array_unique(array_map('intval', $field['reference_types']));
+                $available = ContentType::whereKey($ids)->where(fn ($query) => $query
+                    ->whereIn('scope_type', ['system', 'global'])
+                    ->orWhere(fn ($local) => $local->where('scope_type', 'project')->where('project_id', $template->project_id)));
+                if ($available->count() !== count($ids)) {
+                    throw ValidationException::withMessages(['fields' => 'Un type de référence est hors de la portée du modèle.']);
+                }
+                $options['content_type_ids'] = array_values($ids);
+            }
             $definition = $original?->fieldDefinition ?? FieldDefinition::create([
                 'key' => 'custom-'.Str::uuid(),
                 'label' => $field['label'],
                 'value_type' => $structured ? 'json' : $field['type'],
-                'options_data' => $structured ? [
-                    'format' => $field['type'],
-                    ...($field['type'] === 'scale' ? ['levels' => (int) ($field['levels'] ?? 5)] : []),
-                ] : null,
+                'options_data' => $options ?: null,
                 'scope_type' => $template->scope_type,
                 'project_id' => $template->project_id,
                 'universe_id' => $template->universe_id,

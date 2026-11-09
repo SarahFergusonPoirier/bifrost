@@ -359,7 +359,7 @@
                             <fieldset v-else-if="field.column === 'value_json'">
                                 <legend>{{ field.label_override || field.field_definition.label }}</legend>
                                 <StructuredField :format="field.format" :value="fieldValue(field) || null"
-                                    :content-id="selected.public_id" :targets="referenceTargets" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
+                                    :content-id="selected.public_id" :targets="allowedTargets(field)" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
                             </fieldset>
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}

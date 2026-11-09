@@ -353,7 +353,7 @@ export default {
         function allowedTargets(field) {
             const allowed = field.field_definition?.options_data?.content_type_ids ?? [];
             return [...new Map(treeContents.value.map(item => [item.id, item])).values()]
-                .filter(item => !allowed.length || allowed.some(id => Number(id) === item.content_type_id));
+                .filter(item => item.public_id !== selected.value?.public_id && (!allowed.length || allowed.some(id => Number(id) === Number(item.content_type_id))));
         }
 
         function setField(field, value) {

@@ -48,6 +48,11 @@
                         <input type="number" min="2" max="20" required :value="field.levels ?? 5"
                             @input="field.levels = $event.target.valueAsNumber" />
                     </label>
+                    <label v-if="!field.id && ['reference', 'references'].includes(field.type)">Types de fiches autorisés (aucune sélection = tous)
+                        <select v-model="field.referenceTypes" multiple>
+                            <option v-for="type in availableTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
+                        </select>
+                    </label>
                     <label>Historique du champ
                         <select v-model="field.historyView">
                             <option value="current">Valeur actuelle</option>

@@ -78,6 +78,7 @@ export default {
                         badgeColor: field.display_options?.badge_color ?? '',
                         repeatableLevelMode: field.display_options?.repeatable_level_mode ?? 'text',
                         scaleDisplay: field.display_options?.scale_display ?? 'both',
+                        referenceTypes: field.field_definition?.options_data?.content_type_ids ?? [],
                         choicesText: (field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? []).join('\n'),
                         help: field.help_text ?? '', required: Boolean(field.is_required),
                     })),
@@ -137,8 +138,9 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, historyView, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, historyView, referenceTypes, ...field }) => ({
                     ...field,
+                    ...(!field.id && ['reference', 'references'].includes(field.type) ? { reference_types: referenceTypes ?? [] } : {}),
                     ...(historyView === 'history' ? { history_view: 'history' } : historyView === 'current' ? { history_view: 'current' } : {}),
                     ...(field.type === 'repeatable' ? { repeatable_level_mode: repeatableLevelMode ?? 'text' } : {}),
                     ...(field.type === 'choice' ? { badge_color: badgeColor || null } : {}),
