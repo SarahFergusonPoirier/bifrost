@@ -153,24 +153,23 @@ export default {
             this.removalId = null;
             this.removalDestination = null;
         },
-        removalPlacements(target, source) {
-            const added = source.placements ?? [];
-            const defaults = this.getDefaultPlacements?.() ?? [];
+        mergePlacements(target, added, defaults) {
             const existing = target.placements ?? defaultPlacementsFor(target.id, defaults)
                 .filter(placement => !added.some(item => item.source === placement.source));
             return [...existing, ...added];
         },
         removalTargets(tab) {
+            const defaults = this.getDefaultPlacements?.();
             const defaultTabs = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
             return this.tabs.filter(target => target.id !== tab.id
-                && (target.placements || this.getDefaultPlacements || !defaultTabs.includes(target.id))
-                && this.removalPlacements(target, tab).length <= 80);
+                && (target.placements || defaults || !defaultTabs.includes(target.id))
+                && this.mergePlacements(target, tab.placements ?? [], defaults ?? []).length <= 80);
         },
         remove(tab) {
             if (this.removalDestination) {
                 const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
                 if (!target) return;
-                target.placements = this.removalPlacements(target, tab);
+                target.placements = this.mergePlacements(target, tab.placements ?? [], this.getDefaultPlacements?.() ?? []);
             }
 
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
@@ -181,9 +180,7 @@ export default {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
                 if (!added.length) return tab;
-                const existing = tab.placements ?? defaultPlacementsFor(tab.id, defaults)
-                    .filter(placement => !added.some(item => item.source === placement.source));
-                return { ...tab, placements: [...existing, ...added] };
+                return { ...tab, placements: this.mergePlacements(tab, added, defaults) };
             }), copies);
         },
         saveTabs() {
