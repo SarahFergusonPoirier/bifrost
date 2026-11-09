@@ -72,13 +72,14 @@ class ContentTemplateAuthoringController extends Controller
     {
         return $request->validate([
             'fields' => ['present', 'array', 'list', 'max:200'],
-            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view,reference_types'],
+            'fields.*' => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,history_view,reference_types,allow_reference_creation'],
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
+            'fields.*.allow_reference_creation' => ['sometimes', 'boolean'],
             'fields.*.reference_types' => ['sometimes', 'array', 'list', 'max:100'],
             'fields.*.reference_types.*' => ['required', 'integer', 'exists:content_types,id'],
             'fields.*.history_view' => ['sometimes', 'in:current,history'],
@@ -162,6 +163,11 @@ class ContentTemplateAuthoringController extends Controller
 
             if (isset($field['history_view'])) {
                 $display['history_view'] = $field['history_view'];
+            }
+
+            if (isset($field['allow_reference_creation']) && ($definition->value_type === 'reference'
+                || ($definition->options_data['format'] ?? null) === 'references')) {
+                $display['allow_reference_creation'] = (bool) $field['allow_reference_creation'];
             }
 
             $version->fields()->create([

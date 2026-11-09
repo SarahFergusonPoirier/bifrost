@@ -53,6 +53,9 @@
                             <option v-for="type in availableTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
                         </select>
                     </label>
+                    <label v-if="['reference', 'references'].includes(field.type)">
+                        <input v-model="field.allowReferenceCreation" type="checkbox" /> Autoriser la création depuis la fiche
+                    </label>
                     <label>Historique du champ
                         <select v-model="field.historyView">
                             <option value="current">Valeur actuelle</option>

@@ -1,3 +1,4 @@
+import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
 import FicheText from '../components/fiche/FicheText.vue';
 import { ageFromBirthDate } from '../components/fiche/characterAge';
@@ -20,7 +21,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { FicheReferencePicker, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheReferenceCreate, FicheReferencePicker, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -356,6 +357,20 @@ export default {
                 .filter(item => item.public_id !== selected.value?.public_id && (!allowed.length || allowed.some(id => Number(id) === Number(item.content_type_id))));
         }
 
+        function referenceCreationTypes(field) {
+            const ids = field.field_definition?.options_data?.content_type_ids ?? [];
+            return types.value.filter(type => !ids.length || ids.some(id => Number(id) === Number(type.id)));
+        }
+
+        function useCreatedReference(field, content) {
+            if (!draft.value || Number(content.project_id) !== Number(projectId.value)) return;
+            if (!treeContents.value.some(item => item.public_id === content.public_id)) {
+                treeContents.value = [...treeContents.value, { ...content, folder_id: null }];
+            }
+            const current = fieldValue(field);
+            setField(field, field.format === 'references' ? [...(Array.isArray(current) ? current : []), content.public_id] : content.id);
+        }
+
         function setField(field, value) {
             const values = draft.value.field_values ??= [];
             const index = values.findIndex(item => item.field_definition_id === field.field_definition_id);
@@ -532,7 +547,7 @@ export default {
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
             ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
-            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
+            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;
