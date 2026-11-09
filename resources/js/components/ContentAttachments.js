@@ -1,7 +1,7 @@
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
-    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean },
+    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean, fit: String },
     emits: ['select-image'],
     data: () => ({ attachments: [], alt: '', caption: '', busy: false, error: '' }),
     computed: {

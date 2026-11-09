@@ -17,7 +17,7 @@
                     <option v-for="image in images" :key="image.public_id" :value="image.public_id">{{ image.original_name }}</option>
                 </select>
             </label>
-            <div v-if="displayedImages.length" class="fiche-gallery" :class="{ 'fiche-gallery--single': single }">
+            <div v-if="displayedImages.length" class="fiche-gallery" :class="{ 'fiche-gallery--single': single, 'fiche-gallery--cover': fit === 'cover' }">
                 <figure v-for="image in displayedImages" :key="image.public_id">
                     <a :href="download(image.public_id)">
                         <img :src="download(image.public_id) + '/preview'" :alt="image.metadata.alt ?? image.original_name" loading="lazy" />

@@ -221,7 +221,9 @@
 }
 
 .fiche-gallery figure { margin: 0; }
-.fiche-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-control); }
+.fiche-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-radius: var(--radius-control); }
+
+.fiche-gallery--cover:not(.fiche-gallery--single) img { object-fit: cover; }
 
 .fiche-gallery--single img {
     aspect-ratio: auto;
