@@ -39,11 +39,12 @@
             <label>Modèle de bloc
                 <select v-model="blockTemplateId">
                     <option :value="null">Choisir un modèle</option>
-                    <option v-for="template in blockTemplates" :key="template.id" :value="template.id">
+                    <option v-for="template in matchingBlockTemplates" :key="template.id" :value="template.id">
                         {{ template.name }} · {{ template.scope === 'global' ? 'Global' : 'Projet' }}
                     </option>
                 </select>
             </label>
+            <p v-if="query.trim() && blockTemplates.length && !matchingBlockTemplates.length" role="status">Aucun modèle enregistré ne correspond à cette recherche.</p>
             <div v-if="selectedBlockTemplate" aria-label="Aperçu du modèle de bloc">
                 <strong>{{ selectedBlockTemplate.title || bySource.get(selectedBlockTemplate.source)?.title || 'Bloc de texte' }}</strong>
                 <p>{{ selectedBlockTemplate.width }} colonnes × {{ selectedBlockTemplate.height }} rangées</p>

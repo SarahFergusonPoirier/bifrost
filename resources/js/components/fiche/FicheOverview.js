@@ -145,8 +145,12 @@ export default {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
         },
+        matchingBlockTemplates() {
+            const query = this.query.trim().toLocaleLowerCase('fr');
+            return this.blockTemplates.filter(template => template.name.toLocaleLowerCase('fr').includes(query));
+        },
         selectedLibraryEntry() {
-            return this.blockTemplates.find(template => template.id === this.blockTemplateId);
+            return this.matchingBlockTemplates.find(template => template.id === this.blockTemplateId);
         },
         selectedSavedPlacement() {
             return this.placements?.find(placement => placement.id === this.templatePlacementId);
