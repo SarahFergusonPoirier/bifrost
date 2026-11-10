@@ -74,6 +74,10 @@
                         → {{ selectedSavedPlacement.width }} × {{ selectedSavedPlacement.height }}.
                         Cette mise à jour s’applique aux prochains ajouts. Les placements existants restent indépendants.
                     </p>
+                    <p>
+                        Bloc actuel · {{ selectedBlockTemplate.title || bySource.get(selectedBlockTemplate.source)?.title || (selectedBlockTemplate.source.startsWith('blank:') ? 'Texte vierge' : selectedBlockTemplate.source) }}
+                        → {{ selectedSavedPlacement.title || bySource.get(selectedSavedPlacement.source)?.title || selectedSavedPlacement.source }}
+                    </p>
                     <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !blockTemplateName.trim()"
                         @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>
                 </template>
