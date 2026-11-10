@@ -61,7 +61,10 @@
         <details v-if="blockLibraryPath" @toggle="$event.target.open && loadBlockTemplates()">
             <summary>Modèles de blocs enregistrés</summary>
             <p v-if="loadingBlockTemplates" role="status">Chargement des modèles…</p>
-            <p v-if="libraryError" role="alert">{{ libraryError }}</p>
+            <p v-if="libraryError" role="alert">
+                {{ libraryError }}
+                <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate" @click="loadBlockTemplates">Recharger la bibliothèque</button>
+            </p>
             <label>Modèle de bloc
                 <select v-model="blockTemplateId">
                     <option :value="null">Choisir un modèle</option>

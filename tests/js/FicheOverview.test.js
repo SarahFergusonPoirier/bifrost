@@ -222,9 +222,9 @@ it('resolves an existing section placement after a model renames the section', (
 
 it('adds a reusable block as a new placement with its saved dimensions', async () => {
     const template = { source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
-    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify([
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json([
         { id: 1, name: 'Résumé large', scope: 'project', definition: { placements: [template] } },
-    ]), { headers: { 'Content-Type': 'application/json' } }));
+    ]));
     const persist = vi.fn().mockResolvedValue(true);
     try {
         const wrapper = mount(FicheOverview, {
@@ -239,7 +239,7 @@ it('adds a reusable block as a new placement with its saved dimensions', async (
         await library.trigger('toggle');
         await flushPromises();
         await library.get('select').setValue('1');
-        await library.get('button').trigger('click');
+        await library.findAll('button').find(button => button.text() === 'Ajouter ce modèle').trigger('click');
         await wrapper.get('form').trigger('submit');
 
         expect(fetch).toHaveBeenCalledWith('/api/library?kind=block', expect.anything());
