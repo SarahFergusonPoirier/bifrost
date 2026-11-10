@@ -332,7 +332,7 @@ export default {
             this.deletionImpact = null;
             try {
                 await contentRequest(this.blockDeletionPath + '/' + this.deletionId, 'DELETE', {
-                    version: impact.version, confirmed: true,
+                    version: impact.version, block_version: impact.block_version, confirmed: true,
                 });
                 this.deletionId = null;
                 this.$emit('block-deleted');

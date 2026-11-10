@@ -289,7 +289,7 @@ it('publishes a new block template revision using the selected saved placement',
 });
 
 it('requires a fresh impact check and confirmation before deleting an orphan text block', async () => {
-    const impact = { version: 4, placements: [], historical_versions: [], implicit_overview: false };
+    const impact = { version: 4, block_version: 'hash', placements: [], historical_versions: [], implicit_overview: false };
     const fetch = vi.spyOn(globalThis, 'fetch')
         .mockResolvedValueOnce(Response.json({ ...impact, historical_versions: [3] }))
         .mockResolvedValueOnce(Response.json(impact))
@@ -318,7 +318,7 @@ it('requires a fresh impact check and confirmation before deleting an orphan tex
         await flushPromises();
 
         expect(fetch).toHaveBeenLastCalledWith('/api/blocks/example', expect.objectContaining({
-            method: 'DELETE', body: JSON.stringify({ version: 4, confirmed: true }),
+            method: 'DELETE', body: JSON.stringify({ version: 4, block_version: 'hash', confirmed: true }),
         }));
         expect(wrapper.emitted('block-deleted')).toHaveLength(1);
         wrapper.unmount();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use App\Models\ContentBlock;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,22 +33,23 @@ class FicheLayoutController extends Controller
     public function blockImpact(string $project, string $content, string $block): JsonResponse
     {
         $record = $this->content($project, $content);
-        $record->blocks()->where('public_id', $block)->firstOrFail();
+        $text = $record->blocks()->where('public_id', $block)->where('block_type', 'text')->firstOrFail();
 
-        return response()->json($this->textBlockImpact($record, $block));
+        return response()->json($this->textBlockImpact($record, $text));
     }
 
     public function destroyBlock(Request $request, string $project, string $content, string $block): JsonResponse
     {
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
+            'block_version' => ['required', 'string', 'size:64'],
             'confirmed' => ['required', 'accepted'],
         ]);
 
         return DB::transaction(function () use ($project, $content, $block, $input): JsonResponse {
             $record = $this->content($project, $content, lock: true);
             $text = $record->blocks()->where('public_id', $block)->where('block_type', 'text')->firstOrFail();
-            $impact = $this->textBlockImpact($record, $block);
+            $impact = $this->textBlockImpact($record, $text);
             abort_if($impact['version'] !== (int) $input['version'], 409, 'La disposition a changé.');
             abort_if(
                 $impact['implicit_overview'] || $impact['placements'] || $impact['historical_versions'],
@@ -55,16 +57,17 @@ class FicheLayoutController extends Controller
                 'Ce bloc est encore utilisé dans une disposition actuelle ou historique.',
             );
 
+            abort_unless(hash_equals($impact['block_version'], $input['block_version']), 409, 'Le texte a changé depuis la vérification.');
             $text->forceDelete();
 
             return response()->json(null, 204);
         }, attempts: 3);
     }
 
-    private function textBlockImpact(Content $record, string $block): array
+    private function textBlockImpact(Content $record, ContentBlock $text): array
     {
         $layout = $this->layout($record);
-        $source = 'text:'.$block;
+        $source = 'text:'.$text->public_id;
         $placements = collect($layout['tabs'])->flatMap(fn (array $tab): array => collect($tab['placements'] ?? [])
             ->where('source', $source)
             ->map(fn (array $placement): array => [
@@ -85,6 +88,7 @@ class FicheLayoutController extends Controller
             'version' => $layout['version'],
             'placements' => $placements,
             'historical_versions' => $historicalVersions,
+            'block_version' => hash('sha256', json_encode([$text->title, $text->body], JSON_THROW_ON_ERROR)),
             'implicit_overview' => collect($layout['tabs'])->contains(
                 fn (array $tab): bool => $tab['id'] === 'overview' && ! isset($tab['placements']),
             ),
