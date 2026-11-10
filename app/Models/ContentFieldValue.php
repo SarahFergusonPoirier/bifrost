@@ -126,15 +126,16 @@ class ContentFieldValue extends Model
             'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label'.(match ($format) {
-                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',id,description,period,level,rank', 'bullets' => '', default => ',description'
+                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',id,description,period,date,level,rank', 'bullets' => '', default => ',description'
                 })],
-                'value_json.*.id' => ['sometimes', 'uuid', 'distinct:ignore_case'],
+                'value_json.*.id' => ['required_with:value_json.*.date', 'uuid', 'distinct:ignore_case'],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
                 'value_json.*.image' => ['nullable', 'uuid'],
                 'value_json.*.category' => ['nullable', 'string', 'max:120'],
                 'value_json.*.mastery' => ['nullable', 'integer', 'between:1,5'],
                 'value_json.*.period' => ['nullable', 'string', 'max:255'],
+                ...($format === 'repeatable' ? $this->temporalRules('value_json.*.date') : []),
                 'value_json.*.level' => ['nullable', 'string', 'max:120'],
                 'value_json.*.rank' => ['nullable', 'integer', 'between:1,5'],
             ],
@@ -152,17 +153,7 @@ class ContentFieldValue extends Model
                 'value_json.x' => ['sometimes', 'numeric'],
                 'value_json.y' => ['sometimes', 'numeric'],
             ],
-            'temporal' => [
-                'value_json' => ['array:precision,start,end,calendar,order,timeline,timeline_title,timeline_description', 'min:1'],
-                'value_json.precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown'],
-                'value_json.start' => ['sometimes', 'string', 'max:255'],
-                'value_json.end' => ['sometimes', 'string', 'max:255'],
-                'value_json.calendar' => ['sometimes', 'string', 'max:255'],
-                'value_json.order' => ['sometimes', 'integer', 'between:-1000000000,1000000000'],
-                'value_json.timeline' => ['sometimes', 'boolean'],
-                'value_json.timeline_title' => ['sometimes', 'string', 'max:255'],
-                'value_json.timeline_description' => ['sometimes', 'string', 'max:10000'],
-            ],
+            'temporal' => $this->temporalRules('value_json'),
             'references' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:200'],
                 'value_json.*' => ['required', 'uuid', 'distinct:ignore_case'],
@@ -214,5 +205,20 @@ class ContentFieldValue extends Model
     public function referenceContent(): BelongsTo
     {
         return $this->belongsTo(Content::class, 'reference_content_id');
+    }
+
+    private function temporalRules(string $path): array
+    {
+        return [
+            $path => ['array:precision,start,end,calendar,order,timeline,timeline_title,timeline_description', 'min:1'],
+            $path.'.precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown'],
+            $path.'.start' => ['sometimes', 'string', 'max:255'],
+            $path.'.end' => ['sometimes', 'string', 'max:255'],
+            $path.'.calendar' => ['sometimes', 'string', 'max:255'],
+            $path.'.order' => ['sometimes', 'integer', 'between:-1000000000,1000000000'],
+            $path.'.timeline' => ['sometimes', 'boolean'],
+            $path.'.timeline_title' => ['sometimes', 'string', 'max:255'],
+            $path.'.timeline_description' => ['sometimes', 'string', 'max:10000'],
+        ];
     }
 }
