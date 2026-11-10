@@ -58,7 +58,7 @@
                 <label>Portée
                     <select v-model="blockTemplateScope"><option value="project">Projet</option><option value="global">Globale</option></select>
                 </label>
-                <button type="button" :disabled="!templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate">Enregistrer le modèle de bloc</button>
+                <button type="button" :disabled="savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate">Enregistrer le modèle de bloc</button>
             </fieldset>
         </details>
         <label v-if="destinations.length">Onglet de destination

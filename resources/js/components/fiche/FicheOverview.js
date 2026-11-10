@@ -50,7 +50,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select'],
-    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '' }),
+    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false }),
     computed: {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -307,6 +307,8 @@ export default {
             }
         },
         async saveBlockTemplate() {
+            if (this.savingBlockTemplate || !this.templatePlacementId || !this.blockTemplateName.trim()) return;
+            this.savingBlockTemplate = true;
             this.libraryError = '';
             try {
                 const { data } = await contentRequest(this.blockSavePath, 'POST', {
@@ -318,6 +320,8 @@ export default {
                 this.blockTemplateName = '';
             } catch (error) {
                 this.libraryError = error.message;
+            } finally {
+                this.savingBlockTemplate = false;
             }
         },
         applyBlockTemplate() {
