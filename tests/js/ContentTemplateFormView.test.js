@@ -51,6 +51,7 @@ describe('ContentTemplateFormView.vue', () => {
             scope_type: 'global',
             project_id: null,
             universe_id: null,
+            versions: [{ published_at: '2026-11-09T00:00:00Z' }],
         });
         createContentTemplate.mockResolvedValue({ id: 9 });
         updateContentTemplate.mockResolvedValue({ id: 8 });
@@ -93,6 +94,9 @@ describe('ContentTemplateFormView.vue', () => {
 
         expect(wrapper.find('h1').text()).toBe('Modifier le modèle');
         expect(wrapper.find('#content-template-name').element.value).toBe('Modèle existant');
+
+        expect(wrapper.get('#content-template-type').element.disabled).toBe(true);
+        expect(wrapper.get('#content-template-name').element.disabled).toBe(false);
 
         await wrapper.find('#content-template-name').setValue('Modèle modifié');
         await wrapper.find('form').trigger('submit');
