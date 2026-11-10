@@ -35,6 +35,7 @@
         </details>
         <details v-if="blockLibraryPath" @toggle="$event.target.open && loadBlockTemplates()">
             <summary>Modèles de blocs enregistrés</summary>
+            <p v-if="loadingBlockTemplates" role="status">Chargement des modèles…</p>
             <p v-if="libraryError" role="alert">{{ libraryError }}</p>
             <label>Modèle de bloc
                 <select v-model="blockTemplateId">
@@ -65,7 +66,7 @@
                 <label>Portée
                     <select v-model="blockTemplateScope"><option value="project">Projet</option><option value="global">Globale</option></select>
                 </label>
-                <button type="button" :disabled="savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate()">Enregistrer comme nouveau modèle</button>
+                <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate()">Enregistrer comme nouveau modèle</button>
                 <template v-if="selectedLibraryEntry && selectedSavedPlacement">
                     <p>
                         {{ selectedLibraryEntry.name }} · version {{ selectedLibraryEntry.definition.revision ?? 1 }}.
@@ -73,7 +74,7 @@
                         → {{ selectedSavedPlacement.width }} × {{ selectedSavedPlacement.height }}.
                         Cette mise à jour s’applique aux prochains ajouts. Les placements existants restent indépendants.
                     </p>
-                    <button type="button" :disabled="savingBlockTemplate || !blockTemplateName.trim()"
+                    <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !blockTemplateName.trim()"
                         @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>
                 </template>
             </fieldset>

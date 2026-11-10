@@ -50,7 +50,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select'],
-    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false }),
+    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -308,16 +308,20 @@ export default {
             this.transfers.push({ tab: this.destination, placement: copy });
         },
         async loadBlockTemplates() {
+            if (this.loadingBlockTemplates || this.savingBlockTemplate) return;
+            this.loadingBlockTemplates = true;
             this.libraryError = '';
             try {
                 const { data } = await contentRequest(this.blockLibraryPath + '?kind=block');
                 this.blockTemplates = data;
             } catch (error) {
                 this.libraryError = error.message;
+            } finally {
+                this.loadingBlockTemplates = false;
             }
         },
         async saveBlockTemplate(update = false) {
-            if (this.savingBlockTemplate || !this.templatePlacementId || !this.blockTemplateName.trim()) return;
+            if (this.loadingBlockTemplates || this.savingBlockTemplate || !this.templatePlacementId || !this.blockTemplateName.trim()) return;
             const existing = update ? this.selectedLibraryEntry : null;
             if (update && !existing) return;
             this.savingBlockTemplate = true;
