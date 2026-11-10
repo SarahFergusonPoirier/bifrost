@@ -139,6 +139,16 @@ class FicheLayoutTest extends TestCase
         $this->getJson("$url/blocks/$id/impact")->assertOk()
             ->assertJsonCount(0, 'placements')->assertJsonPath('historical_versions', [1]);
 
+        $this->deleteJson("$url/blocks/$id", ['version' => 2, 'confirmed' => true])->assertConflict();
+        $orphan = $content->blocks()->create(['title' => 'Orphelin', 'block_type' => 'text', 'body' => 'Texte']);
+        $impact = $this->getJson("$url/blocks/{$orphan->public_id}/impact")->assertOk()->json();
+        $this->assertSame([], $impact['placements']);
+        $this->assertSame([], $impact['historical_versions']);
+        $this->assertFalse($impact['implicit_overview']);
+        $this->deleteJson("$url/blocks/{$orphan->public_id}", ['version' => $impact['version']])->assertUnprocessable();
+        $this->deleteJson("$url/blocks/{$orphan->public_id}", ['version' => $impact['version'], 'confirmed' => true])->assertNoContent();
+        $this->assertDatabaseMissing('content_blocks', ['id' => $orphan->id]);
+
         $this->assertDatabaseHas('content_blocks', ['public_id' => $id, 'body' => 'Résumé original']);
     }
 

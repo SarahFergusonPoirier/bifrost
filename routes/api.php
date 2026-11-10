@@ -119,3 +119,6 @@ Route::put('/content-templates/{contentTemplate}', [ContentTemplateController::c
 
 Route::get('/projects/{project}/contents/{content}/fiche-layout/blocks/{block}/impact', [FicheLayoutController::class, 'blockImpact'])
     ->whereNumber('project')->whereUuid('block');
+
+Route::delete('/projects/{project}/contents/{content}/fiche-layout/blocks/{block}', [FicheLayoutController::class, 'destroyBlock'])
+    ->whereNumber('project')->whereUuid('block');

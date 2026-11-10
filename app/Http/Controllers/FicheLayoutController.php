@@ -33,6 +33,36 @@ class FicheLayoutController extends Controller
     {
         $record = $this->content($project, $content);
         $record->blocks()->where('public_id', $block)->firstOrFail();
+
+        return response()->json($this->textBlockImpact($record, $block));
+    }
+
+    public function destroyBlock(Request $request, string $project, string $content, string $block): JsonResponse
+    {
+        $input = $request->validate([
+            'version' => ['required', 'integer', 'min:0'],
+            'confirmed' => ['required', 'accepted'],
+        ]);
+
+        return DB::transaction(function () use ($project, $content, $block, $input): JsonResponse {
+            $record = $this->content($project, $content, lock: true);
+            $text = $record->blocks()->where('public_id', $block)->where('block_type', 'text')->firstOrFail();
+            $impact = $this->textBlockImpact($record, $block);
+            abort_if($impact['version'] !== (int) $input['version'], 409, 'La disposition a changé.');
+            abort_if(
+                $impact['implicit_overview'] || $impact['placements'] || $impact['historical_versions'],
+                409,
+                'Ce bloc est encore utilisé dans une disposition actuelle ou historique.',
+            );
+
+            $text->forceDelete();
+
+            return response()->json(null, 204);
+        }, attempts: 3);
+    }
+
+    private function textBlockImpact(Content $record, string $block): array
+    {
         $layout = $this->layout($record);
         $source = 'text:'.$block;
         $placements = collect($layout['tabs'])->flatMap(fn (array $tab): array => collect($tab['placements'] ?? [])
@@ -42,7 +72,7 @@ class FicheLayoutController extends Controller
                 'title' => $tab['title'],
                 'placement' => $placement['id'],
                 'hidden' => $tab['hidden'] || $placement['hidden'],
-            ])->values()->all());
+            ])->values()->all())->all();
 
         $historicalVersions = DB::table('fiche_layout_revisions')->where('content_id', $record->id)
             ->orderBy('version')->cursor()->filter(function (object $revision) use ($source): bool {
@@ -51,11 +81,14 @@ class FicheLayoutController extends Controller
                 return collect($tabs)->contains(fn (array $tab): bool => collect($tab['placements'] ?? [])->contains('source', $source));
             })->map(fn (object $revision): int => (int) $revision->version)->values()->all();
 
-        return response()->json([
+        return [
             'version' => $layout['version'],
             'placements' => $placements,
             'historical_versions' => $historicalVersions,
-        ]);
+            'implicit_overview' => collect($layout['tabs'])->contains(
+                fn (array $tab): bool => $tab['id'] === 'overview' && ! isset($tab['placements']),
+            ),
+        ];
     }
 
     public function update(Request $request, string $project, string $content): JsonResponse
