@@ -64,7 +64,17 @@
                 <label>Portée
                     <select v-model="blockTemplateScope"><option value="project">Projet</option><option value="global">Globale</option></select>
                 </label>
-                <button type="button" :disabled="savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate">Enregistrer le modèle de bloc</button>
+                <button type="button" :disabled="savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate()">Enregistrer comme nouveau modèle</button>
+                <template v-if="selectedLibraryEntry && selectedSavedPlacement">
+                    <p>
+                        {{ selectedLibraryEntry.name }} · version {{ selectedLibraryEntry.definition.revision ?? 1 }}.
+                        {{ selectedBlockTemplate.width }} × {{ selectedBlockTemplate.height }}
+                        → {{ selectedSavedPlacement.width }} × {{ selectedSavedPlacement.height }}.
+                        Cette mise à jour s’applique aux prochains ajouts. Les placements existants restent indépendants.
+                    </p>
+                    <button type="button" :disabled="savingBlockTemplate || !blockTemplateName.trim()"
+                        @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>
+                </template>
             </fieldset>
         </details>
         <label v-if="destinations.length">Onglet de destination

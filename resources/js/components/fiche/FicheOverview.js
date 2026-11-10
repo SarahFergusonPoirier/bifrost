@@ -145,8 +145,14 @@ export default {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
         },
+        selectedLibraryEntry() {
+            return this.blockTemplates.find(template => template.id === this.blockTemplateId);
+        },
+        selectedSavedPlacement() {
+            return this.placements?.find(placement => placement.id === this.templatePlacementId);
+        },
         selectedBlockTemplate() {
-            return this.blockTemplates.find(template => template.id === this.blockTemplateId)?.definition.placements[0];
+            return this.selectedLibraryEntry?.definition.placements[0];
         },
         selectedCard() {
             return this.matchingCards.find(card => card.source === this.source);
@@ -306,16 +312,19 @@ export default {
                 this.libraryError = error.message;
             }
         },
-        async saveBlockTemplate() {
+        async saveBlockTemplate(update = false) {
             if (this.savingBlockTemplate || !this.templatePlacementId || !this.blockTemplateName.trim()) return;
+            const existing = update ? this.selectedLibraryEntry : null;
+            if (update && !existing) return;
             this.savingBlockTemplate = true;
             this.libraryError = '';
             try {
                 const { data } = await contentRequest(this.blockSavePath, 'POST', {
-                    name: this.blockTemplateName.trim(), scope: this.blockTemplateScope, tab: this.active,
+                    name: this.blockTemplateName.trim(), scope: existing?.scope ?? this.blockTemplateScope, tab: this.active,
                     version: this.layoutVersion, placement: this.templatePlacementId,
+                    ...(existing ? { template_id: existing.id, revision: existing.definition.revision ?? 1 } : {}),
                 });
-                this.blockTemplates.push(data);
+                this.blockTemplates = [...this.blockTemplates.filter(template => template.id !== data.id), data];
                 this.blockTemplateId = data.id;
                 this.blockTemplateName = '';
             } catch (error) {
