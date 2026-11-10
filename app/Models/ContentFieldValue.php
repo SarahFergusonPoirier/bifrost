@@ -126,8 +126,9 @@ class ContentFieldValue extends Model
             'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label'.(match ($format) {
-                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',description,period,level,rank', 'bullets' => '', default => ',description'
+                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',id,description,period,level,rank', 'bullets' => '', default => ',description'
                 })],
+                'value_json.*.id' => ['sometimes', 'uuid', 'distinct:ignore_case'],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
                 'value_json.*.image' => ['nullable', 'uuid'],

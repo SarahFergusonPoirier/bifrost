@@ -35,7 +35,7 @@ export default {
             const label = this.keyword.trim();
             const entries = this.value ?? [];
             if (!label || entries.length >= 100) return;
-            this.setKeywords([...entries, { label }]);
+            this.setKeywords([...entries, { label, ...(this.format === 'repeatable' ? { id: crypto.randomUUID() } : {}) }]);
             this.keyword = '';
         },
         editKeyword(index, key, text) {
@@ -46,7 +46,7 @@ export default {
         duplicateEntry(index) {
             if (this.value.length >= 100) return;
             const entries = [...this.value];
-            entries.splice(index + 1, 0, { ...entries[index] });
+            entries.splice(index + 1, 0, { ...entries[index], ...(this.format === 'repeatable' ? { id: crypto.randomUUID() } : {}) });
             this.setKeywords(entries);
         },
         moveKeyword(index, offset) {
