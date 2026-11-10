@@ -247,7 +247,14 @@ class ContentTemplateController extends Controller
         abort_if($contentTemplate->is_system, 403, 'Les modèles système ne peuvent pas être modifiés.');
 
         $validated = $this->validateTemplate($request);
-        $contentTemplate->update($validated);
+        $contentTemplate->fill($validated);
+        abort_if(
+            $contentTemplate->isDirty(['content_type_id', 'scope_type', 'project_id', 'universe_id'])
+                && $contentTemplate->versions()->whereNotNull('published_at')->exists(),
+            409,
+            'Le type et la portée d’un modèle publié sont conservés. Dupliquez le modèle pour les modifier.',
+        );
+        $contentTemplate->save();
 
         return $contentTemplate->fresh()->load([
             'contentType:id,name',

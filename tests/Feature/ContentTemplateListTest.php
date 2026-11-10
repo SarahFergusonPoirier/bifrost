@@ -191,6 +191,22 @@ class ContentTemplateListTest extends TestCase
             ->assertJsonPath('description', 'Description mise à jour.');
     }
 
+    public function test_published_template_keeps_its_scope(): void
+    {
+        $template = $this->createTemplate();
+        $template->versions()->create(['version_number' => 1, 'published_at' => now()]);
+        $project = Project::create(['name' => 'Projet']);
+
+        $this->putJson('/api/content-templates/'.$template->id, [
+            'name' => $template->name,
+            'content_type_id' => $template->content_type_id,
+            'scope_type' => 'project',
+            'project_id' => $project->id,
+        ])->assertConflict();
+
+        $this->assertSame('global', $template->fresh()->scope_type);
+    }
+
     public function test_system_templates_cannot_be_edited(): void
     {
         $type = ContentType::create([
