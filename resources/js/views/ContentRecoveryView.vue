@@ -242,8 +242,10 @@
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
                 :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                 :get-default-placements="() => $refs.ficheOverview?.defaults" @select="selectFicheTab" @copied="refreshFiche">
-                <template #default="{ tab, tabs, persist }">
+                <template #default="{ tab, tabs, persist, version }">
                     <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab"
+                        :layout-version="version" :block-library-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
+                        :block-save-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-tab-templates' : undefined"
                         :content-id="selected.public_id" :summary="draft.summary" :full-name="draft.title" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab"
                         :connections-path="projectId ? '/projects/' + projectId + '/connections' : undefined"
                         :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"

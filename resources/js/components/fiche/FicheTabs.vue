@@ -95,7 +95,7 @@
             <button type="button" :disabled="revisions.current_page >= revisions.last_page" @click="loadRevisions(revisions.current_page + 1)">Page suivante</button>
         </template>
     </details>
-    <slot :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
+    <slot :version="layout?.version" :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
         :persist="layout && !saving ? (next, transfers, defaults, copies) => savePlacements(next, transfers, defaults, copies) : null" />
 </template>
 

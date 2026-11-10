@@ -33,6 +33,34 @@
                 <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
             </fieldset>
         </details>
+        <details v-if="blockLibraryPath" @toggle="$event.target.open && loadBlockTemplates()">
+            <summary>Modèles de blocs enregistrés</summary>
+            <p v-if="libraryError" role="alert">{{ libraryError }}</p>
+            <label>Modèle de bloc
+                <select v-model="blockTemplateId">
+                    <option :value="null">Choisir un modèle</option>
+                    <option v-for="template in blockTemplates" :key="template.id" :value="template.id">
+                        {{ template.name }} · {{ template.scope === 'global' ? 'Global' : 'Projet' }}
+                    </option>
+                </select>
+            </label>
+            <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
+                @click="applyBlockTemplate">Ajouter ce modèle</button>
+            <fieldset v-if="layoutVersion && placements?.length">
+                <legend>Enregistrer un bloc existant comme modèle</legend>
+                <label>Bloc enregistré
+                    <select v-model="templatePlacementId">
+                        <option :value="null">Choisir un bloc</option>
+                        <option v-for="item in placements" :key="item.id" :value="item.id">{{ item.title || bySource.get(item.source)?.title || item.source }}</option>
+                    </select>
+                </label>
+                <label>Nom <input v-model="blockTemplateName" maxlength="80" /></label>
+                <label>Portée
+                    <select v-model="blockTemplateScope"><option value="project">Projet</option><option value="global">Globale</option></select>
+                </label>
+                <button type="button" :disabled="!templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate">Enregistrer le modèle de bloc</button>
+            </fieldset>
+        </details>
         <label v-if="destinations.length">Onglet de destination
             <select v-model="destination">
                 <option value="">Choisir un onglet</option>

@@ -1,3 +1,4 @@
+import { contentRequest } from '../../services/contentRecovery';
 import { identitySectionTitle } from './identitySection';
 import { defaultPlacementsFor } from './fichePlacementDefaults';
 import FicheFieldHistory from './FicheFieldHistory.vue';
@@ -24,6 +25,9 @@ export default {
         fullName: String,
         resolveReference: Function,
         active: String,
+        layoutVersion: Number,
+        blockLibraryPath: String,
+        blockSavePath: String,
         linksPath: String,
         connectionsPath: String,
         referenceTargets: { type: Array, default: () => [] },
@@ -46,7 +50,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select'],
-    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '' }),
+    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '' }),
     computed: {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -140,6 +144,9 @@ export default {
         matchingCards() {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
+        },
+        selectedBlockTemplate() {
+            return this.blockTemplates.find(template => template.id === this.blockTemplateId)?.definition.placements[0];
         },
         selectedCard() {
             return this.matchingCards.find(card => card.source === this.source);
@@ -289,6 +296,42 @@ export default {
             const item = this.draft[index];
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
+        },
+        async loadBlockTemplates() {
+            this.libraryError = '';
+            try {
+                const { data } = await contentRequest(this.blockLibraryPath + '?kind=block');
+                this.blockTemplates = data;
+            } catch (error) {
+                this.libraryError = error.message;
+            }
+        },
+        async saveBlockTemplate() {
+            this.libraryError = '';
+            try {
+                const { data } = await contentRequest(this.blockSavePath, 'POST', {
+                    name: this.blockTemplateName.trim(), scope: this.blockTemplateScope, tab: this.active,
+                    version: this.layoutVersion, placement: this.templatePlacementId,
+                });
+                this.blockTemplates.push(data);
+                this.blockTemplateId = data.id;
+                this.blockTemplateName = '';
+            } catch (error) {
+                this.libraryError = error.message;
+            }
+        },
+        applyBlockTemplate() {
+            const template = this.selectedBlockTemplate;
+            if (!template || this.draft.length >= 80) return;
+            if (template.source.startsWith('blank:')) {
+                if (!this.canCopy) return;
+                const id = crypto.randomUUID();
+                const title = template.title || 'Texte';
+                this.copies.push({ id, source: 'blank', title, body: '', card: { title, text: '', icon: 'narration' } });
+                this.draft.push({ ...template, id: crypto.randomUUID(), source: 'text:' + id });
+            } else if (this.bySource.has(template.source)) {
+                this.draft.push({ ...template, id: crypto.randomUUID() });
+            }
         },
         createTextBlock() {
             const title = this.newTitle.trim();
