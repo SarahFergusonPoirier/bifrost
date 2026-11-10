@@ -47,7 +47,7 @@
             </label>
             <p v-if="query.trim() && blockTemplates.length && !matchingBlockTemplates.length" role="status">Aucun modèle enregistré ne correspond à cette recherche.</p>
             <div v-if="selectedBlockTemplate" aria-label="Aperçu du modèle de bloc">
-                <strong>{{ selectedBlockTemplate.title || bySource.get(selectedBlockTemplate.source)?.title || 'Bloc de texte' }}</strong>
+                <strong>{{ blockLabel(selectedBlockTemplate) }}</strong>
                 <p>{{ selectedBlockTemplate.width }} colonnes × {{ selectedBlockTemplate.height }} rangées</p>
                 <p v-if="selectedBlockTemplate.source.startsWith('blank:')">Un nouveau texte vide sera créé.</p>
                 <p v-else-if="!bySource.has(selectedBlockTemplate.source)" role="status">Le bloc source est indisponible dans cette fiche.</p>
@@ -59,7 +59,7 @@
                 <label>Bloc enregistré
                     <select v-model="templatePlacementId">
                         <option :value="null">Choisir un bloc</option>
-                        <option v-for="item in placements" :key="item.id" :value="item.id">{{ item.title || bySource.get(item.source)?.title || item.source }}</option>
+                        <option v-for="item in placements" :key="item.id" :value="item.id">{{ blockLabel(item) }}</option>
                     </select>
                 </label>
                 <label>Nom <input v-model="blockTemplateName" maxlength="80" /></label>
@@ -75,8 +75,8 @@
                         Cette mise à jour s’applique aux prochains ajouts. Les placements existants restent indépendants.
                     </p>
                     <p>
-                        Bloc actuel · {{ selectedBlockTemplate.title || bySource.get(selectedBlockTemplate.source)?.title || (selectedBlockTemplate.source.startsWith('blank:') ? 'Texte vierge' : selectedBlockTemplate.source) }}
-                        → {{ selectedSavedPlacement.title || bySource.get(selectedSavedPlacement.source)?.title || selectedSavedPlacement.source }}
+                        Bloc actuel · {{ blockLabel(selectedBlockTemplate) }}
+                        → {{ blockLabel(selectedSavedPlacement) }}
                     </p>
                     <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !blockTemplateName.trim()"
                         @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>

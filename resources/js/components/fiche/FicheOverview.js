@@ -307,6 +307,11 @@ export default {
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
         },
+        blockLabel(item) {
+            if (item.title) return item.title;
+            if (item.source.startsWith('blank:')) return 'Texte vierge';
+            return this.bySource.get(item.source)?.title ?? 'Bloc indisponible';
+        },
         async loadBlockTemplates() {
             if (this.loadingBlockTemplates || this.savingBlockTemplate) return;
             this.loadingBlockTemplates = true;
