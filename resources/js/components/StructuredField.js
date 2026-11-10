@@ -7,6 +7,7 @@ export default {
         levels: { type: Number, default: 5 },
         contentId: String,
         levelMode: String,
+        hideTimeline: Boolean,
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
@@ -45,6 +46,14 @@ export default {
             const value = text.trim();
             if (key === 'label' && !value) return;
             this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (['mastery', 'rank'].includes(key) ? Number(value) : value) : null } : entry));
+        },
+        setRepeatableDate(index, date) {
+            const entries = this.value.map((entry, position) => {
+                if (position !== index) return entry;
+                const { date: previousDate, ...fields } = entry;
+                return date ? { ...fields, date } : fields;
+            });
+            this.setKeywords(entries);
         },
         duplicateEntry(index) {
             if (this.value.length >= 100) return;

@@ -40,3 +40,16 @@ it('duplicates a capability as an independently editable entry', async () => {
     const [updated] = wrapper.emitted('change').at(-1);
     expect(updated.map(entry => entry.label)).toEqual(['Vol', 'Vol prolongé']);
 });
+
+it('preserves the legacy period when setting a structured date on a repeatable entry', async () => {
+    const wrapper = mount(StructuredField, {
+        props: { format: 'repeatable', value: [{ label: 'Voyage', period: 'Avant la guerre' }] },
+    });
+
+    await wrapper.get('details').get('input').setValue('An 498');
+
+    expect(wrapper.emitted('change').at(-1)).toEqual([[{
+        label: 'Voyage', period: 'Avant la guerre', date: { start: 'An 498' },
+        id: expect.stringMatching(/^[a-f0-9-]{36}$/),
+    }]]);
+});
