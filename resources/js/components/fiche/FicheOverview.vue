@@ -257,6 +257,7 @@
                             <ul v-else-if="field.entries?.length" class="fiche-entry-list">
                                 <li v-for="(entry, index) in field.entries" :key="index">
                                     <strong>{{ entry.label }}</strong>
+                                    <span v-if="entry.date"> · {{ formatTemporalDate(entry.date) }}</span>
                                     <span v-if="entry.period"> · {{ entry.period }}</span>
                                     <FicheScale v-if="field.levelMode === 'segments' && entry.rank"
                                         :label="entry.label + ' · Niveau'" :level="Number(entry.rank)" :levels="5" mode="segments" />

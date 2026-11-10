@@ -1,3 +1,4 @@
+import { formatTemporalDate } from './formatFieldValue';
 import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
 import { identitySectionTitle } from './identitySection';
@@ -309,6 +310,7 @@ export default {
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
         },
+        formatTemporalDate,
         blockLabel(item) {
             if (item.title) return item.title;
             if (item.source.startsWith('blank:')) return 'Texte vierge';
