@@ -1,10 +1,12 @@
-async function request(url) {
+async function request(url, options = {}) {
     let response;
 
     try {
         response = await fetch(url, {
+            ...options,
             headers: {
                 Accept: 'application/json',
+                ...(options.headers || {}),
             },
         });
     } catch {
@@ -20,7 +22,10 @@ async function request(url) {
     }
 
     if (!response.ok) {
-        throw new Error(data.message || 'Une erreur est survenue.');
+        const validationMessage = data.errors
+            ? Object.values(data.errors).flat()[0]
+            : null;
+        throw new Error(validationMessage || data.message || 'Une erreur est survenue.');
     }
 
     return data;
@@ -28,13 +33,7 @@ async function request(url) {
 
 export function getContentTemplates(filters = {}) {
     const params = new URLSearchParams();
-
-    if (filters.scope && filters.scope !== 'all') {
-        params.set('scope', filters.scope);
-    } else {
-        params.set('scope', 'all');
-    }
-
+    params.set('scope', filters.scope && filters.scope !== 'all' ? filters.scope : 'all');
     params.set('status', filters.status || 'active');
 
     if (filters.search?.trim()) {
@@ -44,6 +43,40 @@ export function getContentTemplates(filters = {}) {
     return request(`/api/content-templates?${params.toString()}`);
 }
 
+export function getContentTypes() {
+    return request('/api/content-types');
+}
+
+export function getTemplateProjects() {
+    return request('/api/projects');
+}
+
+export function getTemplateUniverses() {
+    return request('/api/universes');
+}
+
 export function getContentTemplate(id) {
-    return request('/api/content-templates/' + encodeURIComponent(id));
+    return request(`/api/content-templates/${encodeURIComponent(id)}`);
+}
+
+export function createContentTemplate(template) {
+    return request('/api/content-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(template),
+    });
+}
+
+export function updateContentTemplate(id, template) {
+    return request(`/api/content-templates/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(template),
+    });
+}
+
+export function cloneContentTemplate(id) {
+    return request(`/api/content-templates/${encodeURIComponent(id)}/clone`, {
+        method: 'POST',
+    });
 }

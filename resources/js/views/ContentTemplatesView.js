@@ -1,9 +1,9 @@
 import { fieldCalculation } from '../components/fiche/characterAge';
 import { identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
-import { getContentTemplate, getContentTemplates } from '../services/contentTemplate';
-
+import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
 import { contentRequest } from '../services/contentRecovery';
+import { useRouter } from 'vue-router';
 
 const scopeLabels = {
     global: 'Global',
@@ -13,6 +13,9 @@ const scopeLabels = {
 
 export default {
     setup() {
+        const router = useRouter();
+        const cloningId = ref(null);
+        const cloneError = ref('');
         const templates = ref([]);
         const details = ref({});
 
@@ -206,6 +209,25 @@ export default {
             }
         }
 
+        async function cloneTemplate(template) {
+            if (cloningId.value !== null) return;
+
+            cloningId.value = template.id;
+            cloneError.value = '';
+
+            try {
+                const copy = await cloneContentTemplate(template.id);
+                await router.push({
+                    name: 'content-template-edit',
+                    params: { id: copy.id },
+                });
+            } catch (error) {
+                cloneError.value = error.message || 'Impossible de cloner ce modèle.';
+            } finally {
+                cloningId.value = null;
+            }
+        }
+
         function getScopeLabel(template) {
             return scopeLabels[template.scope_type] || template.scope_type;
         }
@@ -253,8 +275,11 @@ export default {
             searchQuery,
             loading,
             loadError,
+            cloneError,
+            cloningId,
             hasFilters,
             loadTemplates,
+            cloneTemplate,
             getScopeLabel,
             getScopeContext,
         };

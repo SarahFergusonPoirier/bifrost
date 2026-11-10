@@ -5,6 +5,7 @@ import ProjectsView from '../views/ProjectsView.vue';
 import ProjectCreateView from '../views/ProjectCreateView.vue';
 
 import ContentTemplatesView from '../views/ContentTemplatesView.vue';
+import ContentTemplateFormView from '../views/ContentTemplateFormView.vue';
 
 import ContentRecoveryView from '../views/ContentRecoveryView.vue';
 
@@ -45,6 +46,8 @@ const routes = [
         name: 'content-templates',
         component: ContentTemplatesView,
     },
+    { path: '/templates/create', name: 'content-template-create', component: ContentTemplateFormView },
+    { path: '/templates/:id/edit', name: 'content-template-edit', component: ContentTemplateFormView },
 ];
 
 const router = createRouter({

@@ -135,8 +135,11 @@
         </form>
 
         <section class="content-templates-section">
-            <div class="section-heading">
+            <div class="section-heading content-templates-heading">
                 <h2>Tous les modèles</h2>
+                <RouterLink :to="{ name: 'content-template-create' }" class="button-primary">
+                    + Nouveau modèle
+                </RouterLink>
             </div>
 
             <div class="content-template-filters">
@@ -172,6 +175,9 @@
 
             <p v-if="loadError" class="error" role="alert">
                 {{ loadError }}
+            </p>
+            <p v-if="cloneError" class="error" role="alert">
+                {{ cloneError }}
             </p>
 
             <p v-if="loading" class="content-templates-message">
@@ -212,6 +218,28 @@
                         >
                             {{ template.is_active ? 'Actif' : 'Désactivé' }}
                         </span>
+                        <span
+                            v-if="template.versions?.[0] && !template.versions[0].published_at"
+                            class="content-template-card__draft"
+                        >
+                            Brouillon
+                        </span>
+                        <RouterLink
+                            v-if="!template.is_system"
+                            :to="{ name: 'content-template-edit', params: { id: template.id } }"
+                            class="content-template-card__edit"
+                        >
+                            Modifier
+                        </RouterLink>
+                        <button
+                            v-if="template.is_system"
+                            type="button"
+                            class="content-template-card__clone"
+                            :disabled="cloningId !== null"
+                            @click="cloneTemplate(template)"
+                        >
+                            {{ cloningId === template.id ? 'Copie…' : 'Personnaliser' }}
+                        </button>
                     </div>
                     <div>
                         <button type="button" :disabled="saving" @click="editTemplate(template, true)">Dupliquer</button>

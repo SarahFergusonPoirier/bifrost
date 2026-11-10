@@ -27,6 +27,7 @@ Route::post('/tags', [TagController::class, 'store']);
 Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
 
 Route::get('/content-types', [ContentTemplateController::class, 'types']);
+Route::get('/universes', [ContentTemplateController::class, 'universes']);
 Route::get('/content-templates', [ContentTemplateController::class, 'index']);
 
 Route::get('/contents/trash', [ContentRecoveryController::class, 'trash']);
@@ -88,7 +89,6 @@ Route::get('/projects/{project}/narration/{work}/export', [ProjectNarrativeContr
 Route::get('/contents/{content}/template-versions/{version}/preview', [ContentTemplateController::class, 'previewUpgrade'])->whereNumber('version');
 Route::post('/contents/{content}/template-versions/{version}/apply', [ContentTemplateController::class, 'applyUpgrade'])->whereNumber('version');
 
-Route::post('/content-templates', [ContentTemplateAuthoringController::class, 'store']);
 Route::post('/content-templates/{template}/versions', [ContentTemplateAuthoringController::class, 'publishVersion'])->whereNumber('template');
 Route::put('/projects/{project}/connections/{relation}', [ProjectConnectionController::class, 'update'])->whereNumber('relation');
 
@@ -113,3 +113,6 @@ Route::get('/projects/{project}/fiche-tab-templates', [FicheTabTemplateControlle
 Route::post('/projects/{project}/contents/{content}/fiche-tab-templates', [FicheTabTemplateController::class, 'store']);
 Route::get('/contents/{content}/attachments/{attachment}/preview', [ContentAttachmentController::class, 'preview']);
 Route::get('/projects/{project}/contents/{content}/fiche-layout/revisions', [FicheLayoutController::class, 'history'])->whereNumber('project');
+Route::post('/content-templates', [ContentTemplateController::class, 'store']);
+Route::post('/content-templates/{contentTemplate}/clone', [ContentTemplateController::class, 'duplicate']);
+Route::put('/content-templates/{contentTemplate}', [ContentTemplateController::class, 'update']);

@@ -12,3 +12,5 @@ Route::view('/projects/{id}', 'welcome')->where('id', '[^/]+');
 Route::view('/templates', 'welcome');
 Route::view('/contents', 'welcome');
 Route::view('/projects/{id}/contents', 'welcome')->whereNumber('id');
+Route::view('/templates/create', 'welcome');
+Route::view('/templates/{id}/edit', 'welcome')->where('id', '[^/]+');

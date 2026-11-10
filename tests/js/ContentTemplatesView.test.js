@@ -5,6 +5,7 @@ import ContentTemplatesView from '../../resources/js/views/ContentTemplatesView.
 import { getContentTemplates } from '../../resources/js/services/contentTemplate';
 
 vi.mock('../../resources/js/services/contentTemplate', () => ({
+    cloneContentTemplate: vi.fn(),
     getContentTemplates: vi.fn(),
 }));
 
