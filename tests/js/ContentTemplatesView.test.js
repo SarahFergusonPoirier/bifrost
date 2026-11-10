@@ -2,12 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 
 import ContentTemplatesView from '../../resources/js/views/ContentTemplatesView.vue';
-import { getContentTemplates } from '../../resources/js/services/contentTemplate';
+import { getContentTemplate, getContentTemplates } from '../../resources/js/services/contentTemplate';
 
 vi.mock('../../resources/js/services/contentTemplate', () => ({
     cloneContentTemplate: vi.fn(),
+    getContentTemplate: vi.fn(),
     getContentTemplates: vi.fn(),
 }));
+
+vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn().mockResolvedValue({ data: [] }) }));
 
 const sampleTemplates = [
     {
@@ -26,6 +29,18 @@ describe('ContentTemplatesView.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         getContentTemplates.mockResolvedValue(sampleTemplates);
+    });
+
+    it('demande une publication avant de dupliquer un brouillon', async () => {
+        getContentTemplate.mockResolvedValueOnce({ versions: [] });
+        const wrapper = mount(ContentTemplatesView);
+        await flushPromises();
+
+        await wrapper.findAll('button').find(button => button.text() === 'Dupliquer').trigger('click');
+        await flushPromises();
+
+        expect(getContentTemplate).toHaveBeenCalledWith(1, false);
+        expect(wrapper.get('[role="alert"]').text()).toContain('Publiez une version');
     });
 
     it('affiche le titre et les filtres de la page', () => {
