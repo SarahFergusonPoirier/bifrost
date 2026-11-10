@@ -29,13 +29,16 @@ export default {
             }
         },
         setKeywords(entries) {
-            this.$emit('change', entries.length ? entries : '');
+            const values = this.format === 'repeatable'
+                ? entries.map(entry => entry.id ? entry : { ...entry, id: crypto.randomUUID() })
+                : entries;
+            this.$emit('change', values.length ? values : '');
         },
         addKeyword() {
             const label = this.keyword.trim();
             const entries = this.value ?? [];
             if (!label || entries.length >= 100) return;
-            this.setKeywords([...entries, { label, ...(this.format === 'repeatable' ? { id: crypto.randomUUID() } : {}) }]);
+            this.setKeywords([...entries, { label}]);
             this.keyword = '';
         },
         editKeyword(index, key, text) {
@@ -46,7 +49,7 @@ export default {
         duplicateEntry(index) {
             if (this.value.length >= 100) return;
             const entries = [...this.value];
-            entries.splice(index + 1, 0, { ...entries[index], ...(this.format === 'repeatable' ? { id: crypto.randomUUID() } : {}) });
+            entries.splice(index + 1, 0, { ...entries[index], ...(this.format === 'repeatable' ? { id: undefined } : {}) });
             this.setKeywords(entries);
         },
         moveKeyword(index, offset) {
