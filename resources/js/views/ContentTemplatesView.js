@@ -57,11 +57,15 @@ export default {
                 const [typeList, projectList, source] = await Promise.all([
                     contentRequest('/content-types'),
                     contentRequest('/projects'),
-                    template ? getContentTemplate(template.id, true) : null,
+                    template ? getContentTemplate(template.id, !copy) : null,
                 ]);
                 types.value = typeList.data;
                 projects.value = projectList.data;
                 const version = source?.versions.at(-1);
+                if (copy && !version) {
+                    editorError.value = 'Publiez une version de ce modèle avant de le dupliquer.';
+                    return;
+                }
                 editor.value = {
                     id: copy ? null : template?.id,
                     base_version_id: copy ? version?.id : null,
