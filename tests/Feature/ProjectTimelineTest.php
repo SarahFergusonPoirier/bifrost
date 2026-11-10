@@ -47,6 +47,39 @@ class ProjectTimelineTest extends TestCase
             ->assertJsonPath('data.0.key', $key)->assertJsonPath('data.0.date.start', 'Avant la guerre');
     }
 
+    public function test_repeatable_date_keeps_its_timeline_key_when_edited_and_reordered(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['name' => 'Lieu', 'key' => 'lieu']);
+        $content = $project->contents()->create(['title' => 'Ville', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $field = FieldDefinition::create([
+            'key' => 'voyages', 'label' => 'Voyages', 'value_type' => 'json', 'options_data' => ['format' => 'repeatable'],
+        ]);
+        $timeline = "/api/projects/{$project->id}/timeline";
+        $links = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-links";
+        $save = fn (array $entries) => $this->patchJson('/api/contents/'.$content->public_id, [
+            'title' => 'Ville', 'summary' => null, 'field_values' => [['field_definition_id' => $field->id, 'value_json' => $entries]],
+        ])->assertOk();
+        $entry = [
+            'id' => '3a83a413-c5c8-422c-8459-032e89bb3bc1', 'label' => 'Voyage',
+            'date' => ['start' => 'An 498', 'precision' => 'approximate', 'timeline' => true],
+        ];
+
+        $save([$entry, ['label' => 'Ancienne entrée']]);
+        $key = $this->getJson($timeline.'?precision=approximate')->assertOk()->assertJsonCount(1, 'data')->json('data.0.key');
+        $entry['date']['start'] = 'An 499';
+        $save([['label' => 'Ancienne entrée'], $entry]);
+        $this->getJson($timeline)->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.key', $key)->assertJsonPath('data.0.date.start', 'An 499');
+        $this->getJson($links)->assertOk()->assertJsonPath('timeline.0.date.start', 'An 499');
+
+        unset($entry['date']['timeline']);
+        $save([$entry]);
+        $this->getJson($timeline)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson($links)->assertOk()->assertJsonCount(0, 'timeline');
+        $this->assertSame('An 499', $content->fieldValues()->sole()->value_json[0]['date']['start']);
+    }
+
     public function test_conversion_keeps_one_entry_and_one_content_across_retries(): void
     {
         $project = Project::create(['name' => 'Projet']);
