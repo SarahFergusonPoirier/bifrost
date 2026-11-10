@@ -249,3 +249,41 @@ it('adds a reusable block as a new placement with its saved dimensions', async (
         fetch.mockRestore();
     }
 });
+
+it('publishes a new block template revision using the selected saved placement', async () => {
+    const placement = { id: 'saved', source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
+    const entry = { id: 1, name: 'Résumé', scope: 'global', definition: { revision: 2, placements: [placement] } };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) =>
+        options.method === 'POST'
+            ? Response.json({ ...entry, definition: { ...entry.definition, revision: 3 } })
+            : Response.json([entry]));
+    try {
+        const wrapper = mount(FicheOverview, {
+            props: {
+                summary: 'Résumé', active: 'overview', templateSections: new Map(), hiddenFields: [],
+                displayValue: () => '', placements: [placement], persist: vi.fn(), layoutVersion: 4,
+                blockLibraryPath: '/library', blockSavePath: '/save',
+            },
+        });
+        await wrapper.get('button').trigger('click');
+        const library = wrapper.findAll('details').find(item => item.get('summary').text() === 'Modèles de blocs enregistrés');
+        library.element.open = true;
+        await library.trigger('toggle');
+        await flushPromises();
+        const [model, source] = library.findAll('select');
+        await model.setValue('1');
+        await source.setValue('saved');
+        await library.get('input').setValue('Résumé');
+        await library.findAll('button').find(button => button.text().startsWith('Publier')).trigger('click');
+        await flushPromises();
+
+        expect(fetch).toHaveBeenLastCalledWith('/api/save', expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ name: 'Résumé', scope: 'global', tab: 'overview', version: 4, placement: 'saved', template_id: 1, revision: 2 }),
+        }));
+        expect(library.text()).toContain('version 3');
+        wrapper.unmount();
+    } finally {
+        fetch.mockRestore();
+    }
+});
