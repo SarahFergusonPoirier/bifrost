@@ -90,6 +90,7 @@
             </select>
         </label>
         <p v-if="transfers.length" role="status">{{ transfers.length }} transfert(s) à enregistrer.</p>
+        <p>Masquer conserve le bloc dans cet onglet. Retirer enlève son placement et conserve ses données.</p>
         <ol>
             <li v-for="(placement, index) in draft" :key="placement.id"
                 draggable="true" @dragstart="startDrag($event, index)" @dragover.prevent @drop.prevent="drop(index)" @dragend="dragged = null">
