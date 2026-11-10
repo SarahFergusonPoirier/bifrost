@@ -1,5 +1,5 @@
-import { mount } from '@vue/test-utils';
-import { expect, it } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 
 it('reads canonical fields and expands long text in place', async () => {
@@ -218,4 +218,34 @@ it('resolves an existing section placement after a model renames the section', (
     } });
     expect(wrapper.get('h2').text()).toBe('Identité civile');
     expect(wrapper.get('dd').text()).toBe('Élia');
+});
+
+it('adds a reusable block as a new placement with its saved dimensions', async () => {
+    const template = { source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify([
+        { id: 1, name: 'Résumé large', scope: 'project', definition: { placements: [template] } },
+    ]), { headers: { 'Content-Type': 'application/json' } }));
+    const persist = vi.fn().mockResolvedValue(true);
+    try {
+        const wrapper = mount(FicheOverview, {
+            props: {
+                summary: 'Résumé de cette fiche', templateSections: new Map(), hiddenFields: [],
+                displayValue: () => '', placements: [], persist, blockLibraryPath: '/library',
+            },
+        });
+        await wrapper.get('button').trigger('click');
+        const library = wrapper.findAll('details').find(item => item.get('summary').text() === 'Modèles de blocs enregistrés');
+        library.element.open = true;
+        await library.trigger('toggle');
+        await flushPromises();
+        await library.get('select').setValue('1');
+        await library.get('button').trigger('click');
+        await wrapper.get('form').trigger('submit');
+
+        expect(fetch).toHaveBeenCalledWith('/api/library?kind=block', expect.anything());
+        expect(persist.mock.calls[0][0]).toEqual([{ ...template, id: expect.stringMatching(/^[a-f0-9-]{36}$/) }]);
+        wrapper.unmount();
+    } finally {
+        fetch.mockRestore();
+    }
 });
