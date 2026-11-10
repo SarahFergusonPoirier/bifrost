@@ -8,6 +8,7 @@ use App\Models\Project;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ProjectTimelineController extends Controller
@@ -18,23 +19,41 @@ class ProjectTimelineController extends Controller
             'precision' => ['sometimes', 'in:exact,approximate,range,relative,unknown'],
         ]);
 
-        $entries = ContentFieldValue::query()
+        $fields = ContentFieldValue::query()
             ->whereHas('content', fn ($query) => $query->where('project_id', $project->id))
-            ->whereHas('fieldDefinition', fn ($query) => $query->where('options_data->format', 'temporal'))
-            ->where('value_json->timeline', true)
-            ->when(isset($filters['precision']), fn ($query) => $query->where('value_json->precision', $filters['precision']))
+            ->whereHas('fieldDefinition', fn ($query) => $query->whereIn('options_data->format', ['temporal', 'repeatable']))
+            ->whereNotNull('value_json')
             ->with(['content:id,public_id,project_id,title', 'fieldDefinition:id,label'])
-            ->orderBy('id')
-            ->paginate(50)
-            ->through(fn (ContentFieldValue $field): array => [
-                'key' => $field->content->public_id.':'.$field->field_definition_id,
-                'content_public_id' => $field->content->public_id,
-                'title' => $field->value_json['timeline_title'] ?? $field->content->title.' · '.$field->fieldDefinition->label,
-                'description' => $field->value_json['timeline_description'] ?? null,
-                'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'calendar', 'precision'])),
-            ]);
+            ->lazyById();
 
-        return response()->json($entries);
+        $perPage = 50;
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $offset = ($page - 1) * $perPage;
+        $entries = [];
+        $total = 0;
+        foreach ($fields as $field) {
+            foreach ($field->timelineDates() as $entry) {
+                $date = $entry['date'];
+                if (isset($filters['precision']) && ($date['precision'] ?? null) !== $filters['precision']) {
+                    continue;
+                }
+
+                if ($total >= $offset && count($entries) < $perPage) {
+                    $entries[] = [
+                        'key' => $field->content->public_id.':'.$field->field_definition_id.($entry['id'] ? ':'.$entry['id'] : ''),
+                        'content_public_id' => $field->content->public_id,
+                        'title' => $date['timeline_title'] ?? $field->content->title.' · '.($entry['label'] ?? $field->fieldDefinition->label),
+                        'description' => $date['timeline_description'] ?? null,
+                        'date' => array_intersect_key($date, array_flip(['start', 'end', 'calendar', 'precision'])),
+                    ];
+                }
+                $total++;
+            }
+        }
+
+        return response()->json(new LengthAwarePaginator($entries, $total, $perPage, $page, [
+            'path' => $request->url(), 'query' => $filters,
+        ]));
     }
 
     public function events(Request $request, Project $project): JsonResponse

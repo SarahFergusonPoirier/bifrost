@@ -7,7 +7,6 @@ export default {
         levels: { type: Number, default: 5 },
         contentId: String,
         levelMode: String,
-        hideTimeline: Boolean,
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
