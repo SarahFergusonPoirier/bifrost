@@ -84,10 +84,18 @@ class FicheLayoutController extends Controller
                 return collect($tabs)->contains(fn (array $tab): bool => collect($tab['placements'] ?? [])->contains('source', $source));
             })->map(fn (object $revision): int => (int) $revision->version)->values()->all();
 
+        $recoverableRevisions = DB::table('content_revisions')->where('content_id', $record->id)
+            ->orderBy('id')->cursor()->filter(function (object $revision) use ($text): bool {
+                $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
+
+                return collect($snapshot['blocks'] ?? [])->contains('public_id', $text->public_id);
+            })->map(fn (object $revision): int => (int) $revision->id)->values()->all();
+
         return [
             'version' => $layout['version'],
             'placements' => $placements,
             'historical_versions' => $historicalVersions,
+            'recoverable_revisions' => $recoverableRevisions,
             'block_version' => hash('sha256', json_encode([$text->title, $text->body], JSON_THROW_ON_ERROR)),
             'implicit_overview' => collect($layout['tabs'])->contains(
                 fn (array $tab): bool => $tab['id'] === 'overview' && ! isset($tab['placements']),

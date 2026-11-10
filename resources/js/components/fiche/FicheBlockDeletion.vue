@@ -17,6 +17,9 @@
                 <li v-for="item in deletionImpact.placements" :key="item.placement">{{ item.title }}{{ item.hidden ? ' (masqué)' : '' }}</li>
             </ul>
             <p v-if="deletionImpact.historical_versions.length">Dispositions historiques liées · {{ deletionImpact.historical_versions.join(', ') }}</p>
+            <p v-if="deletionImpact.recoverable_revisions?.length">
+                Le texte figure dans {{ deletionImpact.recoverable_revisions.length }} version(s) de la fiche.
+            </p>
             <template v-if="!deletionImpact.implicit_overview && !deletionImpact.placements.length && !deletionImpact.historical_versions.length">
                 <p>Ce bloc n’est utilisé dans aucune disposition. Confirme sa suppression définitive.</p>
                 <button type="button" @click="deleteOrphanBlock">Supprimer définitivement ce bloc</button>
