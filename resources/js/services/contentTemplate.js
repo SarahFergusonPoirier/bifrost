@@ -55,8 +55,8 @@ export function getTemplateUniverses() {
     return request('/api/universes');
 }
 
-export function getContentTemplate(id) {
-    return request(`/api/content-templates/${encodeURIComponent(id)}`);
+export function getContentTemplate(id, includeDrafts = false) {
+    return request(`/api/content-templates/${encodeURIComponent(id)}${includeDrafts ? '?include_drafts=1' : ''}`);
 }
 
 export function createContentTemplate(template) {

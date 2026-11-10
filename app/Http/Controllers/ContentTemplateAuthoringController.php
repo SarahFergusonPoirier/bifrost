@@ -59,7 +59,7 @@ class ContentTemplateAuthoringController extends Controller
 
         return DB::transaction(function () use ($template, $input, $fields): JsonResponse {
             $record = ContentTemplate::whereKey($template->id)->lockForUpdate()->firstOrFail();
-            $latest = $record->versions()->reorder()->whereNotNull('published_at')->latest('version_number')->firstOrFail();
+            $latest = $record->versions()->reorder()->latest('version_number')->firstOrFail();
             abort_if($latest->id !== (int) $input['from_version_id'], 409, 'Une nouvelle version a été publiée. Recharge le modèle.');
 
             $version = $this->publish($record, $fields, $latest);

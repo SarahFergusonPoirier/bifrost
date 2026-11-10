@@ -23,7 +23,7 @@ export default {
             if (details.value[id]?.versions || details.value[id]?.loading) return;
             details.value[id] = { loading: true };
             try {
-                details.value[id] = await getContentTemplate(id);
+                details.value[id] = await getContentTemplate(id, true);
             } catch (error) {
                 details.value[id] = { error: error.message };
             }
@@ -57,7 +57,7 @@ export default {
                 const [typeList, projectList, source] = await Promise.all([
                     contentRequest('/content-types'),
                     contentRequest('/projects'),
-                    template ? getContentTemplate(template.id) : null,
+                    template ? getContentTemplate(template.id, true) : null,
                 ]);
                 types.value = typeList.data;
                 projects.value = projectList.data;

@@ -16,10 +16,11 @@ use Illuminate\Validation\Rule;
 
 class ContentTemplateController extends Controller
 {
-    public function show(ContentTemplate $template): JsonResponse
+    public function show(Request $request, ContentTemplate $template): JsonResponse
     {
         $template->load(['versions' => fn ($query) => $query
-            ->whereNotNull('published_at')->with('fields.fieldDefinition')]);
+            ->when(! $request->boolean('include_drafts'), fn ($versions) => $versions->whereNotNull('published_at'))
+            ->with('fields.fieldDefinition')]);
 
         return response()->json($template);
     }

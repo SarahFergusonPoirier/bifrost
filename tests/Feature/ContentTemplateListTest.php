@@ -266,6 +266,17 @@ class ContentTemplateListTest extends TestCase
             ->assertJsonPath('versions.0.published_at', null);
 
         $copyId = $response->json('id');
+
+        $this->getJson('/api/content-templates/'.$copyId.'?include_drafts=1')
+            ->assertOk()
+            ->assertJsonPath('versions.0.fields.0.field_definition_id', $definition->id);
+
+        $this->postJson('/api/content-templates/'.$copyId.'/versions', [
+            'from_version_id' => $response->json('versions.0.id'),
+            'fields' => [
+                ['id' => $definition->id, 'label' => 'Nom complet', 'section' => 'Identité', 'type' => 'text'],
+            ],
+        ])->assertCreated()->assertJsonPath('version_number', 2);
         $this->assertDatabaseHas('template_version_fields', [
             'template_version_id' => TemplateVersion::where('template_id', $copyId)->value('id'),
             'field_definition_id' => $definition->id,
