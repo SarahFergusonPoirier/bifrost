@@ -207,6 +207,23 @@ class ContentFieldValue extends Model
         return $this->belongsTo(Content::class, 'reference_content_id');
     }
 
+    public function timelineDates(): array
+    {
+        $value = $this->value_json ?? [];
+        if (! array_is_list($value)) {
+            return empty($value['timeline']) ? [] : [['id' => null, 'label' => null, 'date' => $value]];
+        }
+
+        $dates = [];
+        foreach ($value as $entry) {
+            if (! empty($entry['id']) && ! empty($entry['date']['timeline'])) {
+                $dates[] = ['id' => $entry['id'], 'label' => $entry['label'], 'date' => $entry['date']];
+            }
+        }
+
+        return $dates;
+    }
+
     private function temporalRules(string $path): array
     {
         return [

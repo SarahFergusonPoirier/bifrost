@@ -71,15 +71,16 @@ class FicheLinkedDataController extends Controller
         $datedContentIds = $eventContentIds->push($record->id)->unique()->all();
 
         $dates = ContentFieldValue::query()->whereIntegerInRaw('content_id', $datedContentIds)
-            ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('options_data->format', 'temporal'))
-            ->where('value_json->timeline', true)->with(['fieldDefinition:id,label', 'content:id,public_id,title,project_id'])->orderBy('id')->get()
-            ->map(fn (ContentFieldValue $field): array => [
-                'key' => 'field-'.$field->id,
+            ->whereHas('fieldDefinition', fn (Builder $query) => $query->whereIn('options_data->format', ['temporal', 'repeatable']))
+            ->whereNotNull('value_json')->with(['fieldDefinition:id,label', 'content:id,public_id,title,project_id'])->orderBy('id')->get()
+            ->flatMap(fn (ContentFieldValue $field): array => array_map(fn (array $entry): array => [
+                'key' => 'field-'.$field->id.($entry['id'] ? ':'.$entry['id'] : ''),
                 'public_id' => $field->content_id === $record->id ? null : $field->content->public_id,
-                'description' => $field->value_json['timeline_description'] ?? null,
-                'title' => $field->value_json['timeline_title'] ?? ($field->content_id === $record->id ? $field->fieldDefinition->label : $field->content->title),
-                'date' => array_intersect_key($field->value_json, array_flip(['start', 'end', 'precision', 'calendar', 'order'])),
-            ]);
+                'description' => $entry['date']['timeline_description'] ?? null,
+                'title' => $entry['date']['timeline_title'] ?? $entry['label']
+                    ?? ($field->content_id === $record->id ? $field->fieldDefinition->label : $field->content->title),
+                'date' => array_intersect_key($entry['date'], array_flip(['start', 'end', 'precision', 'calendar', 'order'])),
+            ], $field->timelineDates()));
 
         $linkedPublicIds = $linked->pluck('public_id', 'content_id');
         $events = DB::table('project_timeline_events')->where('project_id', $project->id)->whereNull('deleted_at')
