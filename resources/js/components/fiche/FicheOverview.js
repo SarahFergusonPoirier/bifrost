@@ -28,6 +28,7 @@ export default {
         layoutVersion: Number,
         blockLibraryPath: String,
         blockSavePath: String,
+        blockDeletionPath: String,
         linksPath: String,
         connectionsPath: String,
         referenceTargets: { type: Array, default: () => [] },
@@ -49,8 +50,8 @@ export default {
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
-    emits: ['open', 'select'],
-    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
+    emits: ['open', 'select', 'block-deleted'],
+    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false, deletionId: null, deletionImpact: null, deletionBusy: false, deletionError: '' }),
     computed: {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -306,6 +307,40 @@ export default {
             const item = this.draft[index];
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy });
+        },
+        async inspectBlockDeletion() {
+            if (!this.deletionId || this.deletionBusy) return;
+            this.deletionBusy = true;
+            this.deletionImpact = null;
+            this.deletionError = '';
+            try {
+                const { data } = await contentRequest(this.blockDeletionPath + '/' + this.deletionId + '/impact');
+                this.deletionImpact = data;
+            } catch (error) {
+                this.deletionError = error.message;
+            } finally {
+                this.deletionBusy = false;
+            }
+        },
+        async deleteOrphanBlock() {
+            const impact = this.deletionImpact;
+            if (!this.canCopy || this.deletionBusy || !impact || impact.implicit_overview
+                || impact.placements.length || impact.historical_versions.length) return;
+
+            this.deletionBusy = true;
+            this.deletionError = '';
+            this.deletionImpact = null;
+            try {
+                await contentRequest(this.blockDeletionPath + '/' + this.deletionId, 'DELETE', {
+                    version: impact.version, confirmed: true,
+                });
+                this.deletionId = null;
+                this.$emit('block-deleted');
+            } catch (error) {
+                this.deletionError = error.message;
+            } finally {
+                this.deletionBusy = false;
+            }
         },
         blockLabel(item) {
             if (item.title) return item.title;
