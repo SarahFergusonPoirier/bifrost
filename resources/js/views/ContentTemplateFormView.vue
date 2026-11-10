@@ -42,13 +42,15 @@
                 ></textarea>
             </div>
 
+            <p v-if="structureLocked">Le type et la portée sont verrouillés après publication.</p>
+
             <div class="content-template-form__field">
                 <label for="content-template-type">Type de fiche</label>
                 <select
                     id="content-template-type"
                     v-model="form.content_type_id"
                     required
-                    :disabled="saving"
+                    :disabled="saving || structureLocked"
                 >
                     <option value="" disabled>Choisir un type</option>
                     <option
@@ -66,7 +68,7 @@
                 <select
                     id="content-template-scope"
                     v-model="form.scope_type"
-                    :disabled="saving"
+                    :disabled="saving || structureLocked"
                 >
                     <option value="global">Global — disponible partout</option>
                     <option value="universe">Un univers précis</option>
@@ -80,7 +82,7 @@
                     id="content-template-universe"
                     v-model="form.universe_id"
                     required
-                    :disabled="saving"
+                    :disabled="saving || structureLocked"
                 >
                     <option value="" disabled>Choisir un univers</option>
                     <option v-for="universe in universes" :key="universe.id" :value="String(universe.id)">
@@ -98,7 +100,7 @@
                     id="content-template-project"
                     v-model="form.project_id"
                     required
-                    :disabled="saving"
+                    :disabled="saving || structureLocked"
                 >
                     <option value="" disabled>Choisir un projet</option>
                     <option v-for="project in projects" :key="project.id" :value="String(project.id)">

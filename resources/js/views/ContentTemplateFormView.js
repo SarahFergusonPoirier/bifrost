@@ -16,6 +16,7 @@ export default {
         const isEditing = computed(() => Boolean(route.params.id));
         const loading = ref(true);
         const saving = ref(false);
+        const structureLocked = ref(false);
         const error = ref('');
         const contentTypes = ref([]);
         const projects = ref([]);
@@ -51,6 +52,7 @@ export default {
 
                 if (isEditing.value) {
                     const template = await getContentTemplate(route.params.id);
+                    structureLocked.value = template.versions?.some(version => Boolean(version.published_at)) ?? false;
                     form.name = template.name;
                     form.description = template.description || '';
                     form.content_type_id = String(template.content_type_id);
@@ -105,6 +107,7 @@ export default {
             isEditing,
             loading,
             saving,
+            structureLocked,
             error,
             contentTypes,
             projects,
