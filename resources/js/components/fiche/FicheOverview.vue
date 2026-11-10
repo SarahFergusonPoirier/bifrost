@@ -44,6 +44,12 @@
                     </option>
                 </select>
             </label>
+            <div v-if="selectedBlockTemplate" aria-label="Aperçu du modèle de bloc">
+                <strong>{{ selectedBlockTemplate.title || bySource.get(selectedBlockTemplate.source)?.title || 'Bloc de texte' }}</strong>
+                <p>{{ selectedBlockTemplate.width }} colonnes × {{ selectedBlockTemplate.height }} rangées</p>
+                <p v-if="selectedBlockTemplate.source.startsWith('blank:')">Un nouveau texte vide sera créé.</p>
+                <p v-else-if="!bySource.has(selectedBlockTemplate.source)" role="status">Le bloc source est indisponible dans cette fiche.</p>
+            </div>
             <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
                 @click="applyBlockTemplate">Ajouter ce modèle</button>
             <fieldset v-if="layoutVersion && placements?.length">
