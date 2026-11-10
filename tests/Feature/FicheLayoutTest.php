@@ -156,6 +156,9 @@ class FicheLayoutTest extends TestCase
         $this->deleteJson("$url/blocks/{$orphan->public_id}", ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertNoContent();
         $this->assertDatabaseMissing('content_blocks', ['id' => $orphan->id]);
 
+        $this->postJson("/api/contents/{$content->public_id}/revisions/$snapshot/restore")->assertOk();
+        $this->assertDatabaseHas('content_blocks', ['public_id' => $orphan->public_id, 'body' => 'Texte', 'deleted_at' => null]);
+
         $this->assertDatabaseHas('content_blocks', ['public_id' => $id, 'body' => 'Résumé original']);
     }
 
