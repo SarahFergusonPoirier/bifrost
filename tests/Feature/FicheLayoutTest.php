@@ -174,6 +174,17 @@ class FicheLayoutTest extends TestCase
         $this->getJson($otherLibrary)->assertOk()->assertJsonCount(1);
         $this->getJson($otherLibrary.'?kind=block')->assertOk()->assertJsonCount(1)
             ->assertJsonPath('0.definition.kind', 'block');
+
+        $blockId = $this->getJson($otherLibrary.'?kind=block')->json('0.id');
+        $update = array_replace($definition, [
+            'name' => 'Résumé', 'scope' => 'global', 'placement' => $layout['tabs'][0]['placements'][0]['id'],
+            'template_id' => $blockId, 'revision' => 1,
+        ]);
+        $this->postJson("$base/fiche-tab-templates", $update)->assertOk()
+            ->assertJsonPath('definition.revision', 2)->assertJsonPath('definition.placements.0.source', 'summary');
+        $this->postJson("$base/fiche-tab-templates", $update)->assertConflict();
+        $this->getJson($otherLibrary.'?kind=block')->assertOk()->assertJsonCount(1)
+            ->assertJsonMissingPath('0.definition.history');
     }
 
     public function test_equipment_reads_canonical_objects_from_outgoing_equipment_links(): void
