@@ -287,3 +287,42 @@ it('publishes a new block template revision using the selected saved placement',
         fetch.mockRestore();
     }
 });
+
+it('requires a fresh impact check and confirmation before deleting an orphan text block', async () => {
+    const impact = { version: 4, placements: [], historical_versions: [], implicit_overview: false };
+    const fetch = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(Response.json({ ...impact, historical_versions: [3] }))
+        .mockResolvedValueOnce(Response.json(impact))
+        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    try {
+        const wrapper = mount(FicheOverview, {
+            props: {
+                templateSections: new Map(), hiddenFields: [], displayValue: () => '', canCopy: true,
+                blocks: [{ public_id: 'example', block_type: 'text', title: 'Biographie' }],
+                blockDeletionPath: '/blocks',
+            },
+        });
+        const panel = wrapper.get('details');
+        const action = name => panel.findAll('button').find(button => button.text() === name);
+        await panel.get('select').setValue('example');
+        await action('Analyser les dépendances').trigger('click');
+        await flushPromises();
+
+        expect(panel.text()).toContain('Dispositions historiques liées');
+        expect(action('Supprimer définitivement ce bloc')).toBeUndefined();
+
+        await action('Analyser les dépendances').trigger('click');
+        await flushPromises();
+        expect(fetch).toHaveBeenCalledTimes(2);
+        await action('Supprimer définitivement ce bloc').trigger('click');
+        await flushPromises();
+
+        expect(fetch).toHaveBeenLastCalledWith('/api/blocks/example', expect.objectContaining({
+            method: 'DELETE', body: JSON.stringify({ version: 4, confirmed: true }),
+        }));
+        expect(wrapper.emitted('block-deleted')).toHaveLength(1);
+        wrapper.unmount();
+    } finally {
+        fetch.mockRestore();
+    }
+});
