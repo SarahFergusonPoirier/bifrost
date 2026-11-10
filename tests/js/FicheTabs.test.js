@@ -53,7 +53,7 @@ it('moves placements into an implicit layout when removing a tab and submits bot
     const tabs = [
         { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
         { id: 'notes', title: 'Notes', icon: 'folder', hidden: false, placements: [placement] },
-        { id: 'details', title: 'Détails', icon: 'catalogue', hidden: false },
+        { id: 'details', title: 'Détails', icon: 'catalogue', hidden: true },
     ];
     contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs } });
     const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'notes', getDefaultPlacements: () => [relations, { ...placement, id: 'summary' }] } });
@@ -61,6 +61,7 @@ it('moves placements into an implicit layout when removing a tab and submits bot
 
     await wrapper.findAll('button').filter(button => button.text() === 'Supprimer')[1].trigger('click');
     const confirmation = wrapper.get('.fiche-tab-removal');
+    expect(confirmation.findAll('option').map(option => option.element.value)).toEqual(['Retirer les placements', 'overview']);
     await confirmation.get('select').setValue('overview');
     await confirmation.findAll('button')[0].trigger('click');
     contentRequest.mockImplementationOnce(async (path, method, input) => ({ data: { version: 2, tabs: input.tabs } }));

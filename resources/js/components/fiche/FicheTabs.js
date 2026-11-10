@@ -164,9 +164,9 @@ export default {
         removalTargets(tab) {
             const defaults = this.getDefaultPlacements?.();
             const defaultTabs = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
-            return this.tabs.filter(target => target.id !== tab.id
+            return this.tabs.filter(target => target.id !== tab.id && !target.hidden
                 && (target.placements || defaults || !defaultTabs.includes(target.id))
-                && this.mergePlacements(target, this.placementsForRemoval(tab), defaults ?? []).length <= 80);
+                && this.mergePlacements(target, this.placementsForRemoval(tab, defaults ?? []), defaults ?? []).length <= 80);
         },
         remove(tab) {
             if (this.removalDestination) {
