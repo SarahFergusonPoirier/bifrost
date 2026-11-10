@@ -10,10 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class FicheTabTemplateController extends Controller
 {
-    public function index(Project $project): JsonResponse
+    public function index(Request $request, Project $project): JsonResponse
     {
+        $kind = $request->validate(['kind' => ['sometimes', 'in:tab,block']])['kind'] ?? 'tab';
         $templates = DB::table('fiche_tab_templates')
             ->where(fn ($query) => $query->where('project_id', $project->id)->orWhereNull('project_id'))
+            ->when($kind === 'block', fn ($query) => $query->where('definition->kind', 'block'),
+                fn ($query) => $query->whereNull('definition->kind'))
             ->orderBy('name')->orderBy('id')->get()->map(fn (object $row): array => [
                 'id' => $row->id,
                 'name' => $row->name,
@@ -30,6 +33,7 @@ class FicheTabTemplateController extends Controller
             'name' => ['required', 'string', 'max:80'],
             'scope' => ['required', 'in:project,global'],
             'tab' => ['required', 'string', 'max:64'],
+            'placement' => ['sometimes', 'uuid'],
             'version' => ['required', 'integer', 'min:1'],
         ]);
         $record = $project->contents()->where('public_id', $content)->firstOrFail();
@@ -39,6 +43,11 @@ class FicheTabTemplateController extends Controller
         $tab = collect(json_decode($layout->tabs, true, flags: JSON_THROW_ON_ERROR))->firstWhere('id', $input['tab']);
         abort_if(! $tab, 404);
         $placements = $tab['placements'] ?? [];
+        if (isset($input['placement'])) {
+            $placement = collect($placements)->firstWhere('id', $input['placement']);
+            abort_if(! $placement, 404);
+            $placements = [$placement];
+        }
         $globalFields = [];
         if ($input['scope'] === 'global') {
             $ids = collect($placements)->flatMap(fn (array $placement): array => $placement['field_order'] ?? [])->unique()->all();
@@ -65,6 +74,9 @@ class FicheTabTemplateController extends Controller
             return $placement;
         }, $placements);
         $definition = ['title' => $tab['title'], 'icon' => $tab['icon'], 'placements' => $placements];
+        if (isset($input['placement'])) {
+            $definition['kind'] = 'block';
+        }
         $id = DB::table('fiche_tab_templates')->insertGetId([
             'project_id' => $input['scope'] === 'project' ? $project->id : null,
             'name' => $input['name'],
