@@ -29,6 +29,24 @@ class FicheLayoutController extends Controller
         return response()->json($revisions);
     }
 
+    public function blockImpact(string $project, string $content, string $block): JsonResponse
+    {
+        $record = $this->content($project, $content);
+        $record->blocks()->where('public_id', $block)->firstOrFail();
+        $layout = $this->layout($record);
+        $source = 'text:'.$block;
+        $placements = collect($layout['tabs'])->flatMap(fn (array $tab): array => collect($tab['placements'] ?? [])
+            ->where('source', $source)
+            ->map(fn (array $placement): array => [
+                'tab' => $tab['id'],
+                'title' => $tab['title'],
+                'placement' => $placement['id'],
+                'hidden' => $tab['hidden'] || $placement['hidden'],
+            ])->values()->all());
+
+        return response()->json(['version' => $layout['version'], 'placements' => $placements]);
+    }
+
     public function update(Request $request, string $project, string $content): JsonResponse
     {
         $input = $request->validate([

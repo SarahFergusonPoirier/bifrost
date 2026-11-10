@@ -122,6 +122,9 @@ class FicheLayoutTest extends TestCase
             'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false,
         ]];
         $this->putJson($url, $layout)->assertOk()->assertJsonPath('tabs.0.placements.0.source', 'text:'.$id);
+        $this->getJson("$url/blocks/$id/impact")->assertOk()
+            ->assertJsonCount(1, 'placements')->assertJsonPath('placements.0.tab', 'overview');
+
         $content->update(['summary' => 'Nouveau résumé']);
         $this->assertSame('Résumé original', $content->blocks()->sole()->body);
 

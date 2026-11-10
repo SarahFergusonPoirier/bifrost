@@ -116,3 +116,6 @@ Route::get('/projects/{project}/contents/{content}/fiche-layout/revisions', [Fic
 Route::post('/content-templates', [ContentTemplateController::class, 'store']);
 Route::post('/content-templates/{contentTemplate}/clone', [ContentTemplateController::class, 'duplicate']);
 Route::put('/content-templates/{contentTemplate}', [ContentTemplateController::class, 'update']);
+
+Route::get('/projects/{project}/contents/{content}/fiche-layout/blocks/{block}/impact', [FicheLayoutController::class, 'blockImpact'])
+    ->whereNumber('project')->whereUuid('block');
