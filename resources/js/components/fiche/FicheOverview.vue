@@ -10,7 +10,15 @@
                     <option v-for="card in matchingCards" :key="card.source" :value="card.source">{{ card.title }}</option>
                 </select>
             </label>
-            <p v-if="source && bySource.has(source)">Aperçu · {{ bySource.get(source).title }}</p>
+            <section v-if="bySource.has(source)" aria-label="Aperçu du bloc">
+                <FicheBlock :title="bySource.get(source).title" :icon="bySource.get(source).icon">
+                    <ul v-if="bySource.get(source).fields?.length">
+                        <li v-for="field in bySource.get(source).fields.slice(0, 5)" :key="field.id">{{ field.label }}</li>
+                    </ul>
+                    <p v-else-if="bySource.get(source).text">{{ bySource.get(source).text.slice(0, 140) }}</p>
+                </FicheBlock>
+            </section>
+            <p v-if="!matchingCards.length" role="status">Aucun bloc ne correspond à cette recherche.</p>
             <button type="button" :disabled="!source || draft.length >= 80" @click="add">Ajouter un placement</button>
             <fieldset v-if="canCopy">
                 <legend>Nouveau bloc de texte</legend>
