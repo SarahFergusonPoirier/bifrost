@@ -44,7 +44,18 @@ class FicheLayoutController extends Controller
                 'hidden' => $tab['hidden'] || $placement['hidden'],
             ])->values()->all());
 
-        return response()->json(['version' => $layout['version'], 'placements' => $placements]);
+        $historicalVersions = DB::table('fiche_layout_revisions')->where('content_id', $record->id)
+            ->orderBy('version')->cursor()->filter(function (object $revision) use ($source): bool {
+                $tabs = json_decode($revision->tabs, true, flags: JSON_THROW_ON_ERROR);
+
+                return collect($tabs)->contains(fn (array $tab): bool => collect($tab['placements'] ?? [])->contains('source', $source));
+            })->map(fn (object $revision): int => (int) $revision->version)->values()->all();
+
+        return response()->json([
+            'version' => $layout['version'],
+            'placements' => $placements,
+            'historical_versions' => $historicalVersions,
+        ]);
     }
 
     public function update(Request $request, string $project, string $content): JsonResponse

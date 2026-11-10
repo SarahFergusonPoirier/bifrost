@@ -136,6 +136,9 @@ class FicheLayoutTest extends TestCase
         $layout['copies'][0] += ['title' => 'Biographie', 'body' => 'Début de son histoire.'];
         $this->putJson($url, $layout)->assertOk();
         $this->assertDatabaseHas('content_blocks', ['public_id' => $blank, 'title' => 'Biographie', 'body' => 'Début de son histoire.']);
+        $this->getJson("$url/blocks/$id/impact")->assertOk()
+            ->assertJsonCount(0, 'placements')->assertJsonPath('historical_versions', [1]);
+
         $this->assertDatabaseHas('content_blocks', ['public_id' => $id, 'body' => 'Résumé original']);
     }
 
