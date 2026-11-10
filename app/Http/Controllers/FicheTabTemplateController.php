@@ -64,13 +64,8 @@ class FicheTabTemplateController extends Controller
                 $placement['source'] = $textSlots[$source];
             }
             unset($placement['id'], $placement['media_image']);
-            if ($input['scope'] === 'global' && ! empty($placement['field_order'])) {
-                $ordered = array_values(array_intersect($placement['field_order'], $globalFields));
-                if ($ordered === []) {
-                    unset($placement['field_order']);
-                } else {
-                    $placement['field_order'] = $ordered;
-                }
+            if ($input['scope'] === 'global' && isset($placement['field_order'])) {
+                $placement['field_order'] = array_values(array_intersect($placement['field_order'], $globalFields));
             }
 
             return $placement;

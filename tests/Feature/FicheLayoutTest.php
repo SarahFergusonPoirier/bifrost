@@ -169,7 +169,7 @@ class FicheLayoutTest extends TestCase
         $placement = ['width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false];
         $layout['tabs'][0]['placements'] = [
             $placement + ['id' => 'bf3c7b23-6268-4185-9d52-ec8428478fb7', 'source' => 'summary'],
-            $placement + ['id' => '53cbde0a-d5df-4d20-9611-2af436081194', 'source' => 'text:3a83a413-c5c8-422c-8459-032e89bb3bc1'],
+            $placement + ['id' => '53cbde0a-d5df-4d20-9611-2af436081194', 'source' => 'text:3a83a413-c5c8-422c-8459-032e89bb3bc1', 'field_order' => [999999]],
         ];
         $this->putJson("$base/fiche-layout", $layout)->assertOk();
 
@@ -188,7 +188,8 @@ class FicheLayoutTest extends TestCase
             'scope' => 'global', 'placement' => $layout['tabs'][0]['placements'][1]['id'],
         ])->assertCreated()->assertJsonPath('definition.kind', 'block')
             ->assertJsonCount(1, 'definition.placements')
-            ->assertJsonPath('definition.placements.0.source', 'blank:0');
+            ->assertJsonPath('definition.placements.0.source', 'blank:0')
+            ->assertJsonPath('definition.placements.0.field_order', []);
 
         $this->getJson($otherLibrary)->assertOk()->assertJsonCount(1);
         $this->getJson($otherLibrary.'?kind=block')->assertOk()->assertJsonCount(1)
