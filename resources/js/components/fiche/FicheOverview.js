@@ -346,10 +346,7 @@ export default {
             if (!template || this.draft.length >= 80) return;
             if (template.source.startsWith('blank:')) {
                 if (!this.canCopy) return;
-                const id = crypto.randomUUID();
-                const title = template.title || 'Texte';
-                this.copies.push({ id, source: 'blank', title, body: '', card: { title, text: '', icon: 'narration' } });
-                this.draft.push({ ...template, id: crypto.randomUUID(), source: 'text:' + id });
+                this.addTextPlacement(template.title || 'Texte', '', template);
             } else if (this.bySource.has(template.source)) {
                 this.draft.push({ ...template, id: crypto.randomUUID() });
             }
@@ -357,11 +354,15 @@ export default {
         createTextBlock() {
             const title = this.newTitle.trim();
             if (!title || this.draft.length >= 80) return;
-            const id = crypto.randomUUID();
-            const card = { title, text: this.newBody, icon: 'narration' };
-            this.copies.push({ id, source: 'blank', title, body: this.newBody, card });
-            this.draft.push(placement('text:' + id));
+            this.addTextPlacement(title, this.newBody);
             this.newBody = '';
+        },
+        addTextPlacement(title, body, settings = {}) {
+            const id = crypto.randomUUID();
+            const card = { title, text: body, icon: 'narration' };
+            this.copies.push({ id, source: 'blank', title, body, card });
+            const item = placement('text:' + id);
+            this.draft.push({ ...item, ...settings, id: item.id, source: item.source });
         },
         duplicate(index) {
             const original = this.draft[index];
