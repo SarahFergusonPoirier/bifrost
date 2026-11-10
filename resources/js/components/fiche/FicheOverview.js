@@ -141,6 +141,9 @@ export default {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
         },
+        selectedCard() {
+            return this.matchingCards.find(card => card.source === this.source);
+        },
         bySource() {
             const index = new Map(this.cards.map(card => [card.source, card]));
             const aliases = new Map();
@@ -223,6 +226,7 @@ export default {
             this.$nextTick(() => this.$refs.blockSearch?.focus());
         },
         add() {
+            if (!this.selectedCard || this.draft.length >= 80) return;
             const item = placement(this.source);
             if (item.source === 'fields') item.field_order = [];
             this.draft.push(item);
