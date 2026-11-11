@@ -15,9 +15,10 @@ class FicheLinkedDataController extends Controller
     {
         $record = $project->contents()->where('public_id', $content)->firstOrFail();
         $inProject = fn (Builder $query) => $query->where('project_id', $project->id);
-        $relations = ContentRelation::query()
+        $projectRelations = ContentRelation::query()->whereHas('source', $inProject)->whereHas('target', $inProject);
+        $relationTypes = (clone $projectRelations)->distinct()->orderBy('type_key')->pluck('type_key');
+        $relations = $projectRelations
             ->where(fn (Builder $query) => $query->where('source_content_id', $record->id)->orWhere('target_content_id', $record->id))
-            ->whereHas('source', $inProject)->whereHas('target', $inProject)
             ->with(['source:id,public_id,title,project_id,content_type_id', 'source.contentType:id,key', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
             ->orderBy('id')->get();
         $linked = $relations->map(function (ContentRelation $relation) use ($record): array {
@@ -95,6 +96,6 @@ class FicheLinkedDataController extends Controller
                 'date' => ['start' => $event->start, 'end' => $event->end, 'precision' => $event->precision, 'calendar' => $event->calendar],
             ]);
 
-        return response()->json(['relations' => $linked, 'equipment' => $equipment, 'capabilities' => $capabilities, 'timeline' => $dates->concat($events)->values()]);
+        return response()->json(['relations' => $linked, 'relation_types' => $relationTypes, 'equipment' => $equipment, 'capabilities' => $capabilities, 'timeline' => $dates->concat($events)->values()]);
     }
 }

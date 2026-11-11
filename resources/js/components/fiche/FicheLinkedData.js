@@ -14,7 +14,7 @@ export default {
     },
     computed: {
         relationTypes() {
-            return [...new Set(['famille', 'ami', 'rival', 'mentor', ...(this.data?.relations ?? []).map(relation => relation.type_key).filter(Boolean)])];
+            return [...new Set(['famille', 'ami', 'rival', 'mentor', ...(this.data?.relationTypes ?? []), ...(this.data?.relations ?? []).map(relation => relation.type_key).filter(Boolean)])];
         },
         linkType() {
             return { equipment: 'equipment', capabilities: 'capability' }[this.kind] ?? this.relationType.trim();
@@ -131,7 +131,7 @@ export default {
             this.error = '';
             try {
                 const { data } = await contentRequest(this.path);
-                this.data = { relations: data?.relations ?? [], timeline: data?.timeline ?? [], equipment: data?.equipment ?? [], capabilities: data?.capabilities ?? [] };
+                this.data = { relations: data?.relations ?? [], relationTypes: data?.relation_types ?? [], timeline: data?.timeline ?? [], equipment: data?.equipment ?? [], capabilities: data?.capabilities ?? [] };
             } catch (error) {
                 this.error = error.message;
             }

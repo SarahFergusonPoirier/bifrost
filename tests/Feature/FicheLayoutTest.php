@@ -86,7 +86,7 @@ class FicheLayoutTest extends TestCase
         ContentRelation::create([
             'source_content_id' => $source->id,
             'target_content_id' => $foreign->id,
-            'type_key' => 'mentor',
+            'type_key' => 'externe',
         ]);
 
         DB::table('project_timeline_events')->insert([
@@ -100,6 +100,7 @@ class FicheLayoutTest extends TestCase
         $url = "/api/projects/{$project->id}/contents";
         $this->getJson("$url/{$source->public_id}/fiche-links")->assertOk()
             ->assertJsonCount(1, 'relations')->assertJsonPath('relations.0.label', 'Élève')
+            ->assertJsonPath('relation_types', ['mentor'])
             ->assertJsonPath('timeline.0.title', 'Rencontre')->assertJsonPath('timeline.0.date.precision', 'approximate');
         $this->getJson("$url/{$target->public_id}/fiche-links")->assertOk()
             ->assertJsonPath('relations.0.label', 'Mentor');
