@@ -1,3 +1,4 @@
+import { useId } from 'vue';
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
@@ -11,6 +12,15 @@ export default {
     },
     emits: ['change'],
     data: () => ({ keyword: '', images: [], imageError: '' }),
+    setup() {
+        return { categoryListId: useId() };
+    },
+    computed: {
+        abilityCategories() {
+            if (this.format !== 'capabilities') return [];
+            return [...new Set((this.value ?? []).map(entry => entry.category).filter(Boolean))];
+        },
+    },
     methods: {
         update(key, value) {
             const next = { ...this.value };

@@ -64,7 +64,7 @@
                         @change="editKeyword(index, 'level', $event.target.value)" /></label>
                 </template>
                 <template v-if="format === 'capabilities'">
-                    <label>Catégorie <input :value="entry.category ?? ''" maxlength="120"
+                    <label>Catégorie <input :value="entry.category ?? ''" :list="categoryListId" maxlength="120"
                         @change="editKeyword(index, 'category', $event.target.value)" /></label>
                     <label>Maîtrise
                         <select :value="entry.mastery ?? ''" @change="editKeyword(index, 'mastery', $event.target.value)">
@@ -88,6 +88,9 @@
             </li>
         </ol>
         <p v-if="imageError" role="alert">{{ imageError }}</p>
+        <datalist v-if="format === 'capabilities'" :id="categoryListId">
+            <option v-for="category in abilityCategories" :key="category" :value="category" />
+        </datalist>
         <label>{{ format === 'equipment' ? 'Nouvel équipement' : format === 'capabilities' ? 'Nouvelle capacité' : ['repeatable', 'bullets'].includes(format) ? 'Nouvelle entrée' : 'Nouveau mot-clé' }} <input v-model="keyword" maxlength="120" @keydown.enter.prevent="addKeyword" /></label>
         <button type="button" :disabled="!keyword.trim() || (value?.length ?? 0) >= 100" @click="addKeyword">Ajouter</button>
     </div>
