@@ -32,6 +32,7 @@ export default {
         blockSavePath: String,
         blockDeletionPath: String,
         linksPath: String,
+        contentVersion: String,
         connectionsPath: String,
         referenceTargets: { type: Array, default: () => [] },
         equipmentType: Number,

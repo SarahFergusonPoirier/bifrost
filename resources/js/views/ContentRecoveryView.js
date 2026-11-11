@@ -624,7 +624,7 @@ export default {
                 await loadList();
                 if (item.content) await open(item.content.public_id);
             }),
-            listing, trash, projectTrash, projects, currentProject, selectedProjectId: projectId, types, newTitle, typeId, selected, draft, revisions, from, to,
+            listing, trash, projectTrash, projects, currentProject, selectedProjectId: projectId, types, newTitle, typeId, selected, draft, contentVersion: version, revisions, from, to,
             comparison, snapshotName, snapshotNote, error, busy, saving, dirty, save,
             folderId, folderName, folderParent, folderEditing, folderOptions, placement,
             browseFolder: id => run(async () => {
