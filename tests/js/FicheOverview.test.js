@@ -404,3 +404,30 @@ it('refreshes the gallery after attachments change', async () => {
         fetch.mockRestore();
     }
 });
+
+it('ignores duplicate layout submissions and permits retry after failure', async () => {
+    let resolveSave;
+    const persist = vi.fn()
+        .mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve; }))
+        .mockResolvedValueOnce(true);
+    const wrapper = mount(FicheOverview, {
+        props: { templateSections: new Map(), hiddenFields: [], displayValue: () => '', persist },
+    });
+    await wrapper.get('button').trigger('click');
+    const form = wrapper.get('form');
+
+    await form.trigger('submit');
+    await form.trigger('submit');
+    expect(persist).toHaveBeenCalledTimes(1);
+    expect(form.attributes('inert')).toBeDefined();
+
+    resolveSave(false);
+    await flushPromises();
+    expect(form.attributes('inert')).toBeUndefined();
+
+    await form.trigger('submit');
+    await flushPromises();
+    expect(persist).toHaveBeenCalledTimes(2);
+    expect(wrapper.find('form').exists()).toBe(false);
+    wrapper.unmount();
+});

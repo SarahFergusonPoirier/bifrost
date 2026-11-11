@@ -4,7 +4,7 @@
         :path="blockDeletionPath" :blocks="blocks" @deleted="$emit('block-deleted')" />
 
     <p v-if="savingLayout" role="status">Enregistrement des blocs…</p>
-    <form v-if="editing" class="fiche-grid-controls" :inert="savingLayout" @submit.prevent="save">
+    <form v-if="editing" class="fiche-grid-controls" :inert="savingLayout ? true : null" @submit.prevent="save">
         <details open>
             <summary>Bibliothèque de blocs</summary>
             <label>Rechercher un bloc <input ref="blockSearch" v-model="query" type="search" /></label>
