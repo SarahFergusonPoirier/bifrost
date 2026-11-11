@@ -1,3 +1,4 @@
+import UniverseRelationSettings from '../components/projects/UniverseRelationSettings.vue';
 import {
     ref,
     onMounted,
@@ -20,6 +21,7 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 export default {
     components: {
         ProjectTagInput,
+        UniverseRelationSettings,
     },
 
     setup() {

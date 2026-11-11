@@ -182,6 +182,8 @@
                     </button>
                 </form>
             </header>
+
+            <UniverseRelationSettings v-if="!editing" :key="project.id" :project-id="project.id" />
         </template>
 
         <div
