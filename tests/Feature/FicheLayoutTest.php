@@ -7,6 +7,7 @@ use App\Models\ContentRelation;
 use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
+use App\Models\Universe;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -76,6 +77,9 @@ class FicheLayoutTest extends TestCase
         $target = $make($project, 'Élève');
         $foreign = $make($other, 'Externe');
 
+        $universe = Universe::create(['name' => 'Univers', 'settings' => ['relation_types' => ['allie', 'mentor', 'type invalide']]]);
+        $project->universes()->attach($universe->id);
+
         $this->postJson("/api/projects/{$project->id}/connections", [
             'source' => $source->public_id,
             'target' => $target->public_id,
@@ -100,7 +104,7 @@ class FicheLayoutTest extends TestCase
         $url = "/api/projects/{$project->id}/contents";
         $this->getJson("$url/{$source->public_id}/fiche-links")->assertOk()
             ->assertJsonCount(1, 'relations')->assertJsonPath('relations.0.label', 'Élève')
-            ->assertJsonPath('relation_types', ['mentor'])
+            ->assertJsonPath('relation_types', ['allie', 'mentor'])
             ->assertJsonPath('timeline.0.title', 'Rencontre')->assertJsonPath('timeline.0.date.precision', 'approximate');
         $this->getJson("$url/{$target->public_id}/fiche-links")->assertOk()
             ->assertJsonPath('relations.0.label', 'Mentor');

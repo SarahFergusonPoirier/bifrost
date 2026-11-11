@@ -16,7 +16,11 @@ class FicheLinkedDataController extends Controller
         $record = $project->contents()->where('public_id', $content)->firstOrFail();
         $inProject = fn (Builder $query) => $query->where('project_id', $project->id);
         $projectRelations = ContentRelation::query()->whereHas('source', $inProject)->whereHas('target', $inProject);
-        $relationTypes = (clone $projectRelations)->distinct()->orderBy('type_key')->pluck('type_key');
+        $universeTypes = $project->universes()->get(['universes.id', 'universes.settings'])
+            ->flatMap(fn ($universe): array => (array) ($universe->settings['relation_types'] ?? []))
+            ->filter(fn ($type): bool => is_string($type) && preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $type) === 1);
+        $relationTypes = (clone $projectRelations)->distinct()->pluck('type_key')
+            ->merge($universeTypes)->unique()->sort()->values();
         $relations = $projectRelations
             ->where(fn (Builder $query) => $query->where('source_content_id', $record->id)->orWhere('target_content_id', $record->id))
             ->with(['source:id,public_id,title,project_id,content_type_id', 'source.contentType:id,key', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
