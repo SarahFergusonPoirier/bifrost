@@ -210,7 +210,7 @@
                     :targets="card.source === 'equipment' ? referenceTargets.filter(item => item.content_type_id === equipmentType) : referenceTargets"
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
-                <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image" :fit="placement.media_fit"
+                <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :key="attachmentsRevision" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image" :fit="placement.media_fit"
                     :select-image="editing && placement.media_mode === 'single'"
                     @select-image="placement.media_image = $event" read-only />
                 <FicheLinkedData v-else-if="card.source === 'capabilities'" :key="card.source + contentVersion" :path="linksPath" kind="capabilities"

@@ -2,7 +2,7 @@ import { contentRequest } from '../services/contentRecovery';
 
 export default {
     props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean, fit: String },
-    emits: ['select-image'],
+    emits: ['select-image', 'changed'],
     data: () => ({ attachments: [], alt: '', caption: '', busy: false, error: '' }),
     computed: {
         displayedImages() {
@@ -46,6 +46,7 @@ export default {
                 if (this.alt.trim()) data.set('alt', this.alt.trim());
                 if (this.caption.trim()) data.set('caption', this.caption.trim());
                 await contentRequest(this.endpoint(), 'POST', data);
+                this.$emit('changed');
                 input.value = '';
                 this.alt = '';
                 this.caption = '';
@@ -53,7 +54,10 @@ export default {
         },
         remove(attachment) {
             if (!window.confirm('Retirer cette pièce jointe de la fiche ?')) return;
-            return this.run(() => contentRequest(this.endpoint() + '/' + encodeURIComponent(attachment.public_id), 'DELETE'));
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/' + encodeURIComponent(attachment.public_id), 'DELETE');
+                this.$emit('changed');
+            });
         },
     },
 };

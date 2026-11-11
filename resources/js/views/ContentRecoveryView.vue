@@ -246,7 +246,7 @@
                     <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab"
                         :block-deletion-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout/blocks' : undefined"
                         @block-deleted="refreshFiche"
-                        :content-version="contentVersion" :layout-version="version" :block-library-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
+                        :attachments-revision="attachmentsRevision" :content-version="contentVersion" :layout-version="version" :block-library-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                         :block-save-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-tab-templates' : undefined"
                         :content-id="selected.public_id" :summary="draft.summary" :full-name="draft.title" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab"
                         :connections-path="projectId ? '/projects/' + projectId + '/connections' : undefined"
@@ -259,7 +259,7 @@
                 </template>
             </FicheTabs>
             <div v-show="ficheTab === 'details'">
-            <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" />
+            <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" @changed="attachmentsRevision++" />
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
                 <button type="button" :disabled="busy || saving" @click="openPanel('ideas')">Ouvrir les idées du projet</button>

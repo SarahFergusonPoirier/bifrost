@@ -33,6 +33,7 @@ export default {
         blockDeletionPath: String,
         linksPath: String,
         contentVersion: String,
+        attachmentsRevision: Number,
         connectionsPath: String,
         referenceTargets: { type: Array, default: () => [] },
         equipmentType: Number,

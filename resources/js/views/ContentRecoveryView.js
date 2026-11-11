@@ -218,6 +218,7 @@ export default {
         const draft = ref(null);
         const baseline = ref('');
         const version = ref('');
+        const attachmentsRevision = ref(0);
         const revisions = ref(null);
         const from = ref('');
         const to = ref('');
@@ -624,7 +625,7 @@ export default {
                 await loadList();
                 if (item.content) await open(item.content.public_id);
             }),
-            listing, trash, projectTrash, projects, currentProject, selectedProjectId: projectId, types, newTitle, typeId, selected, draft, contentVersion: version, revisions, from, to,
+            listing, trash, projectTrash, projects, currentProject, selectedProjectId: projectId, types, newTitle, typeId, selected, draft, contentVersion: version, attachmentsRevision, revisions, from, to,
             comparison, snapshotName, snapshotNote, error, busy, saving, dirty, save,
             folderId, folderName, folderParent, folderEditing, folderOptions, placement,
             browseFolder: id => run(async () => {
