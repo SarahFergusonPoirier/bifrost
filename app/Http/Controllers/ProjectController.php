@@ -124,8 +124,7 @@ class ProjectController extends Controller
         $universes = $project->universes()->orderBy('universes.name')->get()->map(fn ($universe): array => [
             'id' => $universe->id,
             'name' => $universe->name,
-            'relation_types' => array_values(array_filter((array) ($universe->settings['relation_types'] ?? []),
-                fn ($type): bool => is_string($type) && preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $type) === 1)),
+            'relation_types' => $universe->relationTypes(),
         ]);
 
         return response()->json($universes);
@@ -141,6 +140,20 @@ class ProjectController extends Controller
             $project->universes()->attach($universe->id);
 
             return response()->json(['id' => $universe->id, 'name' => $universe->name, 'relation_types' => []], 201);
+        }, attempts: 3);
+    }
+
+    public function attachRelationUniverse(Project $project, Universe $universe): JsonResponse
+    {
+        return DB::transaction(function () use ($project, $universe): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $project->universes()->syncWithoutDetaching([$universe->id]);
+
+            return response()->json([
+                'id' => $universe->id,
+                'name' => $universe->name,
+                'relation_types' => $universe->relationTypes(),
+            ]);
         }, attempts: 3);
     }
 

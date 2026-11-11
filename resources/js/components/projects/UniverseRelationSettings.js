@@ -2,7 +2,7 @@ import { contentRequest } from '../../services/contentRecovery';
 
 export default {
     props: { projectId: { type: [Number, String], required: true } },
-    data: () => ({ universes: null, busy: false, error: '', saved: '', universeName: '' }),
+    data: () => ({ universes: null, busy: false, error: '', saved: '', universeName: '', availableUniverses: [], universeToAttach: null }),
     methods: {
         endpoint() {
             return '/projects/' + encodeURIComponent(this.projectId) + '/relation-universes';
@@ -14,6 +14,37 @@ export default {
             try {
                 const { data } = await contentRequest(this.endpoint());
                 this.universes = data.map(universe => ({ ...universe, typesText: universe.relation_types.join('\n') }));
+            } catch (error) {
+                this.error = error.message;
+            } finally {
+                this.busy = false;
+            }
+        },
+        async loadAvailable() {
+            if (this.busy || this.universes === null) return;
+            this.busy = true;
+            this.error = '';
+            try {
+                const { data } = await contentRequest('/universes');
+                const attachedIds = new Set(this.universes.map(universe => universe.id));
+                this.availableUniverses = data.filter(universe => !attachedIds.has(universe.id));
+            } catch (error) {
+                this.error = error.message;
+            } finally {
+                this.busy = false;
+            }
+        },
+        async attachUniverse() {
+            if (!this.universeToAttach || this.busy) return;
+            this.busy = true;
+            this.error = '';
+            this.saved = '';
+            try {
+                const { data } = await contentRequest(this.endpoint() + '/' + this.universeToAttach + '/attach', 'PUT');
+                this.universes.push({ ...data, typesText: data.relation_types.join('\n') });
+                this.availableUniverses = this.availableUniverses.filter(universe => universe.id !== data.id);
+                this.universeToAttach = null;
+                this.saved = 'Univers rattaché au projet.';
             } catch (error) {
                 this.error = error.message;
             } finally {

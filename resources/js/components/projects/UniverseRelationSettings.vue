@@ -19,6 +19,18 @@
             <label>Nouvel univers <input v-model.trim="universeName" required maxlength="255" :disabled="busy" /></label>
             <button type="submit" :disabled="busy || !universeName">Créer et rattacher</button>
         </form>
+        <details v-if="universes !== null" @toggle="$event.target.open && loadAvailable()">
+            <summary>Rattacher un univers existant</summary>
+            <form @submit.prevent="attachUniverse">
+                <label>Univers
+                    <select v-model="universeToAttach" :disabled="busy" required>
+                        <option :value="null" disabled>Choisir un univers</option>
+                        <option v-for="universe in availableUniverses" :key="universe.id" :value="universe.id">{{ universe.name }}</option>
+                    </select>
+                </label>
+                <button type="submit" :disabled="busy || !universeToAttach">Rattacher</button>
+            </form>
+        </details>
     </details>
 </template>
 

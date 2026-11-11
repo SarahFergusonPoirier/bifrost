@@ -24,6 +24,7 @@ Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
 Route::get('/projects/{project}/relation-universes', [ProjectController::class, 'relationUniverses']);
 Route::post('/projects/{project}/relation-universes', [ProjectController::class, 'createRelationUniverse']);
+Route::put('/projects/{project}/relation-universes/{universe}/attach', [ProjectController::class, 'attachRelationUniverse'])->whereNumber('universe');
 Route::put('/projects/{project}/relation-universes/{universe}', [ProjectController::class, 'updateUniverseRelationTypes'])->whereNumber('universe');
 
 Route::get('/tags', [TagController::class, 'index']);

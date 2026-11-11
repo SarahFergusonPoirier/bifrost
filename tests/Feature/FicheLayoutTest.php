@@ -90,6 +90,14 @@ class FicheLayoutTest extends TestCase
         $this->putJson("$settings/{$universe->id}", ['relation_types' => ['allie']])
             ->assertOk()->assertJsonPath('relation_types', ['allie']);
 
+        $otherSettings = "/api/projects/{$other->id}/relation-universes";
+        $this->putJson("$otherSettings/{$universe->id}/attach")->assertOk()->assertJsonPath('relation_types', ['allie']);
+        $this->putJson("$otherSettings/{$universe->id}/attach")->assertOk();
+        $this->getJson($otherSettings)->assertOk()->assertJsonCount(2);
+        $this->putJson("$otherSettings/{$universe->id}", ['relation_types' => ['allie', 'rival']])->assertOk();
+        $this->getJson($settings)->assertOk()->assertJsonPath('0.relation_types', ['allie', 'rival']);
+        $this->putJson("$settings/{$universe->id}", ['relation_types' => ['allie']])->assertOk();
+
         $this->postJson("/api/projects/{$project->id}/connections", [
             'source' => $source->public_id,
             'target' => $target->public_id,

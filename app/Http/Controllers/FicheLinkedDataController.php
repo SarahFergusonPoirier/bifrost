@@ -17,8 +17,7 @@ class FicheLinkedDataController extends Controller
         $inProject = fn (Builder $query) => $query->where('project_id', $project->id);
         $projectRelations = ContentRelation::query()->whereHas('source', $inProject)->whereHas('target', $inProject);
         $universeTypes = $project->universes()->get(['universes.id', 'universes.settings'])
-            ->flatMap(fn ($universe): array => (array) ($universe->settings['relation_types'] ?? []))
-            ->filter(fn ($type): bool => is_string($type) && preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $type) === 1);
+            ->flatMap(fn ($universe): array => $universe->relationTypes());
         $relationTypes = (clone $projectRelations)->distinct()->pluck('type_key')
             ->merge($universeTypes)->unique()->sort()->values();
         $relations = $projectRelations

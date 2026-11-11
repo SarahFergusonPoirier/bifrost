@@ -28,6 +28,15 @@ class Universe extends Model
         });
     }
 
+    /** @return list<string> */
+    public function relationTypes(): array
+    {
+        $types = $this->settings['relation_types'] ?? [];
+
+        return array_values(array_filter((array) $types,
+            fn ($type): bool => is_string($type) && preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $type) === 1));
+    }
+
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class)
