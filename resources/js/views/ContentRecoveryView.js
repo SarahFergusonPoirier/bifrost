@@ -1,5 +1,5 @@
 import { formatFieldValue } from '../components/fiche/formatFieldValue';
-import { fieldColumns, groupTemplateFields } from '../components/fiche/templateFields';
+import { fieldColumns, groupTemplateFields, templateSectionLabel } from '../components/fiche/templateFields';
 import { identityField, identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
@@ -539,6 +539,7 @@ export default {
         });
 
         return {
+            templateSectionLabel,
             referenceTargets: computed(() => [...new Map(treeContents.value.map(item => [item.public_id, item])).values()]
                 .filter(item => item.public_id !== selected.value?.public_id)),
             refreshFiche: () => run(async () => {

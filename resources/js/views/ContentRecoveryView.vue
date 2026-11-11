@@ -314,7 +314,7 @@
                 <p v-if="selected.tags?.length">{{ selected.tags.map(tag => tag.name).join(' · ') }}</p>
                 <label v-if="templateSections.size"><input v-model="showHidden" type="checkbox" /> Afficher les champs masqués</label>
                 <details v-for="[section, fields] in templateSections" :key="section" open>
-                    <summary>{{ section }}</summary>
+                    <summary>{{ templateSectionLabel(section, fields) }}</summary>
                     <dl>
                         <template v-for="field in fields.filter(item => showHidden || !hiddenFields.includes(item.field_definition_id))" :key="field.id">
                             <dt>{{ field.label_override || field.field_definition.label }}</dt>
@@ -358,7 +358,7 @@
                         <button type="button" :disabled="!newTag.trim()" @click="addTag">Créer et associer</button>
                     </fieldset>
                     <details v-for="[section, fields] in templateSections" :key="section" open>
-                        <summary>{{ section }}</summary>
+                        <summary>{{ templateSectionLabel(section, fields) }}</summary>
                         <div v-for="field in fields" :key="field.id">
                             <label>{{ field.label_override || field.field_definition.label }} · État
                                 <select :value="fieldState(field) ?? ''" @change="setFieldState(field, $event.target.value)">

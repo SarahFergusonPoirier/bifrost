@@ -25,6 +25,21 @@ it('reads canonical fields and expands long text in place', async () => {
     expect(wrapper.find('dl').exists()).toBe(false);
 });
 
+it('translates legacy section headings while resolving their saved placement keys', () => {
+    const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom et identité' } };
+    const wrapper = mount(FicheOverview, {
+        props: {
+            templateSections: new Map([['identity', [field]]]),
+            hiddenFields: [],
+            displayValue: () => 'Élia',
+            placements: [{ id: 'identity', source: 'section:identity', width: 6, height: 2 }],
+        },
+    });
+    expect(wrapper.get('.fiche-block h2').text()).toBe('Identité');
+    expect(wrapper.get('.fiche-block dd').text()).toBe('Élia');
+    wrapper.unmount();
+});
+
 it('previews keyboard resizing and persists the same dimensions', async () => {
     const saved = [];
     const wrapper = mount(FicheOverview, {

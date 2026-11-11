@@ -2,6 +2,7 @@ import { formatTemporalDate } from './formatFieldValue';
 import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
 import { identitySectionTitle } from './identitySection';
+import { templateSectionLabel } from './templateFields';
 import { defaultPlacementsFor } from './fichePlacementDefaults';
 import FicheFieldHistory from './FicheFieldHistory.vue';
 import FicheTags from './FicheTags.vue';
@@ -63,7 +64,7 @@ export default {
                 source: 'section:' + title,
                 aliases: [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
                 fullName: title === identityTitle ? this.fullName : null,
-                title,
+                title: templateSectionLabel(title, fields),
                 icon: 'catalogue',
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({
                     id: field.id,
