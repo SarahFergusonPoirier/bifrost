@@ -197,10 +197,10 @@ export default {
             const sources = new Set();
             for (const tab of this.destinations) {
                 const placements = tab.placements ?? defaultPlacementsFor(tab.id, this.defaults);
-                for (const item of placements) sources.add(item.source);
+                for (const item of placements) sources.add(this.resolvedSource(item.source));
             }
             for (const transfer of this.transfers) {
-                if (this.editing) sources.add(transfer.placement.source);
+                if (this.editing) sources.add(this.resolvedSource(transfer.placement.source));
             }
             return sources;
         },
@@ -211,11 +211,14 @@ export default {
                     const card = this.bySource.get(item.source) ?? { title: 'Bloc indisponible', icon: 'catalogue', unavailable: true };
                     const ordered = this.orderedFields(item, card.fields);
                     const fields = item.hide_empty ? ordered.filter(field => !field.empty) : ordered;
-                    return { placement: item, card, fields };
+                    return { placement: item, card, fields, shared: this.sharedSources.has(this.resolvedSource(item.source)) };
                 });
         },
     },
     methods: {
+        resolvedSource(source) {
+            return this.bySource.get(source)?.source ?? source;
+        },
         safeExternalUrl(value) {
             try {
                 const url = new URL(value);

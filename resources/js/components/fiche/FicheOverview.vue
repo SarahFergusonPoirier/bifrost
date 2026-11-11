@@ -196,10 +196,10 @@
         </div>
     </form>
     <div ref="grid" class="fiche-grid">
-        <FicheBlock v-for="{ card, placement, fields } in displayed" :key="placement.id" :title="placement.title || card.title"
+        <FicheBlock v-for="{ card, placement, fields, shared } in displayed" :key="placement.id" :title="placement.title || card.title"
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
-                <small v-if="sharedSources.has(placement.source)" class="fiche-shared-label">Données partagées</small>
+                <small v-if="shared" class="fiche-shared-label">Données partagées</small>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize" :disabled="savingLayout"
                     :aria-label="'Redimensionner ' + (placement.title || card.title) + ' avec les flèches. Largeur ' + placement.width + ' colonnes, hauteur ' + placement.height + ' rangées'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"
