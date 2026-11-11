@@ -51,6 +51,48 @@ it('previews keyboard resizing and persists the same dimensions', async () => {
     expect(saved[0]).toMatchObject({ width: 12, height: 3 });
 });
 
+it('restores the dimensions after a cancelled pointer resize and saves a completed resize', async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, {
+        props: {
+            summary: 'Résumé',
+            templateSections: new Map(),
+            hiddenFields: [],
+            displayValue: () => '',
+            placements: [{ id: 'summary', source: 'summary', width: 6, height: 2 }],
+            persist,
+        },
+    });
+    await wrapper.get('button').trigger('click');
+    const grid = wrapper.get('.fiche-grid').element;
+    grid.style.gridTemplateColumns = Array(12).fill('90px').join(' ');
+    grid.style.columnGap = '10px';
+    const block = wrapper.get('.fiche-block').element;
+    block.style.minHeight = '160px';
+    const handle = wrapper.get('.fiche-resize');
+    handle.element.setPointerCapture = vi.fn();
+    const pointer = async (type, clientX = 0, clientY = 0) => {
+        handle.element.dispatchEvent(new PointerEvent(type, { pointerId: 1, clientX, clientY }));
+        await wrapper.vm.$nextTick();
+    };
+
+
+    await pointer('pointerdown');
+    await pointer('pointermove', 100, 80);
+    expect(block.style.getPropertyValue('--fiche-width')).toBe('7');
+    expect(block.style.getPropertyValue('--fiche-height')).toBe('3');
+    await pointer('pointercancel');
+    expect(block.style.getPropertyValue('--fiche-width')).toBe('6');
+    expect(block.style.getPropertyValue('--fiche-height')).toBe('2');
+
+    await pointer('pointerdown');
+    await pointer('pointermove', 100, 80);
+    await pointer('pointerup');
+    await wrapper.get('form').trigger('submit');
+    expect(persist.mock.calls[0][0]).toEqual([expect.objectContaining({ width: 7, height: 3 })]);
+    wrapper.unmount();
+});
+
 it('opens available references and keeps unavailable references readable', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Alliés' } };
     const wrapper = mount(FicheOverview, {
