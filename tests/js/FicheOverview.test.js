@@ -326,12 +326,12 @@ it('opens a visible custom tab containing the complete linked block', async () =
     } });
     try {
         await flushPromises();
-        await wrapper.get('button[aria-expanded]').trigger('click');
+        await wrapper.findAll('button').find(button => button.text() === 'Voir tout').trigger('click');
         expect(wrapper.emitted('select')).toEqual([['tab-custom']]);
 
         await wrapper.setProps({ active: 'tab-custom', destinations: [] });
         expect(wrapper.findAll('.fiche-relations li')).toHaveLength(5);
-        expect(wrapper.find('button[aria-expanded]').exists()).toBe(false);
+        expect(wrapper.findAll('button').some(button => button.text() === 'Voir tout')).toBe(false);
     } finally {
         wrapper.unmount();
         fetch.mockRestore();

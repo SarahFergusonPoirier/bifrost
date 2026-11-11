@@ -1,9 +1,20 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
+
+beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+        configurable: true,
+        value() { this.open = true; },
+    });
+});
+
+afterEach(() => {
+    delete HTMLDialogElement.prototype.showModal;
+});
 
 it('shows a compact preview, expanding only if there is no complete tab', async () => {
     const relations = Array.from({ length: 5 }, (_, id) => ({ id, title: 'Personnage ' + id, public_id: String(id), label: 'Ami' }));
@@ -11,13 +22,13 @@ it('shows a compact preview, expanding only if there is no complete tab', async 
     const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'relations', hasTab: true } });
     await flushPromises();
     expect(wrapper.findAll('li')).toHaveLength(4);
-    const more = () => wrapper.get('button[aria-expanded]');
+    const more = () => wrapper.findAll('button').find(button => button.text() === 'Voir tout');
     await more().trigger('click');
     expect(wrapper.emitted('show-all')).toEqual([['relations']]);
     await wrapper.setProps({ hasTab: false });
     await more().trigger('click');
     expect(wrapper.findAll('li')).toHaveLength(5);
-    await more().trigger('click');
+    await wrapper.get('dialog').trigger('close');
     expect(wrapper.findAll('li')).toHaveLength(4);
 });
 
@@ -28,10 +39,12 @@ it('opens details for a single timeline event without a dedicated tab', async ()
     const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'timeline' } });
     await flushPromises();
     expect(wrapper.find('details').exists()).toBe(false);
-    await wrapper.get('button[aria-expanded]').trigger('click');
-    expect(wrapper.get('details').text()).toContain('Première rencontre à Montréal');
+    await wrapper.get('button[aria-haspopup="dialog"]').trigger('click');
+    const dialog = wrapper.get('dialog[open][aria-label="Chronologie"]');
+    expect(dialog.get('details').text()).toContain('Première rencontre à Montréal');
     expect(wrapper.emitted('show-all')).toBeUndefined();
-    await wrapper.get('button[aria-expanded]').trigger('click');
+    await dialog.trigger('close');
+    expect(wrapper.find('dialog').exists()).toBe(false);
     expect(wrapper.find('details').exists()).toBe(false);
     wrapper.unmount();
 });

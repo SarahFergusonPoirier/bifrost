@@ -4,6 +4,7 @@ import { contentRequest } from '../../services/contentRecovery';
 
 const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
 const dateOrder = new Intl.Collator('fr', { numeric: true });
+const titles = { relations: 'Relations', timeline: 'Chronologie', equipment: 'Équipements', capabilities: 'Capacités' };
 
 export default {
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
@@ -13,6 +14,9 @@ export default {
         return { relationTypeListId: useId() };
     },
     computed: {
+        fullViewTitle() {
+            return titles[this.kind];
+        },
         relationTypes() {
             return [...new Set(['famille', 'ami', 'rival', 'mentor', ...(this.data?.relationTypes ?? []), ...(this.data?.relations ?? []).map(relation => relation.type_key).filter(Boolean)])];
         },
@@ -131,9 +135,21 @@ export default {
                 this.savingLink = false;
             }
         },
-        showAll() {
-            if (this.hasTab) this.$emit('show-all', this.kind);
-            else this.expanded = !this.expanded;
+        async showAll() {
+            if (this.hasTab) {
+                this.$emit('show-all', this.kind);
+                return;
+            }
+
+            this.expanded = true;
+            await this.$nextTick();
+            this.$refs.fullView?.showModal();
+        },
+        async closeFullView() {
+            this.expanded = false;
+            this.editingLink = null;
+            await this.$nextTick();
+            this.$refs.showAllButton?.focus();
         },
         async load() {
             this.error = '';

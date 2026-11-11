@@ -203,6 +203,30 @@
     user-select: none;
 }
 
+.fiche-linked-dialog {
+    box-sizing: border-box;
+    width: min(44rem, calc(100% - 2rem));
+    max-height: calc(100% - 2rem);
+    overflow: auto;
+    margin: auto;
+    padding: var(--space-4);
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--workspace-border);
+    border-radius: var(--radius-card);
+}
+
+.fiche-linked-dialog::backdrop {
+    background: rgb(0 0 0 / 60%);
+}
+
+.fiche-linked-dialog > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
 .fiche-references {
     display: flex;
     flex-wrap: wrap;
