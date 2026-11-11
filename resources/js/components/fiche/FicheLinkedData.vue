@@ -10,16 +10,16 @@
                 <button v-if="relation.public_id" type="button" @click="$emit('open', relation.public_id)">{{ relation.title }}</button>
                 <strong v-else>{{ relation.title }}</strong>
                 <span v-if="relation.label" class="fiche-relation-label">{{ relation.label }}</span>
-                <template v-if="view === 'cards'">
+                <template v-if="view === 'cards' || showDetails">
                     <p v-if="relation.status">{{ relation.status }}</p>
                     <p v-if="relation.role">{{ relation.role }}</p>
                     <p v-if="relation.start || relation.end">{{ [relation.start, relation.end].filter(Boolean).join(' – ') }}</p>
                     <p v-if="relation.note">{{ relation.note }}</p>
                 </template>
                 </slot>
-                <button v-if="kind === 'relations' && full && connectionsPath && relation.link_id" type="button"
+                <button v-if="kind === 'relations' && showDetails && connectionsPath && relation.link_id" type="button"
                     :disabled="savingLink" @click="editLink(relation)">Modifier le lien</button>
-                <button v-if="full && connectionsPath && relation.link_id" type="button" :disabled="savingLink"
+                <button v-if="showDetails && connectionsPath && relation.link_id" type="button" :disabled="savingLink"
                     @click="removeLink(relation)">Retirer le lien</button>
             </li>
         </ul>
@@ -31,7 +31,7 @@
                 {{ formatDate(event.date) }} ·
                 <button v-if="event.public_id" type="button" @click="$emit('open', event.public_id)">{{ event.title }}</button>
                 <template v-else>{{ event.title }}</template>
-                <details v-if="full && event.description">
+                <details v-if="showDetails && event.description">
                     <summary>Détails de l’événement</summary>
                     <p>{{ event.description }}</p>
                 </details>
@@ -39,9 +39,9 @@
         </ol>
         <p v-else>Aucun événement lié à cette fiche.</p>
     </template>
-    <button v-if="data && !full && items.length > previewSize" type="button" :aria-expanded="expanded"
+    <button v-if="data && !full && (expanded || canOpenFullView)" type="button" :aria-expanded="expanded"
         @click="showAll">{{ expanded ? 'Voir moins' : 'Voir tout' }}</button>
-    <form v-if="full && connectionsPath && kind !== 'timeline' && targets.length" @submit.prevent="addLink">
+    <form v-if="showDetails && connectionsPath && kind !== 'timeline' && targets.length" @submit.prevent="addLink">
         <fieldset :disabled="savingLink">
             <legend>Lier une fiche</legend>
             <label>Fiche cible
@@ -75,7 +75,7 @@
             <button type="button" @click="editingLink = null">Annuler</button>
         </fieldset>
     </form>
-    <datalist v-if="kind === 'relations' && full && connectionsPath" :id="relationTypeListId">
+    <datalist v-if="kind === 'relations' && showDetails && connectionsPath" :id="relationTypeListId">
         <option v-for="type in relationTypes" :key="type" :value="type" />
     </datalist>
     <p v-if="linkError" role="alert">{{ linkError }}</p>

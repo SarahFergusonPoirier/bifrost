@@ -21,6 +21,21 @@ it('shows a compact preview, expanding only if there is no complete tab', async 
     expect(wrapper.findAll('li')).toHaveLength(4);
 });
 
+it('opens details for a single timeline event without a dedicated tab', async () => {
+    contentRequest.mockResolvedValue({ data: { timeline: [
+        { key: 'meeting', title: 'Rencontre', description: 'Première rencontre à Montréal' },
+    ] } });
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'timeline' } });
+    await flushPromises();
+    expect(wrapper.find('details').exists()).toBe(false);
+    await wrapper.get('button[aria-expanded]').trigger('click');
+    expect(wrapper.get('details').text()).toContain('Première rencontre à Montréal');
+    expect(wrapper.emitted('show-all')).toBeUndefined();
+    await wrapper.get('button[aria-expanded]').trigger('click');
+    expect(wrapper.find('details').exists()).toBe(false);
+    wrapper.unmount();
+});
+
 it('sorts timeline entries by date or importance and keeps approximate dates labelled', async () => {
     contentRequest.mockResolvedValue({ data: { timeline: [
         { key: 'unknown', title: 'Inconnu', date: null },
