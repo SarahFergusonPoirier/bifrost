@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Tag;
+use App\Models\Universe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -128,6 +129,19 @@ class ProjectController extends Controller
         ]);
 
         return response()->json($universes);
+    }
+
+    public function createRelationUniverse(Request $request, Project $project): JsonResponse
+    {
+        $input = $request->validate(['name' => ['required', 'string', 'max:255']]);
+
+        return DB::transaction(function () use ($project, $input): JsonResponse {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $universe = Universe::create($input);
+            $project->universes()->attach($universe->id);
+
+            return response()->json(['id' => $universe->id, 'name' => $universe->name, 'relation_types' => []], 201);
+        }, attempts: 3);
     }
 
     public function updateUniverseRelationTypes(Request $request, Project $project, int $universe): JsonResponse

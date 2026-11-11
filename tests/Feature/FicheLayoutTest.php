@@ -81,6 +81,9 @@ class FicheLayoutTest extends TestCase
         $project->universes()->attach($universe->id);
 
         $settings = "/api/projects/{$project->id}/relation-universes";
+        $newUniverse = $this->postJson("/api/projects/{$other->id}/relation-universes", ['name' => 'Nouvel univers'])
+            ->assertCreated()->assertJsonPath('name', 'Nouvel univers')->json('id');
+        $this->assertDatabaseHas('project_universe', ['project_id' => $other->id, 'universe_id' => $newUniverse]);
         $this->getJson($settings)->assertOk()->assertJsonPath('0.relation_types', ['allie', 'mentor']);
         $this->putJson("$settings/{$universe->id}", ['relation_types' => ['allié']])->assertUnprocessable();
         $this->putJson("/api/projects/{$other->id}/relation-universes/{$universe->id}", ['relation_types' => []])->assertNotFound();

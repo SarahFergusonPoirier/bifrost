@@ -15,6 +15,10 @@
                 <button type="submit">Enregistrer les types</button>
             </fieldset>
         </form>
+        <form v-if="universes !== null" @submit.prevent="createUniverse">
+            <label>Nouvel univers <input v-model.trim="universeName" required maxlength="255" :disabled="busy" /></label>
+            <button type="submit" :disabled="busy || !universeName">Créer et rattacher</button>
+        </form>
     </details>
 </template>
 
