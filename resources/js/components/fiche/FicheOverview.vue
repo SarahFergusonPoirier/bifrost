@@ -3,7 +3,8 @@
     <FicheBlockDeletion v-if="blockDeletionPath && canCopy && !editing && blocks.some(block => block.block_type === 'text')"
         :path="blockDeletionPath" :blocks="blocks" @deleted="$emit('block-deleted')" />
 
-    <form v-if="editing" class="fiche-grid-controls" @submit.prevent="save">
+    <p v-if="savingLayout" role="status">Enregistrement des blocs…</p>
+    <form v-if="editing" class="fiche-grid-controls" :inert="savingLayout" @submit.prevent="save">
         <details open>
             <summary>Bibliothèque de blocs</summary>
             <label>Rechercher un bloc <input ref="blockSearch" v-model="query" type="search" /></label>
@@ -199,7 +200,7 @@
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <small v-if="sharedSources.has(placement.source)" class="fiche-shared-label">Données partagées</small>
-                <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
+                <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize" :disabled="savingLayout"
                     :aria-label="'Redimensionner ' + (placement.title || card.title) + ' avec les flèches. Largeur ' + placement.width + ' colonnes, hauteur ' + placement.height + ' rangées'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"
                     @pointerup="finishResize" @pointercancel="cancelResize" @lostpointercapture="finishResize"
@@ -211,7 +212,7 @@
                     :sort="placement.sort" :view="placement.view" :full="active === card.source" :has-tab="linkedTabs.includes(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', $event)" />
                 <ContentAttachments v-else-if="['attachments', 'gallery'].includes(card.source)" :key="attachmentsRevision" :content-id="contentId" :gallery="card.source === 'gallery'" :single="placement.media_mode === 'single'" :image-id="placement.media_image" :fit="placement.media_fit"
-                    :select-image="editing && placement.media_mode === 'single'"
+                    :select-image="editing && !savingLayout && placement.media_mode === 'single'"
                     @select-image="placement.media_image = $event" read-only />
                 <FicheLinkedData v-else-if="card.source === 'capabilities'" :key="card.source + contentVersion" :path="linksPath" kind="capabilities"
                     :local-capabilities="card.entries" :connections-path="connectionsPath" :content-id="contentId" :targets="referenceTargets" view="cards" :full="active === 'capabilities'"
