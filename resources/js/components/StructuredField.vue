@@ -42,7 +42,7 @@
     </div>
     <div v-else-if="['keywords', 'equipment', 'capabilities', 'repeatable', 'bullets'].includes(format)">
         <ol v-if="value?.length">
-            <li v-for="(entry, index) in value" :key="index">
+            <li v-for="(entry, index) in value" :key="entry.id ?? index">
                 <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : ['repeatable', 'bullets'].includes(format) ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <label v-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
