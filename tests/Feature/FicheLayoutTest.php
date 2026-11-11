@@ -76,14 +76,18 @@ class FicheLayoutTest extends TestCase
         $target = $make($project, 'Élève');
         $foreign = $make($other, 'Externe');
 
-        foreach ([$target, $foreign] as $linked) {
-            ContentRelation::create([
-                'source_content_id' => $source->id,
-                'target_content_id' => $linked->id,
-                'type_key' => 'mentor',
-                'properties_data' => ['forward_label' => 'Élève', 'inverse_label' => 'Mentor'],
-            ]);
-        }
+        $this->postJson("/api/projects/{$project->id}/connections", [
+            'source' => $source->public_id,
+            'target' => $target->public_id,
+            'type_key' => 'mentor',
+            'properties' => ['forward_label' => 'Élève', 'inverse_label' => 'Mentor'],
+        ])->assertCreated();
+
+        ContentRelation::create([
+            'source_content_id' => $source->id,
+            'target_content_id' => $foreign->id,
+            'type_key' => 'mentor',
+        ]);
 
         DB::table('project_timeline_events')->insert([
             'project_id' => $project->id,
