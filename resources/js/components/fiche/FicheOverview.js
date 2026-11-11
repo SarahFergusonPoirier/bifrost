@@ -55,7 +55,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select', 'block-deleted'],
-    data: () => ({ icons, editing: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
+    data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -391,11 +391,17 @@ export default {
             this.$nextTick(() => this.$refs.editButton?.focus());
         },
         async save() {
+            if (this.savingLayout) return;
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
             const copies = this.copies.filter(copy => placed.has('text:' + copy.id)).map(({ card, ...copy }) => copy);
             const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === 'text:' + copy.id))
                 .map(item => placement(item.source));
-            if (await this.persist(this.draft, this.transfers, defaults, copies)) this.cancel();
+            this.savingLayout = true;
+            try {
+                if (await this.persist(this.draft, this.transfers, defaults, copies)) this.cancel();
+            } finally {
+                this.savingLayout = false;
+            }
         },
     },
 };

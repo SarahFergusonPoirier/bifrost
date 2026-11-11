@@ -206,6 +206,7 @@ export default {
             return this.save(tabs, [...copies.values()]);
         },
         async save(tabs, copies = []) {
+            if (this.saving) return false;
             this.saving = true;
             this.error = '';
             try {

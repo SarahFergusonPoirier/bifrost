@@ -190,8 +190,8 @@
             </li>
         </ol>
         <div class="fiche-grid-actions">
-            <button type="submit" :disabled="!persist || (copies.length > 0 && !canCopy)">Enregistrer les blocs</button>
-            <button type="button" @click="cancel">Annuler</button>
+            <button type="submit" :disabled="savingLayout || !persist || (copies.length > 0 && !canCopy)">Enregistrer les blocs</button>
+            <button type="button" :disabled="savingLayout" @click="cancel">Annuler</button>
         </div>
     </form>
     <div ref="grid" class="fiche-grid">
