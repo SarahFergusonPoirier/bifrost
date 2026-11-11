@@ -216,6 +216,14 @@ export default {
         },
     },
     methods: {
+        linkedTabFor(source) {
+            if (this.active === source || this.linkedTabs.includes(source)) return source;
+            const containsBlock = placements => placements?.some(item =>
+                item.source === source && !item.hidden && !item.collapsed);
+            if (this.active?.startsWith('tab-') && containsBlock(this.placements)) return this.active;
+            return this.destinations.find(tab => tab.id.startsWith('tab-')
+                && !tab.hidden && containsBlock(tab.placements))?.id;
+        },
         resolvedSource(source) {
             return this.bySource.get(source)?.source ?? source;
         },

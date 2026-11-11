@@ -311,6 +311,33 @@ it('resolves a renamed section and identifies placements sharing its values', ()
     expect(wrapper.get('.fiche-shared-label').text()).toBe('Données partagées');
 });
 
+it('opens a visible custom tab containing the complete linked block', async () => {
+    const placement = { id: 'relations', source: 'relations', width: 6, height: 2 };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
+        relations: Array.from({ length: 5 }, (_, id) => ({ id, title: 'Relation ' + id })),
+    }));
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        linksPath: '/fiche-links', active: 'overview', placements: [placement],
+        destinations: [
+            { id: 'tab-hidden', hidden: true, placements: [placement] },
+            { id: 'tab-custom', placements: [placement] },
+        ],
+    } });
+    try {
+        await flushPromises();
+        await wrapper.get('button[aria-expanded]').trigger('click');
+        expect(wrapper.emitted('select')).toEqual([['tab-custom']]);
+
+        await wrapper.setProps({ active: 'tab-custom', destinations: [] });
+        expect(wrapper.findAll('.fiche-relations li')).toHaveLength(5);
+        expect(wrapper.find('button[aria-expanded]').exists()).toBe(false);
+    } finally {
+        wrapper.unmount();
+        fetch.mockRestore();
+    }
+});
+
 it('adds a reusable block as a new placement with its saved dimensions', async () => {
     const template = { source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json([
