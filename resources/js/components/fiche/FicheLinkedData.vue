@@ -53,6 +53,10 @@
             <label v-if="kind === 'relations'">Type de relation
                 <input v-model="relationType" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
             </label>
+            <template v-if="kind === 'relations'">
+                <label>Libellé depuis cette fiche <input v-model="outgoingLabel" maxlength="255" /></label>
+                <label>Libellé depuis l’autre fiche <input v-model="incomingLabel" maxlength="255" /></label>
+            </template>
             <button type="submit">Créer la relation</button>
         </fieldset>
     </form>

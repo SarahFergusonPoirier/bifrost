@@ -7,7 +7,7 @@ const dateOrder = new Intl.Collator('fr', { numeric: true });
 export default {
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all'],
-    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', savingLink: false, linkError: '', editingLink: null }; },
+    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
     computed: {
         linkType() {
             return { equipment: 'equipment', capabilities: 'capability' }[this.kind] ?? this.relationType.trim();
@@ -51,8 +51,16 @@ export default {
             try {
                 await contentRequest(this.connectionsPath, 'POST', {
                     source: this.contentId, target: this.target, type_key: this.linkType,
+                    ...(this.kind === 'relations' && (this.outgoingLabel.trim() || this.incomingLabel.trim()) ? {
+                        properties: {
+                            forward_label: this.outgoingLabel.trim() || null,
+                            inverse_label: this.incomingLabel.trim() || null,
+                        },
+                    } : {}),
                 });
                 this.target = '';
+                this.outgoingLabel = '';
+                this.incomingLabel = '';
                 await this.load();
             } catch (error) {
                 this.linkError = error.message;

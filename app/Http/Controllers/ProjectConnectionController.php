@@ -69,6 +69,9 @@ class ProjectConnectionController extends Controller
         $validated = $request->validate([
             'source' => ['required', 'uuid'],
             'target' => ['required', 'uuid', 'different:source'],
+            'properties' => ['sometimes', 'array:forward_label,inverse_label'],
+            'properties.forward_label' => ['nullable', 'string', 'max:255'],
+            'properties.inverse_label' => ['nullable', 'string', 'max:255'],
             'type_key' => ['required', 'alpha_dash:ascii', 'max:80'],
         ]);
 
@@ -85,6 +88,7 @@ class ProjectConnectionController extends Controller
                 'source_content_id' => $source->id,
                 'target_content_id' => $target->id,
                 'type_key' => $validated['type_key'],
+                'properties_data' => $validated['properties'] ?? null,
             ]);
 
             return response()->json($edge, 201);
