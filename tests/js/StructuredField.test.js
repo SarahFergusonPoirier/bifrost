@@ -53,3 +53,19 @@ it('preserves the legacy period when setting a structured date on a repeatable e
         id: expect.stringMatching(/^[a-f0-9-]{36}$/),
     }]]);
 });
+
+it('suggests template and existing ability categories without duplicates', async () => {
+    const wrapper = mount(StructuredField, {
+        props: {
+            format: 'capabilities',
+            categoryOptions: ['Magie', 'Combat'],
+            value: [{ label: 'Bouclier', category: 'Magie' }, { label: 'Pistage', category: 'Survie' }],
+        },
+    });
+
+    const category = wrapper.get('input[list]');
+    expect(category.attributes('list')).toBe(wrapper.get('datalist').attributes('id'));
+    expect(wrapper.findAll('datalist option').map(option => option.element.value)).toEqual(['Magie', 'Combat', 'Survie']);
+    await category.setValue('Diplomatie');
+    expect(wrapper.emitted('change').at(-1)[0][0].category).toBe('Diplomatie');
+});
