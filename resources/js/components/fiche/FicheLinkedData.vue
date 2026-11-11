@@ -51,7 +51,7 @@
                 </select>
             </label>
             <label v-if="kind === 'relations'">Type de relation
-                <input v-model="relationType" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
+                <input v-model="relationType" :list="relationTypeListId" required pattern="[A-Za-z0-9_\-]+" maxlength="80" />
             </label>
             <template v-if="kind === 'relations'">
                 <label>Libellé depuis cette fiche <input v-model="outgoingLabel" maxlength="255" /></label>
@@ -63,7 +63,7 @@
     <form v-if="editingLink" @submit.prevent="saveLink">
         <fieldset :disabled="savingLink">
             <legend>Modifier la relation</legend>
-            <label>Type <input v-model="editingLink.type" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
+            <label>Type <input v-model="editingLink.type" :list="relationTypeListId" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
             <label>Libellé depuis cette fiche <input v-model="editingLink.outgoing" maxlength="255" /></label>
             <label>Libellé depuis l’autre fiche <input v-model="editingLink.incoming" maxlength="255" /></label>
 <label>Statut <input v-model="editingLink.status" maxlength="80" /></label>
@@ -75,6 +75,9 @@
             <button type="button" @click="editingLink = null">Annuler</button>
         </fieldset>
     </form>
+    <datalist v-if="kind === 'relations' && full && connectionsPath" :id="relationTypeListId">
+        <option v-for="type in relationTypes" :key="type" :value="type" />
+    </datalist>
     <p v-if="linkError" role="alert">{{ linkError }}</p>
 </template>
 

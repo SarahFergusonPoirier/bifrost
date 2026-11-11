@@ -1,3 +1,4 @@
+import { useId } from 'vue';
 import { formatTemporalDate } from './formatFieldValue';
 import { contentRequest } from '../../services/contentRecovery';
 
@@ -8,7 +9,13 @@ export default {
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all'],
     data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
+    setup() {
+        return { relationTypeListId: useId() };
+    },
     computed: {
+        relationTypes() {
+            return [...new Set(['famille', 'ami', 'rival', 'mentor', ...(this.data?.relations ?? []).map(relation => relation.type_key).filter(Boolean)])];
+        },
         linkType() {
             return { equipment: 'equipment', capabilities: 'capability' }[this.kind] ?? this.relationType.trim();
         },
