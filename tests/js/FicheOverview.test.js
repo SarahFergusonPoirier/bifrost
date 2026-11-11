@@ -326,3 +326,30 @@ it('requires a fresh impact check and confirmation before deleting an orphan tex
         fetch.mockRestore();
     }
 });
+
+it('refreshes the timeline when a new content version is saved', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(Response.json({ timeline: [{ key: 'date', title: 'Voyage', date: { start: 'An 498' } }] }))
+        .mockResolvedValueOnce(Response.json({ timeline: [{ key: 'date', title: 'Voyage', date: { start: 'An 499' } }] }));
+    try {
+        const wrapper = mount(FicheOverview, {
+            props: {
+                templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+                linksPath: '/fiche-links', contentVersion: 'before',
+                placements: [{ id: 'timeline', source: 'timeline', width: 6, height: 2 }],
+            },
+        });
+        await flushPromises();
+        expect(wrapper.text()).toContain('An 498');
+
+        await wrapper.setProps({ contentVersion: 'after' });
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('An 499');
+        expect(wrapper.text()).not.toContain('An 498');
+        expect(fetch).toHaveBeenCalledTimes(2);
+        wrapper.unmount();
+    } finally {
+        fetch.mockRestore();
+    }
+});
