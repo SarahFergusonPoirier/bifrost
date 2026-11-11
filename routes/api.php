@@ -22,6 +22,9 @@ Route::put('/projects/{project}', [ProjectController::class, 'update']);
 Route::patch('/projects/{project}/favorite', [ProjectController::class, 'updateFavorite']);
 Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
+Route::get('/projects/{project}/relation-universes', [ProjectController::class, 'relationUniverses']);
+Route::put('/projects/{project}/relation-universes/{universe}', [ProjectController::class, 'updateUniverseRelationTypes'])->whereNumber('universe');
+
 Route::get('/tags', [TagController::class, 'index']);
 Route::post('/tags', [TagController::class, 'store']);
 Route::delete('/tags/{tag}', [TagController::class, 'destroy']);

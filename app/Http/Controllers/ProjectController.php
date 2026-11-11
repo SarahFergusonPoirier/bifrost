@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
@@ -115,6 +116,33 @@ class ProjectController extends Controller
         }
 
         return $project->load('tags');
+    }
+
+    public function relationUniverses(Project $project): JsonResponse
+    {
+        $universes = $project->universes()->orderBy('universes.name')->get()->map(fn ($universe): array => [
+            'id' => $universe->id,
+            'name' => $universe->name,
+            'relation_types' => array_values(array_filter((array) ($universe->settings['relation_types'] ?? []),
+                fn ($type): bool => is_string($type) && preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $type) === 1)),
+        ]);
+
+        return response()->json($universes);
+    }
+
+    public function updateUniverseRelationTypes(Request $request, Project $project, int $universe): JsonResponse
+    {
+        $input = $request->validate([
+            'relation_types' => ['present', 'array', 'list', 'max:100'],
+            'relation_types.*' => ['required', 'string', 'alpha_dash:ascii', 'max:80', 'distinct:ignore_case'],
+        ]);
+
+        return DB::transaction(function () use ($project, $universe, $input): JsonResponse {
+            $record = $project->universes()->whereKey($universe)->lockForUpdate()->firstOrFail();
+            $record->update(['settings' => array_replace($record->settings ?? [], $input)]);
+
+            return response()->json($input);
+        }, attempts: 3);
     }
 
     public function updateFavorite(Request $request, Project $project)

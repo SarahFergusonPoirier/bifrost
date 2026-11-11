@@ -80,6 +80,13 @@ class FicheLayoutTest extends TestCase
         $universe = Universe::create(['name' => 'Univers', 'settings' => ['relation_types' => ['allie', 'mentor', 'type invalide']]]);
         $project->universes()->attach($universe->id);
 
+        $settings = "/api/projects/{$project->id}/relation-universes";
+        $this->getJson($settings)->assertOk()->assertJsonPath('0.relation_types', ['allie', 'mentor']);
+        $this->putJson("$settings/{$universe->id}", ['relation_types' => ['allié']])->assertUnprocessable();
+        $this->putJson("/api/projects/{$other->id}/relation-universes/{$universe->id}", ['relation_types' => []])->assertNotFound();
+        $this->putJson("$settings/{$universe->id}", ['relation_types' => ['allie']])
+            ->assertOk()->assertJsonPath('relation_types', ['allie']);
+
         $this->postJson("/api/projects/{$project->id}/connections", [
             'source' => $source->public_id,
             'target' => $target->public_id,
