@@ -200,7 +200,7 @@
             <template #actions>
                 <small v-if="sharedSources.has(placement.source)" class="fiche-shared-label">Données partagées</small>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize"
-                    :aria-label="'Redimensionner ' + card.title + ' avec les flèches'"
+                    :aria-label="'Redimensionner ' + (placement.title || card.title) + ' avec les flèches. Largeur ' + placement.width + ' colonnes, hauteur ' + placement.height + ' rangées'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"
                     @pointerup="finishResize" @pointercancel="cancelResize" @lostpointercapture="finishResize"
                     @keydown="resizeWithKeyboard($event, placement)">↘</button>
