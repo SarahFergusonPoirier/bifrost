@@ -8,6 +8,7 @@ export default {
         levels: { type: Number, default: 5 },
         contentId: String,
         levelMode: String,
+        categoryOptions: { type: Array, default: () => [] },
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
@@ -18,7 +19,7 @@ export default {
     computed: {
         abilityCategories() {
             if (this.format !== 'capabilities') return [];
-            return [...new Set((this.value ?? []).map(entry => entry.category).filter(Boolean))];
+            return [...new Set([...this.categoryOptions, ...(this.value ?? []).map(entry => entry.category)].filter(Boolean))];
         },
     },
     methods: {

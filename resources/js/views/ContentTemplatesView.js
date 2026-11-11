@@ -162,7 +162,7 @@ export default {
                         level_descriptions: (levelDescriptions ?? '').split('\n').slice(0, levels ?? 5).map(line => line.trim() || null),
                         scale_display: scaleDisplay ?? 'both',
                     } : {}),
-                    ...(['choice', 'multiple_choice'].includes(field.type)
+                    ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type)
                         ? { choices: (choicesText ?? '').split('\n').map(option => option.trim()).filter(Boolean) }
                         : {}),
                 }));

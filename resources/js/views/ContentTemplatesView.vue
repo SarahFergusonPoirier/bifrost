@@ -104,8 +104,8 @@
                             <option value="red">Badge rouge</option>
                         </select>
                     </label>
-                    <label v-if="['choice', 'multiple_choice'].includes(field.type)">
-                        Options (une par ligne) <textarea v-model="field.choicesText" maxlength="10000" />
+                    <label v-if="['choice', 'multiple_choice', 'capabilities'].includes(field.type)">
+                        {{ field.type === 'capabilities' ? 'Catégories (une par ligne)' : 'Options (une par ligne)' }} <textarea v-model="field.choicesText" maxlength="10000" />
                     </label>
                     <label>Aide <textarea v-model="field.help" maxlength="10000" /></label>
                     <label><input v-model="field.required" type="checkbox" /> Obligatoire</label>
