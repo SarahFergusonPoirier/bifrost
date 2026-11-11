@@ -5,7 +5,7 @@
         <form v-if="!readOnly" @submit.prevent="upload">
             <label>Fichier à joindre (20 Mo maximum) <input ref="file" type="file" required :disabled="busy" /></label>
             <label>Texte alternatif (image) <input v-model="alt" maxlength="255" :disabled="busy" /></label>
-            <label>Légende (image) <input v-model="caption" maxlength="1000" :disabled="busy" /></label>
+            <label>Légende facultative <input v-model="caption" maxlength="1000" :disabled="busy" /></label>
             <button type="submit" :disabled="busy">Joindre le fichier</button>
         </form>
         <p v-if="readOnly && busy" role="status">Chargement…</p>
@@ -31,6 +31,7 @@
         <ul v-if="!gallery && attachments.length">
             <li v-for="attachment in attachments" :key="attachment.public_id">
                 <a :href="download(attachment.public_id)">{{ attachment.original_name }}</a>
+                <p v-if="attachment.metadata?.caption">{{ attachment.metadata.caption }}</p>
                 <button v-if="!readOnly" type="button" :disabled="busy" @click="remove(attachment)">Retirer de la fiche</button>
             </li>
         </ul>

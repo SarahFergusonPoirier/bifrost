@@ -50,8 +50,11 @@ class ContentAttachmentController extends Controller
         $file = $input['file'];
         $mime = $file->getMimeType();
         $metadata = ['size' => $file->getSize()];
+        if (isset($input['caption'])) {
+            $metadata['caption'] = $input['caption'];
+        }
         if (in_array($mime, self::IMAGE_TYPES, true)) {
-            $metadata += ['image_mime' => $mime, 'alt' => $input['alt'] ?? null, 'caption' => $input['caption'] ?? null];
+            $metadata += ['image_mime' => $mime, 'alt' => $input['alt'] ?? null];
         }
         $name = Str::limit(str_replace(["\r", "\n", '\\', '/'], '_', $file->getClientOriginalName()), 255, '');
         $path = $file->storeAs('content-attachments', (string) Str::uuid(), 'local');

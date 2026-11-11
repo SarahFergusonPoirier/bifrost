@@ -226,8 +226,8 @@ class ContentRecoveryTest extends TestCase
         $url = '/api/contents/'.$content->public_id.'/attachments';
         $file = UploadedFile::fake()->createWithContent('reference.txt', 'Texte joint');
 
-        $id = $this->post($url, ['file' => $file], ['Accept' => 'application/json'])
-            ->assertCreated()->assertJsonPath('original_name', 'reference.txt')->json('public_id');
+        $id = $this->post($url, ['file' => $file, 'caption' => 'Source principale'], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonPath('original_name', 'reference.txt')->assertJsonPath('metadata.caption', 'Source principale')->json('public_id');
         $resource = $content->resources()->sole();
         $this->getJson($url)->assertOk()->assertJsonCount(1)->assertJsonMissingPath('0.location');
         $this->get("/api/contents/{$other->public_id}/attachments/$id")->assertNotFound();
