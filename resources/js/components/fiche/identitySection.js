@@ -5,7 +5,9 @@ export function identitySectionTitle(sections) {
         fields.some(field => field.display_options?.section_aliases?.includes('Identité'))
     );
 
-    return matches.length === 1 ? matches[0][0] : undefined;
+    if (matches.length) return matches.length === 1 ? matches[0][0] : undefined;
+
+    if (sections.has('identity')) return 'identity';
 }
 
 export function identityField(sections, identityTitle, matches) {
