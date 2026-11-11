@@ -375,3 +375,32 @@ it('groups only safe external links from visible fields in a media block', () =>
     expect(wrapper.get('a').text()).toBe('Référence');
     wrapper.unmount();
 });
+
+it('refreshes the gallery after attachments change', async () => {
+    const image = { public_id: 'portrait', original_name: 'Portrait.png', metadata: { image_mime: 'image/png', alt: 'Portrait' } };
+    const fetch = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(Response.json([]))
+        .mockResolvedValueOnce(Response.json([image]))
+        .mockResolvedValueOnce(Response.json([]));
+    try {
+        const wrapper = mount(FicheOverview, {
+            props: {
+                contentId: 'fiche', templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+                attachmentsRevision: 0, placements: [{ id: 'gallery', source: 'gallery', width: 6, height: 2 }],
+            },
+        });
+        await flushPromises();
+        expect(wrapper.find('img').exists()).toBe(false);
+
+        await wrapper.setProps({ attachmentsRevision: 1 });
+        await flushPromises();
+        expect(wrapper.get('img').attributes('alt')).toBe('Portrait');
+
+        await wrapper.setProps({ attachmentsRevision: 2 });
+        await flushPromises();
+        expect(wrapper.find('img').exists()).toBe(false);
+        wrapper.unmount();
+    } finally {
+        fetch.mockRestore();
+    }
+});
