@@ -88,6 +88,8 @@ export default {
                         : null,
                 })),
             }));
+            const fields = [...new Map(sections.flatMap(section => section.fields).map(field => [field.definitionId, field])).values()];
+            const externalLinks = fields.filter(field => field.url);
             const texts = this.blocks.filter(block => block.public_id).map(block => ({
                 source: 'text:' + block.public_id,
                 title: block.title || 'Texte',
@@ -104,8 +106,9 @@ export default {
                 ] : []),
                 ...(this.contentId ? [{ source: 'attachments', title: 'Pièces jointes', icon: 'folder' }, { source: 'gallery', title: 'Galerie d’images', icon: 'folder' }] : []),
                 ...(this.contentId ? [{ source: 'capabilities', title: 'Capacités', icon: 'ideas', entries: this.localCapabilities }] : []),
+                { source: 'external-links', title: 'Liens externes', icon: 'folder', fields: externalLinks },
                 { source: 'fields', title: 'Bloc de champs personnalisé', icon: 'catalogue',
-                    fields: [...new Map(sections.flatMap(section => section.fields).map(field => [field.definitionId, field])).values()] },
+                    fields },
                 ...sections,
                 ...texts,
                 ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
@@ -181,7 +184,7 @@ export default {
         },
         defaults() {
 
-            return this.cards.filter(card => card.source !== 'fields'
+            return this.cards.filter(card => !['fields', 'external-links'].includes(card.source)
                 && (card.linked || card.entries || card.text || card.tags?.length || card.keywords?.length || card.fields?.length))
                 .map(card => placement(card.source, card.source));
         },

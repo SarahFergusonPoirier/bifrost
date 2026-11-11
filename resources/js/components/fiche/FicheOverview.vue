@@ -228,6 +228,7 @@
                         <FicheText v-if="entry.description" :text="entry.description" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                     </template>
                 </FicheLinkedData>
+                <p v-else-if="card.source === 'external-links' && !fields.length">Aucun lien externe disponible.</p>
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                 <template v-else-if="card.source === 'tags'">
                     <section v-if="card.tags.length">
