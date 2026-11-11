@@ -93,6 +93,38 @@ it('restores the dimensions after a cancelled pointer resize and saves a complet
     wrapper.unmount();
 });
 
+it('keeps placement dimensions when reordering with buttons or dragging', async () => {
+    const placements = [
+        { id: 'first', source: 'summary', title: 'Premier', width: 8, height: 3 },
+        { id: 'second', source: 'summary', title: 'Second', width: 4, height: 2 },
+    ];
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, {
+        props: {
+            summary: 'Résumé',
+            templateSections: new Map(),
+            hiddenFields: [],
+            displayValue: () => '',
+            placements,
+            persist,
+        },
+    });
+    await wrapper.get('button').trigger('click');
+    const titles = () => wrapper.findAll('.fiche-block h2').map(heading => heading.text());
+    await wrapper.get('button[aria-label="Monter Second"]').trigger('click');
+    expect(titles()).toEqual(['Second', 'Premier']);
+
+    const [second, first] = wrapper.findAll('.fiche-grid-controls > ol > li');
+    await second.trigger('dragstart', { dataTransfer: { setData: vi.fn() } });
+    await first.trigger('drop');
+    expect(titles()).toEqual(['Premier', 'Second']);
+
+    await wrapper.get('button[aria-label="Descendre Premier"]').trigger('click');
+    await wrapper.get('form').trigger('submit');
+    expect(persist.mock.calls[0][0]).toEqual(placements.toReversed().map(item => expect.objectContaining(item)));
+    wrapper.unmount();
+});
+
 it('opens available references and keeps unavailable references readable', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Alliés' } };
     const wrapper = mount(FicheOverview, {
