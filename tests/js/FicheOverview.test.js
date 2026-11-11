@@ -353,3 +353,25 @@ it('refreshes the timeline when a new content version is saved', async () => {
         fetch.mockRestore();
     }
 });
+
+it('groups only safe external links from visible fields in a media block', () => {
+    const field = (id, label, url) => ({
+        id, field_definition_id: id, field_definition: { label }, format: 'external_link', url,
+    });
+    const fields = [
+        field(1, 'Référence', 'https://example.test/reference'),
+        field(2, 'Adresse invalide', 'javascript:void(0)'),
+        field(3, 'Lien masqué', 'https://example.test/hidden'),
+    ];
+    const wrapper = mount(FicheOverview, {
+        props: {
+            templateSections: new Map([['Ressources', fields]]), hiddenFields: [3],
+            displayValue: item => item.field_definition.label, fieldValue: item => ({ url: item.url }),
+            placements: [{ id: 'links', source: 'external-links', width: 6, height: 2 }],
+        },
+    });
+
+    expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual(['https://example.test/reference']);
+    expect(wrapper.get('a').text()).toBe('Référence');
+    wrapper.unmount();
+});
