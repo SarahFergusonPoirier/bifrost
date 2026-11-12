@@ -195,6 +195,13 @@ export default {
         },
         sharedSources() {
             const sources = new Set();
+            const currentSources = new Set();
+            const currentPlacements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
+            for (const item of currentPlacements) {
+                const source = this.resolvedSource(item.source);
+                if (currentSources.has(source)) sources.add(source);
+                currentSources.add(source);
+            }
             for (const tab of this.destinations) {
                 const placements = tab.placements ?? defaultPlacementsFor(tab.id, this.defaults);
                 for (const item of placements) sources.add(this.resolvedSource(item.source));

@@ -177,6 +177,7 @@ it('applies a local title and text limit without changing the shared source', as
     });
 
     const [short, full] = wrapper.findAll('.fiche-block');
+    expect(wrapper.findAll('.fiche-shared-label')).toHaveLength(2);
     expect(short.get('h2').text()).toBe('Aperçu');
     expect(short.get('.fiche-text').text()).toBe('Un résumé…');
     expect(full.get('.fiche-text').text()).toBe(summary);
