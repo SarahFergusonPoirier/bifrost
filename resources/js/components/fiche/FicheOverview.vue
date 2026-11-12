@@ -242,11 +242,11 @@
                 <template v-else-if="card.source === 'tags'">
                     <section v-if="card.tags.length">
                         <h3>Étiquettes du projet</h3>
-                        <FicheTags :tags="card.tags" :limit="placement.tag_limit" />
+                        <FicheTags label="Étiquettes du projet" :tags="card.tags" :limit="placement.tag_limit" />
                     </section>
                     <section v-if="card.keywords.length">
                         <h3>Mots-clés libres</h3>
-                        <FicheTags :tags="card.keywords" :limit="placement.tag_limit" />
+                        <FicheTags label="Mots-clés libres" :tags="card.keywords" :limit="placement.tag_limit" />
                     </section>
                     <p v-if="!card.tags.length && !card.keywords.length">Aucune étiquette ni mot-clé.</p>
                 </template>

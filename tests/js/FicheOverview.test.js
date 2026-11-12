@@ -56,6 +56,24 @@ it('renders rich biography fields from existing templates', async () => {
     wrapper.unmount();
 });
 
+it('expands free keywords independently from project tags', async () => {
+    const field = { id: 1, field_definition_id: 1, format: 'keywords', field_definition: { label: 'Mots-clés' } };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', [field]]]), hiddenFields: [], displayValue: () => '',
+        tags: [{ id: 1, name: 'Équipe' }, { id: 2, name: 'Favoris' }],
+        fieldValue: () => [{ label: 'Exploration' }, { label: 'Ruines' }],
+        placements: [{ id: 'tags', source: 'tags', width: 6, height: 2, tag_limit: 1 }],
+    } });
+    const keywords = wrapper.get('ul[aria-label="Mots-clés libres"]');
+    const projectTags = wrapper.get('ul[aria-label="Étiquettes du projet"]');
+    const more = wrapper.get('button[aria-label="Voir tout – Mots-clés libres"]');
+    expect(more.attributes('aria-controls')).toBe(keywords.attributes('id'));
+    await more.trigger('click');
+    expect(keywords.findAll('li').map(item => item.text())).toEqual(['Exploration', 'Ruines']);
+    expect(projectTags.findAll('li').map(item => item.text())).toEqual(['Équipe']);
+    wrapper.unmount();
+});
+
 it('translates legacy section headings while resolving their saved placement keys', () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom et identité' } };
     const wrapper = mount(FicheOverview, {
