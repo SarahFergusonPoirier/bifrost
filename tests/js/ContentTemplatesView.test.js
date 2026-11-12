@@ -35,6 +35,14 @@ it('searches all identity genres without accents or duplicate aliases', () => {
     expect(identityPreset('constructor').label).toBe('constructor');
 });
 
+it('suggests editable field types for mastery, dated fields and entity references', () => {
+    expect(identityPreset('Niveau de maîtrise')).toMatchObject({ type: 'scale', levels: 5 });
+    expect(identityPreset('Date de couronnement').type).toBe('temporal');
+    expect(identityPreset('Personne à contacter').type).toBe('reference');
+    expect(identityPreset("Zone d'origine").type).toBe('reference');
+    expect(identityPreset('Identifiant personnel').type).toBe('text');
+});
+
 describe('ContentTemplatesView.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks();

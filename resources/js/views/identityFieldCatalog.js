@@ -144,6 +144,8 @@ const referenceLabels = new Set([
     "Lieu d’origine", 'Lieu de décès', 'Lieu de naissance', 'Résidence actuelle', 'Affiliation principale',
     'Royaume d’appartenance', 'Planète natale', 'Organisation employeuse', 'Employeur', 'Établissement scolaire',
     'Lieu de naissance historique', 'Héritier désigné', 'Entité liée',
+    'Colonie d’origine', 'Communauté/refuge', 'Faction', 'Zone d’origine', 'Zone de résidence',
+    'Personne à contacter', 'Ordre/guilde', 'Ordre secret', 'Ordre militaire/religieux', 'Suzerain/autorité',
 ]);
 const choiceLabels = new Set(['État civil', 'Classe sociale', 'Statut génétique', 'Statut juridique', 'Condition sociale']);
 
@@ -154,10 +156,11 @@ export function identityPreset(suggestion) {
     if (referenceLabels.has(normalized)) type = 'reference';
     else if (/^(Date |Période )/.test(label)) type = 'temporal';
     else if (/^Âge /.test(label)) type = 'number';
+    else if (label === 'Niveau de maîtrise') type = 'scale';
     else if (/^Statut /.test(label) || choiceLabels.has(label)) type = 'choice';
     else if (['Anciens noms', 'Titres honorifiques', 'Langues parlées', 'Nationalité/citoyenneté'].includes(label)) type = 'repeatable';
     else if (label === 'Surnoms et alias') type = 'keywords';
-    return { label, section: 'Identité', type, help: '', required: false };
+    return { label, section: 'Identité', type, help: '', required: false, ...(type === 'scale' ? { levels: 5 } : {}) };
 }
 
 function searchableLabel(label) {
