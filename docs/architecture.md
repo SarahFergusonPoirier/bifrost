@@ -63,8 +63,13 @@ npm run build
 Les composants de présentation des fiches se trouvent dans
 `resources/js/components/fiche`. `FicheBlock` définit la structure commune
 des cartes et expose un emplacement pour leurs actions. `FicheText` gère la
-lecture des textes longs à l’intérieur d’une carte. `FicheOverview` projette
-les valeurs du brouillon et du modèle dans ces cartes sans les dupliquer.
+lecture des textes longs à l’intérieur d’une carte. `FicheTextEditor` fournit les
+commandes de mise en forme et le sélecteur de fiches liées pour le résumé, les
+blocs de texte, les biographies et les descriptions de capacités. Le format
+textuel existant reste la représentation enregistrée. `ficheTextFormat.js`
+reconnaît les éléments de mise en forme et garde les coupures d’aperçu hors de
+ces éléments. `FicheOverview` projette les valeurs du brouillon et du modèle
+dans les cartes.
 
 L’éditeur, l’enregistrement du brouillon, la récupération et l’historique
 restent gérés par `ContentRecoveryView`. Les styles des cartes et de la
@@ -78,9 +83,33 @@ chaque lecture ou écriture. Chaque onglet peut contenir des placements
 ordonnés, avec dimensions, état réduit et visibilité. Une clé source pointe
 vers un résumé, les étiquettes, une section du modèle ou un bloc de texte
 existant. Déplacer ou retirer un placement ne modifie pas cette source.
+Plusieurs placements peuvent pointer vers la même source, y compris dans un
+seul onglet. La duplication indépendante du résumé et des blocs de texte crée
+une nouvelle source dans la même transaction que sa disposition. Les transferts
+en attente font partie du brouillon de disposition. Ils peuvent être annulés
+individuellement avant l’enregistrement.
 Une disposition enregistrée sans placements explicites conserve son aperçu
 par défaut. La grille utilise douze colonnes sur grand écran comme choix
 technique réversible et réduit le nombre de colonnes sur écran étroit.
+
+`FicheTabs` sélectionne un onglet visible à partir de la disposition de la
+fiche. `ContentRecoveryView` ouvre les liens directs à partir des paramètres
+`fiche` et `onglet` de la page du projet. Le lien est vérifié contre le projet
+actif. Si l’onglet demandé a été masqué ou retiré, l’interface revient à la vue
+d’ensemble ou au premier onglet visible.
+
+### Données liées et médias
+
+`FicheLinkedData` présente les relations, la chronologie, les équipements et les
+capacités à partir de l’API fiche-links et des entrées locales. Le bouton
+« Voir tout » sélectionne un onglet visible contenant le bloc ou ouvre une
+fenêtre de détail. Les relations et les équipements référencés utilisent les
+titres et aperçus des fiches sources.
+
+`ContentAttachments` réutilise l’API de pièces jointes pour la liste de fichiers,
+l’image unique et la galerie. Les légendes et textes alternatifs sont conservés
+dans les métadonnées de la ressource. L’API identifie les anciennes images au
+chargement et vérifie le type du fichier avant de servir son aperçu.
 
 ### Champs et modèles
 

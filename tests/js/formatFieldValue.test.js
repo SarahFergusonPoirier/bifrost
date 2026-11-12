@@ -10,10 +10,10 @@ it('shows a stored native date without its serialization time', () => {
     expect(formatFieldValue(field, '')).toBe('—');
 });
 
-it('preserves approximate dates in field display', () => {
+it('preserves approximate dates and displays periods with a range separator', () => {
     const field = { format: 'temporal' };
     expect(formatFieldValue(field, { start: 'An 498', precision: 'approximate' })).toBe('Vers An 498');
-    expect(formatFieldValue(field, { start: 'An 498', end: 'An 500' })).toBe('An 498 · An 500');
+    expect(formatFieldValue(field, { start: 'An 498', end: 'An 500' })).toBe('An 498 – An 500');
 });
 
 it('keeps older list snapshots readable when their shape differs', () => {
