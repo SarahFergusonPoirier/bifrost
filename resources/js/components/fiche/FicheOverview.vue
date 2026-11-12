@@ -97,6 +97,13 @@
             </select>
         </label>
         <p v-if="transfers.length" role="status">{{ transfers.length }} transfert(s) à enregistrer.</p>
+        <ul v-if="transfers.length" aria-label="Transferts en attente">
+            <li v-for="(transfer, index) in transfers" :key="transfer.placement.id">
+                {{ blockLabel(transfer.placement) }} → {{ destinations.find(tab => tab.id === transfer.tab)?.title }}
+                <button type="button" :disabled="transfer.originalIndex !== null && draft.length >= 80"
+                    @click="undoTransfer(index)">Annuler ce transfert</button>
+            </li>
+        </ul>
         <p>Masquer conserve le bloc dans cet onglet. Retirer enlève son placement et conserve ses données.</p>
         <ol>
             <li v-for="(placement, index) in draft" :key="placement.id"

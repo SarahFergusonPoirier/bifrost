@@ -332,7 +332,15 @@ export default {
         transfer(index, shared) {
             const item = this.draft[index];
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
-            this.transfers.push({ tab: this.destination, placement: copy });
+            this.transfers.push({ tab: this.destination, placement: copy, originalIndex: shared ? null : index });
+        },
+        undoTransfer(index) {
+            const transfer = this.transfers[index];
+            if (transfer.originalIndex !== null) {
+                if (this.draft.length >= 80) return;
+                this.draft.splice(transfer.originalIndex, 0, transfer.placement);
+            }
+            this.transfers.splice(index, 1);
         },
         formatTemporalDate,
         blockLabel(item) {
@@ -417,7 +425,8 @@ export default {
                 .map(item => placement(item.source));
             this.savingLayout = true;
             try {
-                if (await this.persist(this.draft, this.transfers, defaults, copies)) this.cancel();
+                const transfers = this.transfers.map(({ tab, placement }) => ({ tab, placement }));
+                if (await this.persist(this.draft, transfers, defaults, copies)) this.cancel();
             } finally {
                 this.savingLayout = false;
             }

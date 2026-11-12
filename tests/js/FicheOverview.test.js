@@ -140,6 +140,33 @@ it('keeps placement dimensions when reordering with buttons or dragging', async 
     wrapper.unmount();
 });
 
+it('can undo a pending move without undoing a separate shared placement', async () => {
+    const original = { id: 'summary', source: 'summary', width: 8, height: 3 };
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        summary: 'Résumé',
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        placements: [original],
+        destinations: [{ id: 'details', title: 'Détails', placements: [] }],
+        persist,
+    } });
+    await wrapper.get('button').trigger('click');
+    await wrapper.findAll('select').find(select => select.text().includes('Choisir un onglet')).setValue('details');
+    const action = label => wrapper.findAll('button').find(button => button.text() === label);
+    await action('Afficher aussi (données partagées)').trigger('click');
+    await action('Déplacer vers l’onglet').trigger('click');
+    expect(wrapper.find('.fiche-block').exists()).toBe(false);
+
+    const pending = wrapper.get('ul[aria-label="Transferts en attente"]');
+    await pending.findAll('button')[1].trigger('click');
+    expect(wrapper.get('.fiche-block').text()).toContain('Données partagées');
+    await wrapper.get('form').trigger('submit');
+    const [placements, transfers] = persist.mock.calls[0];
+    expect(placements).toEqual([original]);
+    expect(transfers).toEqual([{ tab: 'details', placement: { ...original, id: expect.not.stringMatching(/^summary$/) } }]);
+    wrapper.unmount();
+});
+
 it('opens available references and keeps unavailable references readable', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Alliés' } };
     const wrapper = mount(FicheOverview, {
