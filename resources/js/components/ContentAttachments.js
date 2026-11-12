@@ -3,7 +3,7 @@ import { contentRequest } from '../services/contentRecovery';
 export default {
     props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean, fit: String },
     emits: ['select-image', 'changed'],
-    data: () => ({ attachments: [], alt: '', caption: '', busy: false, error: '' }),
+    data: () => ({ attachments: [], alt: '', caption: '', loaded: false, busy: false, error: '' }),
     computed: {
         displayedImages() {
             if (!this.single) return this.images;
@@ -13,9 +13,12 @@ export default {
         images() {
             return this.attachments.filter(item => item.metadata?.image_mime);
         },
+        missingSelectedImage() {
+            return this.loaded && this.single && !!this.imageId && !this.displayedImages.length;
+        },
     },
     mounted() {
-        if (this.readOnly) this.run(() => {});
+        if (this.readOnly) this.refresh();
     },
     methods: {
         endpoint() {
@@ -24,7 +27,10 @@ export default {
         download(id) {
             return '/api' + this.endpoint() + '/' + encodeURIComponent(id);
         },
-        async run(action) {
+        refresh() {
+            return this.run();
+        },
+        async run(action = () => {}) {
             if (this.busy) return;
             this.busy = true;
             this.error = '';
@@ -32,6 +38,7 @@ export default {
                 await action();
                 const { data } = await contentRequest(this.endpoint() + (this.gallery ? '?images=1' : ''));
                 this.attachments = Array.isArray(data) ? data : [];
+                this.loaded = true;
             } catch (error) {
                 this.error = error.message;
             } finally {

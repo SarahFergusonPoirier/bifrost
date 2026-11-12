@@ -1,7 +1,7 @@
 <template>
-    <component :is="readOnly ? 'div' : 'details'" @toggle="$event.target.open && run(() => {})">
+    <component :is="readOnly ? 'div' : 'details'" @toggle="$event.target.open && refresh()">
         <summary v-if="!readOnly">Pièces jointes</summary>
-        <p v-if="error" role="alert">{{ error }}</p>
+        <p v-if="error" role="alert">{{ error }} <button type="button" @click="refresh">Recharger la liste</button></p>
         <form v-if="!readOnly" @submit.prevent="upload">
             <label>Fichier à joindre (20 Mo maximum) <input ref="file" type="file" required :disabled="busy" /></label>
             <label>Texte alternatif (image) <input v-model="alt" maxlength="255" :disabled="busy" /></label>
@@ -25,9 +25,9 @@
                     <figcaption v-if="image.metadata.caption">{{ image.metadata.caption }}</figcaption>
                 </figure>
             </div>
-            <p v-else-if="!busy && !error">Aucune image disponible.</p>
+            <p v-else-if="loaded && !busy && !error">{{ missingSelectedImage ? 'L’image choisie n’est plus disponible.' : 'Aucune image disponible.' }}</p>
         </template>
-        <p v-else-if="readOnly && !busy && !error && !attachments.length">Aucune pièce jointe.</p>
+        <p v-else-if="readOnly && loaded && !busy && !error && !attachments.length">Aucune pièce jointe.</p>
         <ul v-if="!gallery && attachments.length">
             <li v-for="attachment in attachments" :key="attachment.public_id">
                 <a :href="download(attachment.public_id)">{{ attachment.original_name }}</a>

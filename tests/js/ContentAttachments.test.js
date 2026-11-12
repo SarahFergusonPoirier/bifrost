@@ -31,3 +31,24 @@ it('shows only the selected image and lists all available image choices', async 
     await wrapper.get('select').setValue('first');
     expect(wrapper.emitted('select-image')).toEqual([['first']]);
 });
+
+it('retries a failed gallery load and explains when the saved image is missing', async () => {
+    contentRequest.mockRejectedValueOnce(new Error('Galerie indisponible'))
+        .mockResolvedValueOnce({ data: [
+            { public_id: 'remaining', original_name: 'Portrait.png', metadata: { image_mime: 'image/png' } },
+        ] });
+    const wrapper = mount(ContentAttachments, { props: {
+        contentId: 'character', readOnly: true, gallery: true, single: true, imageId: 'missing', selectImage: true,
+    } });
+    await flushPromises();
+    expect(wrapper.get('[role="alert"]').text()).toContain('Galerie indisponible');
+    await wrapper.get('[role="alert"] button').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+    expect(wrapper.text()).toContain('L’image choisie n’est plus disponible.');
+    expect(wrapper.find('img').exists()).toBe(false);
+    await wrapper.get('select').setValue('remaining');
+    expect(wrapper.emitted('select-image')).toEqual([['remaining']]);
+    wrapper.unmount();
+});
