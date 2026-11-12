@@ -40,6 +40,16 @@ it('keeps an existing scale value selected after the maximum is reduced', async 
     wrapper.unmount();
 });
 
+it('formats a multiline capability description without altering the entry name', async () => {
+    const value = [{ label: 'Vol', description: 'Vol léger\nVol rapide' }];
+    const wrapper = mount(StructuredField, { props: { format: 'capabilities', value } });
+    const textarea = wrapper.get('textarea').element;
+    textarea.setSelectionRange(0, textarea.value.length);
+    await wrapper.findAll('button').find(button => button.text() === 'Liste à puces').trigger('click');
+    expect(wrapper.emitted('change')).toEqual([[[{ label: 'Vol', description: '- Vol léger\n- Vol rapide' }]]]);
+    wrapper.unmount();
+});
+
 it('duplicates a capability as an independently editable entry', async () => {
     const original = { label: 'Vol', mastery: 3, description: 'Capacité aérienne' };
     const wrapper = mount(StructuredField, { props: { format: 'capabilities', value: [original] } });

@@ -45,7 +45,9 @@
             <li v-for="(entry, index) in value" :key="entry.id ?? index">
                 <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : ['repeatable', 'bullets'].includes(format) ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
-                <label v-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
+                <FicheTextEditor v-if="format === 'capabilities'" label="Description" :model-value="entry.description"
+                    :max-length="1000" :targets="targets" @update:model-value="editKeyword(index, 'description', $event, false)" />
+                <label v-else-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
                     <label>Période <input :value="entry.period ?? ''" maxlength="255"

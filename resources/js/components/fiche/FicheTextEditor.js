@@ -5,16 +5,21 @@ export default {
     props: {
         label: { type: String, required: true },
         modelValue: String,
+        maxLength: Number,
         targets: { type: Array, default: () => [] },
     },
     emits: ['update:modelValue'],
     methods: {
         replaceSelection(text, start, end, selectionStart, selectionEnd) {
             const editor = this.$refs.editor;
+            if (this.maxLength && editor.value.length - (end - start) + text.length > this.maxLength) return;
             editor.setRangeText(text, start, end, 'end');
             this.$emit('update:modelValue', editor.value);
             editor.focus();
             editor.setSelectionRange(selectionStart, selectionEnd);
+        },
+        updateText(text) {
+            if (!this.maxLength || text.length <= this.maxLength) this.$emit('update:modelValue', text);
         },
         bold() {
             const { value, selectionStart: start, selectionEnd: end } = this.$refs.editor;

@@ -1,7 +1,9 @@
 import { useId } from 'vue';
 import { contentRequest } from '../services/contentRecovery';
+import FicheTextEditor from './fiche/FicheTextEditor.vue';
 
 export default {
+    components: { FicheTextEditor },
     props: {
         format: { type: String, required: true },
         value: { type: [Object, Array], default: null },
@@ -52,8 +54,8 @@ export default {
             this.setKeywords([...entries, { label}]);
             this.keyword = '';
         },
-        editKeyword(index, key, text) {
-            const value = text.trim();
+        editKeyword(index, key, text, trim = true) {
+            const value = trim ? text.trim() : text;
             if (key === 'label' && !value) return;
             this.setKeywords(this.value.map((entry, i) => i === index ? { ...entry, [key]: value ? (['mastery', 'rank'].includes(key) ? Number(value) : value) : null } : entry));
         },
