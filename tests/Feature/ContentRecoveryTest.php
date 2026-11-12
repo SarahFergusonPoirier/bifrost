@@ -312,10 +312,14 @@ class ContentRecoveryTest extends TestCase
         $this->get("$url/$svgId/preview")->assertNotFound();
         $legacy = $content->resources()->where('public_id', $id)->firstOrFail();
         $legacy->update(['metadata' => ['size' => strlen($png)]]);
+        $this->getJson($url)->assertOk()->assertJsonPath('1.public_id', $id)
+            ->assertJsonPath('1.metadata.image_mime', 'image/png');
         $this->getJson("$url?images=1")->assertOk()->assertJsonCount(1)
             ->assertJsonPath('0.public_id', $id)->assertJsonPath('0.metadata.image_mime', 'image/png')
             ->assertJsonMissingPath('0.location');
         $this->assertArrayNotHasKey('image_mime', $legacy->fresh()->metadata);
+        $this->patchJson("$url/$id", ['alt' => 'Ancien portrait'])->assertOk()
+            ->assertJsonPath('metadata.image_mime', 'image/png')->assertJsonPath('metadata.alt', 'Ancien portrait');
     }
 
     private function content(): Content

@@ -28,18 +28,17 @@ class ContentAttachmentController extends Controller
             ->where('location', 'like', 'content-attachments/%')
             ->orderBy('original_name')->get(['public_id', 'original_name', 'metadata', 'location']);
 
-        if ($request->boolean('images')) {
-            $attachments = $attachments->filter(function (Resource $attachment): bool {
-                $mime = $attachment->metadata['image_mime'] ?? $this->imageMime($attachment);
-                if (! in_array($mime, self::IMAGE_TYPES, true)) {
-                    return false;
-                }
+        $imagesOnly = $request->boolean('images');
+        $attachments = $attachments->filter(function (Resource $attachment) use ($imagesOnly): bool {
+            $metadata = $attachment->metadata ?? [];
+            $mime = array_key_exists('image_mime', $metadata) ? $metadata['image_mime'] : $this->imageMime($attachment);
+            $isImage = in_array($mime, self::IMAGE_TYPES, true);
+            if ($isImage) {
+                $attachment->metadata = ['image_mime' => $mime] + $metadata;
+            }
 
-                $attachment->metadata = ['image_mime' => $mime] + ($attachment->metadata ?? []);
-
-                return true;
-            })->values();
-        }
+            return ! $imagesOnly || $isImage;
+        })->values();
 
         return response()->json($attachments->makeHidden(['pivot', 'location']));
     }
@@ -53,12 +52,13 @@ class ContentAttachmentController extends Controller
         ]);
         $file = $input['file'];
         $mime = $file->getMimeType();
-        $metadata = ['size' => $file->getSize()];
+        $isImage = in_array($mime, self::IMAGE_TYPES, true);
+        $metadata = ['size' => $file->getSize(), 'image_mime' => $isImage ? $mime : null];
         if (isset($input['caption'])) {
             $metadata['caption'] = $input['caption'];
         }
-        if (in_array($mime, self::IMAGE_TYPES, true)) {
-            $metadata += ['image_mime' => $mime, 'alt' => $input['alt'] ?? null];
+        if ($isImage) {
+            $metadata['alt'] = $input['alt'] ?? null;
         }
         $name = Str::limit(str_replace(["\r", "\n", '\\', '/'], '_', $file->getClientOriginalName()), 255, '');
         $path = $file->storeAs('content-attachments', (string) Str::uuid(), 'local');
@@ -126,8 +126,13 @@ class ContentAttachmentController extends Controller
         return DB::transaction(function () use ($input, $record, $attachment): JsonResponse {
             $resource = $this->attachment($record, $attachment, lock: true);
             $metadata = $resource->metadata ?? [];
-            if (array_key_exists('alt', $input) && $this->imageMime($resource) === null) {
-                unset($input['alt']);
+            if (array_key_exists('alt', $input)) {
+                $mime = $this->imageMime($resource);
+                if ($mime === null) {
+                    unset($input['alt']);
+                } else {
+                    $metadata['image_mime'] = $mime;
+                }
             }
             $resource->update(['metadata' => array_replace($metadata, $input)]);
 
