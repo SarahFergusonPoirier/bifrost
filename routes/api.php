@@ -116,7 +116,7 @@ Route::put('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutCo
 Route::get('/projects/{project}/contents/{content}/fiche-links', [FicheLinkedDataController::class, 'show'])->whereNumber('project');
 Route::get('/projects/{project}/fiche-tab-templates', [FicheTabTemplateController::class, 'index']);
 Route::post('/projects/{project}/contents/{content}/fiche-tab-templates', [FicheTabTemplateController::class, 'store']);
-Route::get('/contents/{content}/attachments/{attachment}/preview', [ContentAttachmentController::class, 'preview']);
+Route::get('/contents/{content}/attachments/{attachment}/preview', [ContentAttachmentController::class, 'preview'])->name('contents.attachments.preview');
 Route::get('/projects/{project}/contents/{content}/fiche-layout/revisions', [FicheLayoutController::class, 'history'])->whereNumber('project');
 Route::post('/content-templates', [ContentTemplateController::class, 'store']);
 Route::post('/content-templates/{contentTemplate}/clone', [ContentTemplateController::class, 'duplicate']);

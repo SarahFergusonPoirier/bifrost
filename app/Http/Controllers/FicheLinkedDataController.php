@@ -51,13 +51,25 @@ class FicheLinkedDataController extends Controller
         $equipment = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
             && $relation->type_key === 'equipment'
             && $relation->target->contentType?->key === 'objet-artefact')
-            ->unique('target_content_id')->map(fn (ContentRelation $relation): array => [
+            ->unique('target_content_id');
+        $equipment->map(fn (ContentRelation $relation) => $relation->target)->load([
+            'resources' => fn ($query) => $query->select('resources.id', 'resources.public_id')
+                ->where('storage_mode', 'imported')->where('location', 'like', 'content-attachments/%')
+                ->whereNotNull('metadata->image_mime')->orderBy('resources.id'),
+        ]);
+        $equipment = $equipment->map(function (ContentRelation $relation): array {
+            $target = $relation->target;
+            $image = $target->resources->first();
+
+            return [
                 'id' => $relation->id,
                 'link_id' => $relation->id,
-                'public_id' => $relation->target->public_id,
-                'title' => $relation->target->title,
-                'note' => $relation->target->summary,
-            ])->values();
+                'public_id' => $target->public_id,
+                'title' => $target->title,
+                'note' => $target->summary,
+                'image' => $image ? route('contents.attachments.preview', [$target->public_id, $image->public_id], absolute: false) : null,
+            ];
+        })->values();
 
         $capabilities = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
             && $relation->type_key === 'capability')

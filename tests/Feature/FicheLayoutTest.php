@@ -263,7 +263,18 @@ class FicheLayoutTest extends TestCase
         $url = "/api/projects/{$project->id}/contents";
         $this->getJson("$url/{$character->public_id}/fiche-links")->assertOk()->assertJsonCount(1, 'equipment')
             ->assertJsonPath('equipment.0.title', 'Épée de voyage')->assertJsonPath('equipment.0.note', 'Lame courte')
+            ->assertJsonPath('equipment.0.image', null)
             ->assertJsonPath('capabilities.0.label', 'Protection')->assertJsonPath('capabilities.0.description', 'Bloque les sorts');
+        $image = $object->resources()->create([
+            'original_name' => 'epee.png',
+            'storage_mode' => 'imported',
+            'location' => 'content-attachments/epee.png',
+            'scope_type' => 'project',
+            'project_id' => $project->id,
+            'metadata' => ['image_mime' => 'image/png'],
+        ]);
+        $this->getJson("$url/{$character->public_id}/fiche-links")->assertOk()
+            ->assertJsonPath('equipment.0.image', "/api/contents/{$object->public_id}/attachments/{$image->public_id}/preview");
         $this->getJson("$url/{$object->public_id}/fiche-links")->assertOk()->assertJsonCount(0, 'equipment');
     }
 
