@@ -74,6 +74,28 @@ it('expands free keywords independently from project tags', async () => {
     wrapper.unmount();
 });
 
+it('shows the fiche title and the four canonical fields in the default identity block', () => {
+    const fields = [
+        ['Âge', 'number'], ['Genre', 'text'], ['Statut vital', 'choice'], ['Rôle narratif', 'json'],
+    ].map(([label, value_type], index) => ({
+        id: index + 1,
+        field_definition_id: index + 1,
+        section_key: 'identity',
+        display_options: { section_label: 'Identité' },
+        field_definition: { label, value_type, options_data: value_type === 'json' ? { format: 'multiple_choice' } : null },
+    }));
+    const wrapper = mount(FicheOverview, { props: {
+        fullName: 'Élia Voss',
+        templateSections: groupTemplateFields(fields), hiddenFields: [], displayValue: () => '—',
+    } });
+    const identity = wrapper.findAll('.fiche-block').find(block => block.get('h2').text() === 'Identité');
+    expect(identity.findAll('dt').map(field => field.text())).toEqual([
+        'Nom complet', 'Âge', 'Genre', 'Statut vital', 'Rôle narratif',
+    ]);
+    expect(identity.get('dd').text()).toBe('Élia Voss');
+    wrapper.unmount();
+});
+
 it('translates legacy section headings while resolving their saved placement keys', () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom et identité' } };
     const wrapper = mount(FicheOverview, {
