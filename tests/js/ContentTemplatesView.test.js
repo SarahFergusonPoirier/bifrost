@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 
 import ContentTemplatesView from '../../resources/js/views/ContentTemplatesView.vue';
 import { getContentTemplate, getContentTemplates } from '../../resources/js/services/contentTemplate';
+import { findIdentitySuggestions, identityPreset } from '../../resources/js/views/identityFieldCatalog';
 
 vi.mock('../../resources/js/services/contentTemplate', () => ({
     cloneContentTemplate: vi.fn(),
@@ -24,6 +25,15 @@ const sampleTemplates = [
         universe: null,
     },
 ];
+
+it('searches all identity genres without accents or duplicate aliases', () => {
+    expect(findIdentitySuggestions('', 'etablissement')).toContain('Établissement scolaire');
+    expect(findIdentitySuggestions('Universels', 'etablissement')).toEqual([]);
+    const citizenship = findIdentitySuggestions('', 'citoyennete');
+    expect(citizenship.filter(label => label === 'Nationalité/citoyenneté')).toHaveLength(1);
+    expect(citizenship).toContain('Citoyenneté interplanétaire');
+    expect(identityPreset('constructor').label).toBe('constructor');
+});
 
 describe('ContentTemplatesView.vue', () => {
     beforeEach(() => {

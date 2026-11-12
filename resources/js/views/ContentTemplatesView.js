@@ -1,5 +1,5 @@
 import { fieldCalculation } from '../components/fiche/characterAge';
-import { identityGroups, identityPreset } from './identityFieldCatalog';
+import { findIdentitySuggestions, identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
 import { contentRequest } from '../services/contentRecovery';
@@ -258,15 +258,12 @@ export default {
 
         const identityGroup = ref('Universels');
         const identityQuery = ref('');
-        const identitySuggestions = computed(() => {
-            const query = identityQuery.value.trim().toLocaleLowerCase('fr');
-            return (identityGroups[identityGroup.value] ?? []).filter(label => label.toLocaleLowerCase('fr').includes(query));
-        });
+        const identitySuggestions = computed(() => findIdentitySuggestions(identityGroup.value, identityQuery.value));
 
         function addIdentityField(label) {
             const field = identityPreset(label);
             const exists = editor.value.fields.some(item => identityPreset(item.label).label === field.label);
-            if (!exists) editor.value.fields.push(field);
+            if (!exists && editor.value.fields.length < 200) editor.value.fields.push(field);
         }
 
         onMounted(loadTemplates);

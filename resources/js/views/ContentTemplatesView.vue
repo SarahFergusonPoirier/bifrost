@@ -119,13 +119,14 @@
                     <summary>Bibliothèque des champs d’identité</summary>
                     <label>Genre
                         <select v-model="identityGroup">
+                            <option value="">Tous les genres</option>
                             <option v-for="(_, group) in identityGroups" :key="group" :value="group">{{ group }}</option>
                         </select>
                     </label>
                     <label>Rechercher <input v-model="identityQuery" type="search" /></label>
                     <ul>
                         <li v-for="label in identitySuggestions" :key="label">
-                            <button type="button" @click="addIdentityField(label)">{{ label }}</button>
+                            <button type="button" :disabled="editor.fields.length >= 200" @click="addIdentityField(label)">{{ label }}</button>
                         </li>
                     </ul>
                 </details>

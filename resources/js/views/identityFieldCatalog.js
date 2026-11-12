@@ -132,13 +132,13 @@ export const identityGroups = {
   ]
 };
 
-const aliases = {
+const aliases = new Map(Object.entries({
     'Nationalité': 'Nationalité/citoyenneté',
     'Citoyenneté': 'Nationalité/citoyenneté',
     'Profession': 'Profession/occupation',
     'Lieu de résidence': 'Résidence actuelle',
     'État matrimonial': 'État civil',
-};
+}));
 
 const referenceLabels = new Set([
     "Lieu d’origine", 'Lieu de décès', 'Lieu de naissance', 'Résidence actuelle', 'Affiliation principale',
@@ -148,7 +148,7 @@ const referenceLabels = new Set([
 const choiceLabels = new Set(['État civil', 'Classe sociale', 'Statut génétique', 'Statut juridique', 'Condition sociale']);
 
 export function identityPreset(suggestion) {
-    const label = aliases[suggestion] ?? suggestion;
+    const label = aliases.get(suggestion) ?? suggestion;
     const normalized = label.replaceAll("'", '’');
     let type = 'text';
     if (referenceLabels.has(normalized)) type = 'reference';
@@ -158,4 +158,19 @@ export function identityPreset(suggestion) {
     else if (['Anciens noms', 'Titres honorifiques', 'Langues parlées', 'Nationalité/citoyenneté'].includes(label)) type = 'repeatable';
     else if (label === 'Surnoms et alias') type = 'keywords';
     return { label, section: 'Identité', type, help: '', required: false };
+}
+
+function searchableLabel(label) {
+    return label.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('fr');
+}
+
+export function findIdentitySuggestions(group, query) {
+    const labels = group === '' ? Object.values(identityGroups).flat() : identityGroups[group] ?? [];
+    const search = searchableLabel(query.trim());
+    const matches = new Set();
+    for (const label of labels) {
+        const canonical = aliases.get(label) ?? label;
+        if ([label, canonical].some(item => searchableLabel(item).includes(search))) matches.add(canonical);
+    }
+    return [...matches];
 }
