@@ -28,6 +28,11 @@ export default {
             if (this.kind === 'equipment') return [...this.localEquipment, ...(this.data?.equipment ?? [])];
             return this.data?.[this.kind] ?? [];
         },
+        availableTargets() {
+            if (!['equipment', 'capabilities'].includes(this.kind)) return this.targets;
+            const linked = new Set(this.items.map(item => item.public_id).filter(Boolean));
+            return this.targets.filter(item => !linked.has(item.public_id));
+        },
         showDetails() {
             return this.full || this.expanded;
         },
@@ -37,7 +42,7 @@ export default {
         canOpenFullView() {
             return this.items.length > this.previewSize
                 || this.items.some(item => item.description || item.note || item.status || item.role || item.link_id)
-                || (this.kind !== 'timeline' && !!this.connectionsPath && this.targets.length > 0);
+                || (this.kind !== 'timeline' && !!this.connectionsPath && this.availableTargets.length > 0);
         },
         events() {
             return this.data.timeline.toSorted((a, b) => {
@@ -64,7 +69,8 @@ export default {
     },
     methods: {
         async addLink() {
-            if (!this.target || !this.linkType || this.savingLink) return;
+            if (!this.target || !this.availableTargets.some(item => item.public_id === this.target)
+                || !this.linkType || this.savingLink) return;
             this.savingLink = true;
             this.linkError = '';
             try {

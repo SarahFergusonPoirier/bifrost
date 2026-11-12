@@ -95,6 +95,7 @@ it('creates an equipment relation from the active fiche and reloads the list', a
     expect(contentRequest).toHaveBeenCalledWith('/connections', 'POST', {
         source: 'source', target: 'target', type_key: 'equipment',
     });
+    expect(wrapper.find('select').exists()).toBe(false);
     expect(wrapper.get('li').text()).toBe('Épée');
 });
 

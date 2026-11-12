@@ -48,13 +48,13 @@
             </ol>
             <p v-else>Aucun événement lié à cette fiche.</p>
         </template>
-        <form v-if="showDetails && connectionsPath && kind !== 'timeline' && targets.length" @submit.prevent="addLink">
+        <form v-if="showDetails && connectionsPath && kind !== 'timeline' && availableTargets.length" @submit.prevent="addLink">
             <fieldset :disabled="savingLink">
                 <legend>Lier une fiche</legend>
                 <label>Fiche cible
                     <select v-model="target" required>
                         <option value="">Choisir une fiche</option>
-                        <option v-for="item in targets" :key="item.public_id" :value="item.public_id">{{ item.title }}</option>
+                        <option v-for="item in availableTargets" :key="item.public_id" :value="item.public_id">{{ item.title }}</option>
                     </select>
                 </label>
                 <label v-if="kind === 'relations'">Type de relation
