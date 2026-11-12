@@ -2,7 +2,7 @@ import { formatFieldValue } from '../components/fiche/formatFieldValue';
 import { fieldColumns, groupTemplateFields, templateSectionLabel } from '../components/fiche/templateFields';
 import { identityField, identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
-import FicheReferencePicker from '../components/fiche/FicheReferencePicker.vue';
+import FicheTextEditor from '../components/fiche/FicheTextEditor.vue';
 import FicheText from '../components/fiche/FicheText.vue';
 import { ageFromBirthDate, birthDateField, fieldCalculation } from '../components/fiche/characterAge';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
@@ -24,7 +24,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { FicheReferenceCreate, FicheReferencePicker, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheReferenceCreate, FicheTextEditor, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);

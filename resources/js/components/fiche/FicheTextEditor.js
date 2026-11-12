@@ -1,0 +1,34 @@
+import FicheReferencePicker from './FicheReferencePicker.vue';
+
+export default {
+    components: { FicheReferencePicker },
+    props: {
+        label: { type: String, required: true },
+        modelValue: String,
+        targets: { type: Array, default: () => [] },
+    },
+    emits: ['update:modelValue'],
+    methods: {
+        replaceSelection(text, start, end, selectionStart, selectionEnd) {
+            const editor = this.$refs.editor;
+            editor.setRangeText(text, start, end, 'end');
+            this.$emit('update:modelValue', editor.value);
+            editor.focus();
+            editor.setSelectionRange(selectionStart, selectionEnd);
+        },
+        bold() {
+            const { value, selectionStart: start, selectionEnd: end } = this.$refs.editor;
+            const selection = value.slice(start, end);
+            if (selection.includes('\n')) return;
+            this.replaceSelection('**' + selection + '**', start, end, start + 2, end + 2);
+        },
+        prefixLines(prefix) {
+            const { value, selectionStart, selectionEnd } = this.$refs.editor;
+            const start = value.slice(0, selectionStart).lastIndexOf('\n') + 1;
+            const nextLine = value.indexOf('\n', Math.max(selectionStart, selectionEnd - 1));
+            const end = nextLine === -1 ? value.length : nextLine;
+            const replacement = value.slice(start, end).split('\n').map(line => prefix + line).join('\n');
+            this.replaceSelection(replacement, start, end, start + replacement.length, start + replacement.length);
+        },
+    },
+};

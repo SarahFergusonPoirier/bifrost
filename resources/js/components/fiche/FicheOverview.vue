@@ -33,7 +33,7 @@
                     <option value="Personnalité" />
                     <option value="Résumé" />
                 </datalist>
-                <label>Texte <textarea v-model="newBody" /></label>
+                <FicheTextEditor v-model="newBody" label="Texte" :targets="referenceTargets" />
                 <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
             </fieldset>
         </details>

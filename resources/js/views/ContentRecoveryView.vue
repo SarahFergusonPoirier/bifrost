@@ -345,8 +345,7 @@
                             <option value="completed">Terminé</option><option value="abandoned">Abandonné</option>
                         </select>
                     </label></p>
-                    <p><label>Résumé <textarea v-model="draft.summary" /></label></p>
-                    <FicheReferencePicker :key="selected.public_id" v-model="draft.summary" :targets="referenceTargets" />
+                    <FicheTextEditor :key="selected.public_id" v-model="draft.summary" label="Résumé" :targets="referenceTargets" />
                     <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse). Pour une autre fiche, utilise [[identifiant|libellé]].</p>
                     <fieldset v-if="draft.tag_ids">
                         <legend>Étiquettes</legend>
@@ -417,8 +416,7 @@
                     <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                         <legend>Bloc {{ index + 1 }}</legend>
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>
-                        <p><label>Texte <textarea v-model="block.body" /></label></p>
-                        <FicheReferencePicker v-model="block.body" :targets="referenceTargets" />
+                        <FicheTextEditor v-model="block.body" label="Texte" :targets="referenceTargets" />
                         <button type="button" @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
                     </fieldset>
                     <button type="button" @click="draft.blocks.push({ block_type: 'text', title: null, body: null })">Ajouter un bloc</button>
