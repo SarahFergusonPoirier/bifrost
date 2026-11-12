@@ -3,7 +3,7 @@ import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
 import { identitySectionTitle } from './identitySection';
 import { templateSectionLabel } from './templateFields';
-import { defaultPlacementsFor } from './fichePlacementDefaults';
+import { defaultPlacementsFor, mergePlacements } from './fichePlacementDefaults';
 import FicheFieldHistory from './FicheFieldHistory.vue';
 import FicheTags from './FicheTags.vue';
 import FicheScale from './FicheScale.vue';
@@ -329,8 +329,15 @@ export default {
             const [dimension, step] = delta;
             item[dimension] = clampSize(item[dimension] + step);
         },
+        canTransfer(item) {
+            const target = this.destinations.find(tab => tab.id === this.destination);
+            if (!target) return false;
+            const pending = this.transfers.filter(transfer => transfer.tab === target.id).map(transfer => transfer.placement);
+            return mergePlacements(target, [...pending, item], this.defaults).length <= 80;
+        },
         transfer(index, shared) {
             const item = this.draft[index];
+            if (!this.canTransfer(item)) return;
             const copy = shared ? { ...item, id: crypto.randomUUID() } : this.draft.splice(index, 1)[0];
             this.transfers.push({ tab: this.destination, placement: copy, originalIndex: shared ? null : index });
         },

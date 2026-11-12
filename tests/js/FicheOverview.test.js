@@ -167,6 +167,25 @@ it('can undo a pending move without undoing a separate shared placement', async 
     wrapper.unmount();
 });
 
+it('counts pending transfers toward the destination placement limit', async () => {
+    const existing = Array.from({ length: 79 }, (_, id) => ({ id: String(id), source: 'summary' }));
+    const wrapper = mount(FicheOverview, { props: {
+        summary: 'Résumé', templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        placements: [{ id: 'summary', source: 'summary', width: 8, height: 3 }],
+        destinations: [{ id: 'details', title: 'Détails', placements: existing }],
+        persist: vi.fn(),
+    } });
+    await wrapper.get('button').trigger('click');
+    await wrapper.findAll('select').find(select => select.text().includes('Choisir un onglet')).setValue('details');
+    const share = wrapper.findAll('button').find(button => button.text() === 'Afficher aussi (données partagées)');
+    await share.trigger('click');
+    expect(share.element.disabled).toBe(true);
+    expect(wrapper.text()).toContain('L’onglet de destination est plein.');
+    await wrapper.get('ul[aria-label="Transferts en attente"] button').trigger('click');
+    expect(share.element.disabled).toBe(false);
+    wrapper.unmount();
+});
+
 it('opens available references and keeps unavailable references readable', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Alliés' } };
     const wrapper = mount(FicheOverview, {

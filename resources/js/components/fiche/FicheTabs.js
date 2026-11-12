@@ -1,4 +1,4 @@
-import { defaultPlacementsFor } from './fichePlacementDefaults';
+import { defaultPlacementsFor, mergePlacements } from './fichePlacementDefaults';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 import { contentRequest } from '../../services/contentRecovery';
 
@@ -156,17 +156,12 @@ export default {
         placementsForRemoval(tab, defaults = this.getDefaultPlacements?.() ?? []) {
             return tab.placements ?? defaultPlacementsFor(tab.id, defaults);
         },
-        mergePlacements(target, added, defaults) {
-            const existing = target.placements ?? defaultPlacementsFor(target.id, defaults)
-                .filter(placement => !added.some(item => item.source === placement.source));
-            return [...existing, ...added];
-        },
         removalTargets(tab) {
             const defaults = this.getDefaultPlacements?.();
             const defaultTabs = ['overview', 'relations', 'timeline', ...optionalTabs.map(([id]) => id)];
             return this.tabs.filter(target => target.id !== tab.id && !target.hidden
                 && (target.placements || defaults || !defaultTabs.includes(target.id))
-                && this.mergePlacements(target, this.placementsForRemoval(tab, defaults ?? []), defaults ?? []).length <= 80);
+                && mergePlacements(target, this.placementsForRemoval(tab, defaults ?? []), defaults ?? []).length <= 80);
         },
         remove(tab) {
             if (this.removalDestination) {
@@ -175,7 +170,7 @@ export default {
                 const materialize = placements => placements.map(placement => ({ ...placement, id: crypto.randomUUID() }));
                 const added = tab.placements ?? materialize(this.placementsForRemoval(tab));
                 const defaults = materialize(this.getDefaultPlacements?.() ?? []);
-                target.placements = this.mergePlacements(target, added, defaults);
+                target.placements = mergePlacements(target, added, defaults);
             }
 
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
@@ -186,7 +181,7 @@ export default {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
                 if (!added.length) return tab;
-                return { ...tab, placements: this.mergePlacements(tab, added, defaults) };
+                return { ...tab, placements: mergePlacements(tab, added, defaults) };
             }), copies);
         },
         saveTabs() {
