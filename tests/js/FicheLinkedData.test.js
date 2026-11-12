@@ -51,7 +51,7 @@ it('opens details for a single timeline event without a dedicated tab', async ()
 
 it('sorts timeline entries by date or importance and keeps approximate dates labelled', async () => {
     contentRequest.mockResolvedValue({ data: { timeline: [
-        { key: 'unknown', title: 'Inconnu', date: null },
+        { key: 'unknown', title: 'Inconnu', date: { precision: 'unknown', calendar: 'Ère des brumes' } },
         { key: 'recent', title: 'Retour', importance: 'minor', date: { start: '2020' } },
         { key: 'early', title: 'Rencontre', importance: 'major', date: { start: '2000', precision: 'approximate' } },
     ] } });
@@ -64,6 +64,16 @@ it('sorts timeline entries by date or importance and keeps approximate dates lab
     expect(entries()[0]).toBe('2020 · Retour');
     await wrapper.setProps({ sort: 'importance' });
     expect(entries()[0]).toBe('Vers 2000 · Rencontre');
+});
+
+it('presents a date range with both endpoints and the original calendar', async () => {
+    contentRequest.mockResolvedValue({ data: { timeline: [
+        { key: 'range', title: 'Expédition', date: { start: '120', end: '124', calendar: 'Ère des brumes', precision: 'range' } },
+    ] } });
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'timeline' } });
+    await flushPromises();
+    expect(wrapper.get('li').text()).toBe('120 – 124 · Ère des brumes · Expédition');
+    wrapper.unmount();
 });
 
 it('shows the additional relation details in cards', async () => {

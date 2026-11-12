@@ -51,15 +51,15 @@ export default {
                     if (difference) return difference;
                 }
 
-                const start = a.date?.start || a.date?.end;
-                const end = b.date?.start || b.date?.end;
-                if (!start || !end) return Number(Boolean(end)) - Number(Boolean(start));
+                const firstDate = a.date?.precision !== 'unknown' && (a.date?.start || a.date?.end);
+                const secondDate = b.date?.precision !== 'unknown' && (b.date?.start || b.date?.end);
+                if (!firstDate || !secondDate) return Number(Boolean(secondDate)) - Number(Boolean(firstDate));
                 const calendarOrder = dateOrder.compare(a.date.calendar ?? '', b.date.calendar ?? '');
                 if (calendarOrder) return calendarOrder;
                 const firstOrder = a.date.order == null ? null : Number(a.date.order);
                 const secondOrder = b.date.order == null ? null : Number(b.date.order);
                 if ((firstOrder === null) !== (secondOrder === null)) return firstOrder === null ? 1 : -1;
-                const order = (firstOrder !== null ? firstOrder - secondOrder : 0) || dateOrder.compare(start, end);
+                const order = (firstOrder !== null ? firstOrder - secondOrder : 0) || dateOrder.compare(firstDate, secondDate);
                 return this.sort === 'recent' ? -order : order;
             });
         },
