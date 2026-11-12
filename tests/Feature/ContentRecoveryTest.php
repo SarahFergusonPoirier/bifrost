@@ -231,6 +231,10 @@ class ContentRecoveryTest extends TestCase
         $resource = $content->resources()->sole();
         $this->getJson($url)->assertOk()->assertJsonCount(1)->assertJsonMissingPath('0.location');
         $this->get("/api/contents/{$other->public_id}/attachments/$id")->assertNotFound();
+        $this->patchJson("/api/contents/{$other->public_id}/attachments/$id", ['caption' => 'Autre'])->assertNotFound();
+        $this->patchJson("$url/$id", ['caption' => 'Source révisée'])->assertOk()
+            ->assertJsonPath('metadata.caption', 'Source révisée')->assertJsonPath('metadata.size', $file->getSize());
+        $this->getJson($url)->assertOk()->assertJsonPath('0.metadata.caption', 'Source révisée');
         $this->get("$url/$id")->assertDownload('reference.txt')->assertStreamedContent('Texte joint');
 
         $this->deleteJson("$url/$id")->assertNoContent();
@@ -300,6 +304,8 @@ class ContentRecoveryTest extends TestCase
         $this->get("$url/$id/preview")->assertOk()->assertHeader('Content-Type', 'image/png')
             ->assertHeader('X-Content-Type-Options', 'nosniff')->assertStreamedContent($png);
         $this->get("/api/contents/{$other->public_id}/attachments/$id/preview")->assertNotFound();
+        $this->patchJson("$url/$id", ['alt' => 'Portrait de profil'])->assertOk()
+            ->assertJsonPath('metadata.alt', 'Portrait de profil')->assertJsonPath('metadata.caption', 'Élia');
 
         $svg = UploadedFile::fake()->createWithContent('image.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
         $svgId = $this->post($url, ['file' => $svg], ['Accept' => 'application/json'])->assertCreated()->json('public_id');

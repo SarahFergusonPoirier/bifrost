@@ -17,6 +17,11 @@ class ContentAttachmentController extends Controller
 {
     private const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+    private const METADATA_RULES = [
+        'alt' => ['nullable', 'string', 'max:255'],
+        'caption' => ['nullable', 'string', 'max:1000'],
+    ];
+
     public function index(Request $request, string $content): JsonResponse
     {
         $attachments = $this->content($content)->resources()->where('storage_mode', 'imported')
@@ -44,8 +49,7 @@ class ContentAttachmentController extends Controller
         $record = $this->content($content);
         $input = $request->validate([
             'file' => ['required', 'file', 'max:20480'],
-            'alt' => ['nullable', 'string', 'max:255'],
-            'caption' => ['nullable', 'string', 'max:1000'],
+            ...self::METADATA_RULES,
         ]);
         $file = $input['file'];
         $mime = $file->getMimeType();
@@ -114,6 +118,23 @@ class ContentAttachmentController extends Controller
         return response()->json(null, 204);
     }
 
+    public function update(Request $request, string $content, string $attachment): JsonResponse
+    {
+        $input = $request->validate(self::METADATA_RULES);
+        $record = $this->content($content);
+
+        return DB::transaction(function () use ($input, $record, $attachment): JsonResponse {
+            $resource = $this->attachment($record, $attachment, lock: true);
+            $metadata = $resource->metadata ?? [];
+            if (array_key_exists('alt', $input) && $this->imageMime($resource) === null) {
+                unset($input['alt']);
+            }
+            $resource->update(['metadata' => array_replace($metadata, $input)]);
+
+            return response()->json($resource->only(['public_id', 'original_name', 'metadata']));
+        }, attempts: 3);
+    }
+
     private function imageMime(Resource $resource): ?string
     {
         if (! preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $resource->location)) {
@@ -134,9 +155,13 @@ class ContentAttachmentController extends Controller
         return Content::where('public_id', $publicId)->firstOrFail();
     }
 
-    private function attachment(Content $content, string $publicId): Resource
+    private function attachment(Content $content, string $publicId, bool $lock = false): Resource
     {
-        $resource = $content->resources()->where('public_id', $publicId)->where('storage_mode', 'imported')->firstOrFail();
+        $query = $content->resources()->where('public_id', $publicId)->where('storage_mode', 'imported');
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $resource = $query->firstOrFail();
         abort_unless(preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $resource->location) === 1, 404);
 
         return $resource;

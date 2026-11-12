@@ -109,6 +109,7 @@ Route::post('/content-types', [ContentTemplateController::class, 'storeType']);
 Route::get('/contents/{content}/attachments', [ContentAttachmentController::class, 'index']);
 Route::post('/contents/{content}/attachments', [ContentAttachmentController::class, 'store']);
 Route::get('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'download']);
+Route::patch('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'update']);
 Route::delete('/contents/{content}/attachments/{attachment}', [ContentAttachmentController::class, 'destroy']);
 
 Route::get('/projects/{project}/contents/{content}/fiche-layout', [FicheLayoutController::class, 'show'])->whereNumber('project');

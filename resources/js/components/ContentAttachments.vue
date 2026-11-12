@@ -32,6 +32,17 @@
             <li v-for="attachment in attachments" :key="attachment.public_id">
                 <a :href="download(attachment.public_id)">{{ attachment.original_name }}</a>
                 <p v-if="attachment.metadata?.caption">{{ attachment.metadata.caption }}</p>
+                <button v-if="!readOnly && editing?.id !== attachment.public_id" type="button" :disabled="busy"
+                    @click="editMetadata(attachment)">Modifier les informations</button>
+                <form v-if="!readOnly && editing?.id === attachment.public_id" @submit.prevent="saveMetadata">
+                    <fieldset :disabled="busy">
+                        <legend>Informations de {{ attachment.original_name }}</legend>
+                        <label v-if="editing.image">Texte alternatif <input v-model="editing.alt" maxlength="255" /></label>
+                        <label>Légende <input v-model="editing.caption" maxlength="1000" /></label>
+                        <button type="submit">Enregistrer</button>
+                        <button type="button" @click="editing = null">Annuler</button>
+                    </fieldset>
+                </form>
                 <button v-if="!readOnly" type="button" :disabled="busy" @click="remove(attachment)">Retirer de la fiche</button>
             </li>
         </ul>

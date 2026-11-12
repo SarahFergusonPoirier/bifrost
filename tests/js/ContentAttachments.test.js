@@ -52,3 +52,21 @@ it('retries a failed gallery load and explains when the saved image is missing',
     expect(wrapper.emitted('select-image')).toEqual([['remaining']]);
     wrapper.unmount();
 });
+
+it('updates a caption and refreshes the canonical attachment list', async () => {
+    const file = { public_id: 'file', original_name: 'Note.txt', metadata: { caption: 'Avant' } };
+    contentRequest.mockResolvedValueOnce({ data: [file] })
+        .mockResolvedValueOnce({ data: null })
+        .mockResolvedValueOnce({ data: [{ ...file, metadata: { caption: 'Après' } }] });
+    const wrapper = mount(ContentAttachments, { props: { contentId: 'character' } });
+    await wrapper.vm.refresh();
+    await wrapper.findAll('button').find(button => button.text() === 'Modifier les informations').trigger('click');
+    const form = wrapper.get('li form');
+    await form.get('input').setValue('Après');
+    await form.trigger('submit');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/contents/character/attachments/file', 'PATCH', { caption: 'Après' });
+    expect(wrapper.emitted('changed')).toHaveLength(1);
+    expect(wrapper.get('li').text()).toContain('Après');
+    wrapper.unmount();
+});

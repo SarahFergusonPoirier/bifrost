@@ -3,7 +3,7 @@ import { contentRequest } from '../services/contentRecovery';
 export default {
     props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean, fit: String },
     emits: ['select-image', 'changed'],
-    data: () => ({ attachments: [], alt: '', caption: '', loaded: false, busy: false, error: '' }),
+    data: () => ({ attachments: [], alt: '', caption: '', editing: null, loaded: false, busy: false, error: '' }),
     computed: {
         displayedImages() {
             if (!this.single) return this.images;
@@ -57,6 +57,25 @@ export default {
                 input.value = '';
                 this.alt = '';
                 this.caption = '';
+            });
+        },
+        editMetadata(attachment) {
+            this.editing = {
+                id: attachment.public_id,
+                image: Boolean(attachment.metadata?.image_mime),
+                alt: attachment.metadata?.alt ?? '',
+                caption: attachment.metadata?.caption ?? '',
+            };
+        },
+        saveMetadata() {
+            const { id, image, alt, caption } = this.editing;
+            return this.run(async () => {
+                await contentRequest(this.endpoint() + '/' + encodeURIComponent(id), 'PATCH', {
+                    caption: caption.trim() || null,
+                    ...(image ? { alt: alt.trim() || null } : {}),
+                });
+                this.editing = null;
+                this.$emit('changed');
             });
         },
         remove(attachment) {
