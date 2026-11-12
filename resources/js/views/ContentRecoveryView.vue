@@ -235,6 +235,7 @@
                 </div>
                 <div>
                     <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
+                    <a v-if="ficheTabUrl" :href="ficheTabUrl">Lien vers cet onglet</a>
                     <button type="button" @click="ficheTab = 'details'">Modifier</button>
                 </div>
             </header>

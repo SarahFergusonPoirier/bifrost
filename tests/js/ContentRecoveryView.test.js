@@ -109,6 +109,34 @@ it('masque une valeur en lecture compacte sans la retirer de la fiche', async ()
     wrapper.unmount();
 });
 
+it('opens a direct fiche link on the requested tab and keeps the link current', async () => {
+    const originalUrl = window.location.href;
+    window.history.replaceState(null, '', '/projects/1?fiche=fiche&onglet=details');
+    const content = { public_id: 'fiche', project_id: 1, title: 'Élia', blocks: [], field_values: [] };
+    contentRequest.mockImplementation(async path => {
+        if (path === '/contents/fiche') return { data: content };
+        if (path.endsWith('/fiche-layout')) return { data: { version: 0, tabs: [
+            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
+            { id: 'details', title: 'Informations générales', icon: 'catalogue', hidden: false },
+        ] } };
+        if (path.endsWith('/folders') || path.endsWith('/tree') || ['/content-types', '/projects', '/tags'].includes(path)) {
+            return { data: [] };
+        }
+        return { data: { data: [], current_page: 1, last_page: 1 } };
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    try {
+        await flushPromises();
+        expect(wrapper.get('button[data-tab="details"]').attributes('aria-pressed')).toBe('true');
+        await wrapper.get('button[data-tab="overview"]').trigger('click');
+        const link = wrapper.findAll('a').find(anchor => anchor.text() === 'Lien vers cet onglet');
+        expect(new URL(link.attributes('href')).searchParams.get('onglet')).toBe('overview');
+    } finally {
+        wrapper.unmount();
+        window.history.replaceState(null, '', originalUrl);
+    }
+});
+
 it('suggests the full name without replacing a manually entered title', async () => {
     const fields = ['Prénom', 'Nom de famille'].map((label, index) => ({
         id: index + 1, field_definition_id: index + 1, section_key: 'identity',

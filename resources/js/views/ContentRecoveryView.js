@@ -172,6 +172,13 @@ export default {
         const hiddenFields = ref([]);
         const showHidden = ref(false);
         const displayKey = () => 'bifrost:content-display:' + selected.value.public_id;
+        const ficheTabUrl = computed(() => {
+            if (!props.projectId || !selected.value) return null;
+            const url = new URL(window.location.href);
+            url.searchParams.set('fiche', selected.value.public_id);
+            url.searchParams.set('onglet', ficheTab.value);
+            return url.href;
+        });
 
         function loadDisplay() {
             ficheTab.value = 'overview';
@@ -459,11 +466,15 @@ export default {
             revisions.value = (await contentRequest(path() + '/revisions?page=' + page)).data;
         }
 
-        async function open(id) {
+        async function open(id, linkedTab = null) {
             placement.value = 0;
             const response = await contentRequest('/contents/' + id);
+            if (linkedTab !== null && String(response.data.project_id) !== props.projectId) {
+                throw new Error('Cette fiche ne fait pas partie du projet.');
+            }
             accept(response.data, response.version);
             loadDisplay();
+            if (linkedTab) ficheTab.value = linkedTab;
             from.value = '';
             to.value = '';
             comparison.value = null;
@@ -531,6 +542,13 @@ export default {
                 tags.value = Array.isArray(tagList.data) ? tagList.data : [];
                 types.value = data.filter(type => ['system', 'global'].includes(type.scope_type)
                     || (type.scope_type === 'project' && String(type.project_id) === props.projectId));
+                const query = new URLSearchParams(window.location.search);
+                const fiche = query.get('fiche');
+                const tab = query.get('onglet');
+                if (fiche && /^[a-zA-Z0-9-]{1,64}$/.test(fiche)) {
+                    panel.value = 'catalogue';
+                    await open(fiche, tab && /^[a-z0-9-]{1,64}$/.test(tab) ? tab : 'overview');
+                }
             });
         });
         onUnmounted(() => {
@@ -547,7 +565,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, ficheTabUrl, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
