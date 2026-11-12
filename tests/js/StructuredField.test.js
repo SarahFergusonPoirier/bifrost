@@ -25,6 +25,21 @@ it('permet de choisir plusieurs références sans perdre une référence indispo
     expect(wrapper.emitted('change')[0]).toEqual([['first', 'second', 'missing']]);
 });
 
+it('keeps an existing scale value selected after the maximum is reduced', async () => {
+    const wrapper = mount(StructuredField, {
+        props: { format: 'scale', levels: 10, value: { level: 8 } },
+    });
+    await wrapper.setProps({ levels: 5 });
+    const select = wrapper.get('select');
+    expect(select.element.value).toBe('8');
+    expect(select.get('option[value="8"]').text()).toBe('8 · Valeur conservée, maximum actuel 5');
+    expect(wrapper.emitted('change')).toBeUndefined();
+
+    await select.setValue('5');
+    expect(wrapper.emitted('change')).toEqual([[{ level: 5 }]]);
+    wrapper.unmount();
+});
+
 it('duplicates a capability as an independently editable entry', async () => {
     const original = { label: 'Vol', mastery: 3, description: 'Capacité aérienne' };
     const wrapper = mount(StructuredField, { props: { format: 'capabilities', value: [original] } });
