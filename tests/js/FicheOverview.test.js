@@ -25,6 +25,21 @@ it('reads canonical fields and expands long text in place', async () => {
     expect(wrapper.find('dl').exists()).toBe(false);
 });
 
+it('keeps reference markup out of a truncated preview and restores the link on expansion', async () => {
+    const id = '11111111-1111-1111-1111-111111111111';
+    const wrapper = mount(FicheOverview, { props: {
+        summary: 'Rencontre avec [[' + id + '|Kael]] pendant le voyage.',
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        resolveReference: () => 'Kael',
+        placements: [{ id: 'summary', source: 'summary', width: 6, height: 2, text_limit: 30 }],
+    } });
+    expect(wrapper.get('.fiche-text').text()).toBe('Rencontre avec…');
+    await wrapper.get('button[aria-expanded]').trigger('click');
+    await wrapper.get('.fiche-text button').trigger('click');
+    expect(wrapper.emitted('open')).toEqual([[id]]);
+    wrapper.unmount();
+});
+
 it('translates legacy section headings while resolving their saved placement keys', () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom et identité' } };
     const wrapper = mount(FicheOverview, {

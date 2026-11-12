@@ -15,11 +15,22 @@ export function textBlocks(text) {
     return blocks;
 }
 
+const inlinePattern = /\*\*([^*\n]+)\*\*|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\[\[([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})(?:\|([^\]\n]+))?\]\]/gi;
+
+export function textPreview(text, limit) {
+    for (const match of text.matchAll(inlinePattern)) {
+        if (match.index >= limit) break;
+        if (match.index + match[0].length > limit) {
+            return text.slice(0, match.index).trimEnd() + '…';
+        }
+    }
+    return text.slice(0, limit).trimEnd() + '…';
+}
+
 export function inlineText(text) {
-    const pattern = /\*\*([^*\n]+)\*\*|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\[\[([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})(?:\|([^\]\n]+))?\]\]/gi;
     const parts = [];
     let end = 0;
-    for (const match of text.matchAll(pattern)) {
+    for (const match of text.matchAll(inlinePattern)) {
         if (match.index > end) parts.push({ text: text.slice(end, match.index) });
         if (match[4]) parts.push({ type: 'reference', id: match[4].toLowerCase(), text: match[5] });
         else if (match[1]) parts.push({ type: 'strong', text: match[1] });

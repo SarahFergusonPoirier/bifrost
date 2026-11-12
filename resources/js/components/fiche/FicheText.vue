@@ -15,7 +15,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import FicheInlineText from './FicheInlineText.vue';
-import { textBlocks } from './ficheTextFormat';
+import { textBlocks, textPreview } from './ficheTextFormat';
 
 const props = defineProps({
     text: { type: String, required: true },
@@ -26,5 +26,5 @@ defineEmits(['open']);
 const expanded = ref(false);
 const canTruncate = computed(() => props.limit > 0 && props.text.length > props.limit);
 const truncated = computed(() => !expanded.value && canTruncate.value);
-const blocks = computed(() => textBlocks(truncated.value ? props.text.slice(0, props.limit).trimEnd() + '…' : props.text));
+const blocks = computed(() => textBlocks(truncated.value ? textPreview(props.text, props.limit) : props.text));
 </script>
