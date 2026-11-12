@@ -47,6 +47,21 @@ it('keeps a visible restored tab and falls back when the active tab is hidden', 
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
 
+it('keeps the pending tab changes when they would hide the last visible tab', async () => {
+    const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    contentRequest.mockClear().mockResolvedValueOnce({ data: { version: 1, tabs: [overview] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview' } });
+    await flushPromises();
+    await wrapper.get('input[maxlength="80"]').setValue('Nouveau titre');
+    await wrapper.get('input[type="checkbox"]').setValue(true);
+    await wrapper.get('form').trigger('submit');
+    expect(wrapper.get('[role="alert"]').text()).toBe('Conserve au moins un onglet visible.');
+    expect(wrapper.get('input[maxlength="80"]').element.value).toBe('Nouveau titre');
+    expect(wrapper.get('button[data-tab="overview"]').text()).toBe('Aperçu');
+    expect(contentRequest).toHaveBeenCalledTimes(1);
+    wrapper.unmount();
+});
+
 it('moves placements into an implicit layout when removing a tab and submits both changes together', async () => {
     const placement = { id: 'placement', source: 'summary', width: 6, height: 2, hidden: false, collapsed: false };
     const relations = { ...placement, id: 'relations', source: 'relations' };

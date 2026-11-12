@@ -202,6 +202,10 @@ export default {
         },
         async save(tabs, copies = []) {
             if (this.saving) return false;
+            if (!tabs.some(tab => !tab.hidden)) {
+                this.error = 'Conserve au moins un onglet visible.';
+                return false;
+            }
             this.saving = true;
             this.error = '';
             try {

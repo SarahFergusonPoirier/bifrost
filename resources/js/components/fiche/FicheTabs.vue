@@ -5,7 +5,7 @@
             <WorkspaceIcon :name="tab.icon" /> {{ tab.title }}
         </button>
     </nav>
-    <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Réessayer</button></p>
+    <p v-if="error" role="alert">{{ error }} <button v-if="!layout" type="button" @click="load">Réessayer</button></p>
     <details v-if="layout" class="fiche-tab-settings">
         <summary>Gérer les onglets</summary>
         <form @submit.prevent="saveTabs">
