@@ -14,7 +14,8 @@
             <ul v-if="items.length" class="fiche-relations" :class="{ 'fiche-relations--cards': view === 'cards' }">
                 <li v-for="(relation, index) in items.slice(0, limit)" :key="relation.id ?? index">
                     <slot name="entry" :entry="relation">
-                    <img v-if="view === 'cards' && relation.image" class="fiche-equipment-image"
+                    <img v-if="relation.image && (kind === 'relations' || view === 'cards')"
+                        :class="kind === 'relations' ? 'fiche-relation-avatar' : 'fiche-equipment-image'"
                         :src="relation.image" alt="" loading="lazy" @error="$event.target.hidden = true" />
                     <button v-if="relation.public_id" type="button" @click="$emit('open', relation.public_id)">{{ relation.title }}</button>
                     <strong v-else>{{ relation.title }}</strong>

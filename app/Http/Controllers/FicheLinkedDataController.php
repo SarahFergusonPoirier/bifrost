@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Content;
 use App\Models\ContentFieldValue;
 use App\Models\ContentRelation;
 use App\Models\Project;
@@ -24,7 +25,18 @@ class FicheLinkedDataController extends Controller
             ->where(fn (Builder $query) => $query->where('source_content_id', $record->id)->orWhere('target_content_id', $record->id))
             ->with(['source:id,public_id,title,project_id,content_type_id', 'source.contentType:id,key', 'target:id,public_id,title,project_id,content_type_id,summary', 'target.contentType:id,key'])
             ->orderBy('id')->get();
-        $linked = $relations->map(function (ContentRelation $relation) use ($record): array {
+        $related = $relations->map(fn (ContentRelation $relation) => $relation->source_content_id === $record->id
+            ? $relation->target : $relation->source)->unique('id')->load([
+                'resources' => fn ($query) => $query->select('resources.id', 'resources.public_id')
+                    ->where('storage_mode', 'imported')->where('location', 'like', 'content-attachments/%')
+                    ->whereNotNull('metadata->image_mime')->orderBy('resources.id'),
+            ])->keyBy('id');
+        $images = $related->map(function (Content $content): ?string {
+            $image = $content->resources->first();
+
+            return $image ? route('contents.attachments.preview', [$content->public_id, $image->public_id], absolute: false) : null;
+        });
+        $linked = $relations->map(function (ContentRelation $relation) use ($record, $images): array {
             $forward = $relation->source_content_id === $record->id;
             $other = $forward ? $relation->target : $relation->source;
             $properties = $relation->properties_data ?? [];
@@ -35,6 +47,7 @@ class FicheLinkedDataController extends Controller
                 'content_id' => $other->id,
                 'public_id' => $other->public_id,
                 'title' => $other->title,
+                'image' => $images->get($other->id),
                 'label' => $properties[$forward ? 'forward_label' : 'inverse_label'] ?? $relation->type_key,
                 'type_key' => $relation->type_key,
                 'forward' => $forward,
@@ -51,25 +64,18 @@ class FicheLinkedDataController extends Controller
         $equipment = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
             && $relation->type_key === 'equipment'
             && $relation->target->contentType?->key === 'objet-artefact')
-            ->unique('target_content_id');
-        $equipment->map(fn (ContentRelation $relation) => $relation->target)->load([
-            'resources' => fn ($query) => $query->select('resources.id', 'resources.public_id')
-                ->where('storage_mode', 'imported')->where('location', 'like', 'content-attachments/%')
-                ->whereNotNull('metadata->image_mime')->orderBy('resources.id'),
-        ]);
-        $equipment = $equipment->map(function (ContentRelation $relation): array {
-            $target = $relation->target;
-            $image = $target->resources->first();
+            ->unique('target_content_id')->map(function (ContentRelation $relation) use ($images): array {
+                $target = $relation->target;
 
-            return [
-                'id' => $relation->id,
-                'link_id' => $relation->id,
-                'public_id' => $target->public_id,
-                'title' => $target->title,
-                'note' => $target->summary,
-                'image' => $image ? route('contents.attachments.preview', [$target->public_id, $image->public_id], absolute: false) : null,
-            ];
-        })->values();
+                return [
+                    'id' => $relation->id,
+                    'link_id' => $relation->id,
+                    'public_id' => $target->public_id,
+                    'title' => $target->title,
+                    'note' => $target->summary,
+                    'image' => $images->get($target->id),
+                ];
+            })->values();
 
         $capabilities = $relations->filter(fn (ContentRelation $relation): bool => $relation->source_content_id === $record->id
             && $relation->type_key === 'capability')
@@ -81,9 +87,7 @@ class FicheLinkedDataController extends Controller
                 'description' => $relation->target->summary,
             ])->values();
 
-        $eventContentIds = $relations->map(fn (ContentRelation $relation) => $relation->source_content_id === $record->id
-            ? $relation->target : $relation->source)
-            ->filter(fn ($other): bool => $other->contentType?->key === 'evenement-historique')->pluck('id');
+        $eventContentIds = $related->filter(fn ($other): bool => $other->contentType?->key === 'evenement-historique')->pluck('id');
         $datedContentIds = $eventContentIds->push($record->id)->unique()->all();
 
         $dates = ContentFieldValue::query()->whereIntegerInRaw('content_id', $datedContentIds)

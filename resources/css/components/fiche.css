@@ -248,6 +248,16 @@
     color: var(--color-text-muted);
 }
 
+.fiche-relation-avatar {
+    display: inline-block;
+    width: var(--space-8);
+    height: var(--space-8);
+    margin-inline-end: var(--space-2);
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+}
+
 .fiche-relations--cards {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }

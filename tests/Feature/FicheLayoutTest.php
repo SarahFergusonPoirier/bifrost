@@ -274,7 +274,8 @@ class FicheLayoutTest extends TestCase
             'metadata' => ['image_mime' => 'image/png'],
         ]);
         $this->getJson("$url/{$character->public_id}/fiche-links")->assertOk()
-            ->assertJsonPath('equipment.0.image', "/api/contents/{$object->public_id}/attachments/{$image->public_id}/preview");
+            ->assertJsonPath('equipment.0.image', "/api/contents/{$object->public_id}/attachments/{$image->public_id}/preview")
+            ->assertJsonPath('relations.0.image', "/api/contents/{$object->public_id}/attachments/{$image->public_id}/preview");
         $this->getJson("$url/{$object->public_id}/fiche-links")->assertOk()->assertJsonCount(0, 'equipment');
     }
 
