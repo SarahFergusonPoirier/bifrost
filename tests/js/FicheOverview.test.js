@@ -264,9 +264,11 @@ it('renders accessible scale descriptions in numeric mode', () => {
     } });
     const meter = wrapper.get('[role="meter"]');
     expect(meter.attributes('aria-valuetext')).toBe('Moyenne');
+    expect(meter.attributes('title')).toBe('Moyenne');
     expect(meter.text()).toBe('2 / 3');
     expect(meter.find('span').exists()).toBe(false);
-    expect(wrapper.get('details ol').text()).toContain('Forte');
+    expect(wrapper.get('details summary').attributes('aria-label')).toBe('Description des niveaux – Force');
+    expect(wrapper.get('details dl').text()).toContain('Niveau 3Forte');
 });
 
 it('uses different mastery displays for placements of the same capability', () => {

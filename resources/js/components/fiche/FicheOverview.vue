@@ -284,16 +284,8 @@
                                     <template v-else>{{ keyword.label }}</template>
                                 </li>
                             </ul>
-                            <div v-else-if="field.scale">
-                                <FicheScale :label="field.label" :level="Number(field.scale.level)" :levels="field.scale.levels"
-                                    :mode="field.scale.mode" :descriptions="field.scale.descriptions" />
-                                <details v-if="field.scale.descriptions.some(Boolean)">
-                                    <summary>Descriptions des niveaux</summary>
-                                    <ol>
-                                        <li v-for="(description, index) in field.scale.descriptions" :key="index">{{ description || 'Sans description' }}</li>
-                                    </ol>
-                                </details>
-                            </div>
+                            <FicheScale v-else-if="field.scale" :label="field.label" :level="Number(field.scale.level)" :levels="field.scale.levels"
+                                :mode="field.scale.mode" :descriptions="field.scale.descriptions" />
                             <a v-else-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
                             <span v-else-if="field.badgeColor" class="fiche-choice-badge" :data-color="field.badgeColor">{{ field.value }}</span>
                             <template v-else>{{ field.value }}</template>
