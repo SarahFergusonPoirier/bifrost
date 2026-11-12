@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
+import { groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
 
 it('reads canonical fields and expands long text in place', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom complet' } };
@@ -37,6 +38,21 @@ it('keeps reference markup out of a truncated preview and restores the link on e
     await wrapper.get('button[aria-expanded]').trigger('click');
     await wrapper.get('.fiche-text button').trigger('click');
     expect(wrapper.emitted('open')).toEqual([[id]]);
+    wrapper.unmount();
+});
+
+it('renders rich biography fields from existing templates', async () => {
+    const field = { id: 1, field_definition_id: 1, section_key: 'story', field_definition: { label: 'Passé', value_type: 'text' } };
+    const biography = '## Enfance\nUn **souvenir**.\n- Premier voyage';
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: groupTemplateFields([field]), hiddenFields: [],
+        fieldValue: () => biography, displayValue: () => biography,
+        placements: [{ id: 'story', source: 'section:story', width: 6, height: 2, text_limit: 18 }],
+    } });
+    expect(wrapper.get('h4').text()).toBe('Enfance');
+    await wrapper.get('button[aria-expanded]').trigger('click');
+    expect(wrapper.get('.fiche-text strong').text()).toBe('souvenir');
+    expect(wrapper.get('.fiche-text li').text()).toBe('Premier voyage');
     wrapper.unmount();
 });
 

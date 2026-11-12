@@ -145,7 +145,7 @@
                 <label v-if="placement.source === 'fields' || placement.source.startsWith('section:')">
                     <input v-model="placement.hide_empty" type="checkbox" /> Masquer les champs vides
                 </label>
-                <label v-if="['summary', 'capabilities'].includes(placement.source) || placement.source.startsWith('text:')">
+                <label v-if="['summary', 'capabilities'].includes(placement.source) || placement.source.startsWith('text:') || bySource.get(placement.source)?.fields?.some(field => field.richText)">
                     Longueur de l’aperçu (0 pour tout afficher)
                     <input type="number" min="0" max="5000" :value="placement.text_limit ?? ''"
                         @input="placement.text_limit = $event.target.value === '' ? null : Number($event.target.value)" />
@@ -288,6 +288,8 @@
                                 :mode="field.scale.mode" :descriptions="field.scale.descriptions" />
                             <a v-else-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
                             <span v-else-if="field.badgeColor" class="fiche-choice-badge" :data-color="field.badgeColor">{{ field.value }}</span>
+                            <FicheText v-else-if="field.richText && !field.empty" :text="field.value"
+                                :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                             <template v-else>{{ field.value }}</template>
                             <FicheFieldHistory v-if="contentId && field.historyField && formatHistoricalValue"
                                 :content-id="contentId" :field="field.historyField" :format-value="formatHistoricalValue" />

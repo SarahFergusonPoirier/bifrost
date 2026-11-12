@@ -73,6 +73,7 @@ export default {
                     historyField: field.display_options?.history_view === 'history' ? field : null,
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
+                    richText: field.richText && !this.fieldState?.(field),
                     empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',
                     references: this.fieldReferences(field),
                     badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)

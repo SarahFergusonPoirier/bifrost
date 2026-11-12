@@ -319,7 +319,10 @@
                     <dl>
                         <template v-for="field in fields.filter(item => showHidden || !hiddenFields.includes(item.field_definition_id))" :key="field.id">
                             <dt>{{ field.label_override || field.field_definition.label }}</dt>
-                            <dd>{{ displayValue(field) }}
+                            <dd>
+                                <FicheText v-if="field.richText && !fieldState(field) && fieldValue(field)" :text="displayValue(field)"
+                                    :limit="0" :resolve-reference="resolveFicheReference" @open="openPanelContent" />
+                                <template v-else>{{ displayValue(field) }}</template>
                                 <button type="button" @click="toggleHidden(field.field_definition_id)">
                                     {{ hiddenFields.includes(field.field_definition_id) ? 'Réafficher' : 'Masquer' }}
                                 </button>
@@ -381,6 +384,8 @@
                                     :category-options="field.format === 'capabilities' ? (field.display_options?.choices ?? field.field_definition.options_data?.choices) : undefined"
                                     :content-id="selected.public_id" :targets="allowedTargets(field)" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
                             </fieldset>
+                            <FicheTextEditor v-else-if="field.richText" :label="field.label_override || field.field_definition.label"
+                                :model-value="fieldValue(field)" :targets="referenceTargets" @update:model-value="setField(field, $event)" />
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}
                                 <select v-if="field.column === 'reference_content_id'" :value="fieldValue(field)" @change="setField(field, $event.target.value)">

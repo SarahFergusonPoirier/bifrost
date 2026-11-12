@@ -44,7 +44,10 @@ export function groupTemplateFields(fields) {
         if (!column || (column === 'value_json' && !['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link'].includes(format))) continue;
         const section = field.display_options?.section_label ?? field.section_key ?? 'Informations';
         if (!sections.has(section)) sections.set(section, []);
-        sections.get(section).push({ ...field, column, format });
+        const labels = [section, field.label_override, field.field_definition.label, ...(field.display_options?.section_aliases ?? [])];
+        const richText = field.field_definition.value_type === 'text'
+            && (field.section_key === 'story' || labels.some(label => label?.toLocaleLowerCase('fr') === 'biographie'));
+        sections.get(section).push({ ...field, column, format, richText });
     }
     return sections;
 }
