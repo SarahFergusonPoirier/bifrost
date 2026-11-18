@@ -219,6 +219,15 @@ export default {
             if (blockId) nextTick(() => document.getElementById('fiche-text-editor-' + blockId)?.querySelector('textarea')?.focus());
         }
 
+        function editFicheField(fieldId) {
+            editFiche();
+            nextTick(() => {
+                const field = document.getElementById('fiche-field-editor-' + fieldId);
+                if (field) field.closest('details').open = true;
+                field?.querySelector('input')?.focus();
+            });
+        }
+
         function toggleHidden(id) {
             hiddenFields.value = hiddenFields.value.includes(id)
                 ? hiddenFields.value.filter(field => field !== id)
@@ -574,7 +583,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheField, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

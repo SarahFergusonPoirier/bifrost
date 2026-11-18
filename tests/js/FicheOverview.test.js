@@ -408,7 +408,7 @@ it('renders accessible scale descriptions in numeric mode', () => {
     expect(wrapper.get('details dl').text()).toContain('Niveau 3Forte');
 });
 
-it('uses different mastery displays for placements of the same capability', () => {
+it('uses different mastery displays for placements of the same capability', async () => {
     const base = { source: 'capabilities', width: 6, height: 2, hidden: false, collapsed: false };
     const wrapper = mount(FicheOverview, { props: {
         contentId: 'character',
@@ -429,6 +429,8 @@ it('uses different mastery displays for placements of the same capability', () =
     expect(segments.get('[role="meter"]').attributes('aria-valuenow')).toBe('3');
     expect(hidden.text()).toContain('Vol');
     expect(hidden.text()).not.toContain('Maîtrise');
+    await segments.get('header button').trigger('click');
+    expect(wrapper.emitted('edit-field')).toEqual([[1]]);
 });
 
 it('hides local ability entries without hiding linked abilities or losing their navigation', async () => {

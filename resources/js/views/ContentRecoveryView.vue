@@ -258,7 +258,7 @@
                         :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
-                        @open="openPanelContent" @select="selectFicheTab" @edit-text="editFiche"
+                        @open="openPanelContent" @select="selectFicheTab" @edit-text="editFiche" @edit-field="editFicheField"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :format-historical-value="formatHistoricalValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab)" />
                     </div>
@@ -383,7 +383,7 @@
                                         :selected="(fieldValue(field) || []).includes(option)">{{ option }}</option>
                                 </select>
                             </label>
-                            <fieldset v-else-if="field.column === 'value_json'">
+                            <fieldset v-else-if="field.column === 'value_json'" :id="'fiche-field-editor-' + field.field_definition_id">
                                 <legend>{{ field.label_override || field.field_definition.label }}</legend>
                                 <StructuredField :format="field.format" :value="fieldValue(field) || null"
                                     :category-options="field.format === 'capabilities' ? (field.display_options?.choices ?? field.field_definition.options_data?.choices) : undefined"

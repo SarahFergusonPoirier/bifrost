@@ -56,9 +56,21 @@ export default {
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
-    emits: ['open', 'select', 'block-deleted', 'edit-text'],
+    emits: ['open', 'select', 'block-deleted', 'edit-text', 'edit-field'],
     data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], draftVersion: null, dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
+        editableEntryFields() {
+            const fields = {};
+            for (const section of this.templateSections.values()) {
+                for (const field of section) {
+                    if (['capabilities', 'equipment'].includes(field.format)
+                        && !this.hiddenFields.includes(field.field_definition_id) && !this.fieldState?.(field)) {
+                        fields[field.format] ??= field.field_definition_id;
+                    }
+                }
+            }
+            return fields;
+        },
         textBlockTitles() {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return ['Texte', 'Biographie', 'Personnalité', 'Résumé'].filter(title => title.toLocaleLowerCase('fr').includes(query));
