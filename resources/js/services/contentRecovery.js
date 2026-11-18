@@ -11,9 +11,16 @@ export async function contentRequest(path, method = 'GET', body) {
         throw new Error('Impossible de contacter le serveur.');
     }
 
-    const data = response.status === 204 ? null : await response.json();
+    let data = null;
+    if (response.status !== 204) {
+        try {
+            data = await response.json();
+        } catch {
+            if (response.ok) throw new Error('Le serveur a renvoyé une réponse illisible.');
+        }
+    }
     if (!response.ok) {
-        const error = new Error(Object.values(data.errors ?? {}).flat()[0] ?? data.message ?? 'La demande a échoué.');
+        const error = new Error(Object.values(data?.errors ?? {}).flat()[0] ?? data?.message ?? 'La demande a échoué.');
         error.status = response.status;
         throw error;
     }
