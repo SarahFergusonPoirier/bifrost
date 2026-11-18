@@ -13,7 +13,7 @@ export default {
     components: { WorkspaceIcon },
     props: { path: String, templatesPath: String, active: String, canCopy: Boolean, getDefaultPlacements: Function },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
     computed: {
         hasPendingText() {
             return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
@@ -76,8 +76,20 @@ export default {
             this.error = '';
             try {
                 this.accept((await contentRequest(this.path)).data);
+                this.conflict = false;
+                return true;
             } catch (error) {
                 this.error = error.message;
+                return false;
+            }
+        },
+        async reloadAfterConflict() {
+            if (this.saving) return;
+            this.saving = true;
+            try {
+                if (await this.load()) this.reloadCount += 1;
+            } finally {
+                this.saving = false;
             }
         },
         async loadRevisions(page = 1) {
@@ -216,6 +228,7 @@ export default {
                 return true;
             } catch (error) {
                 this.error = error.message;
+                this.conflict = error.status === 409;
             } finally {
                 this.saving = false;
             }

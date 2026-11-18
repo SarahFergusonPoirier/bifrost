@@ -243,8 +243,8 @@
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
                 :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                 :get-default-placements="() => $refs.ficheOverview?.defaults" @select="selectFicheTab" @copied="refreshFiche">
-                <template #default="{ tab, tabs, persist, version }">
-                    <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab"
+                <template #default="{ tab, tabs, persist, version, reloadCount }">
+                    <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab + ':' + reloadCount"
                         :block-deletion-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout/blocks' : undefined"
                         @block-deleted="refreshFiche"
                         :attachments-revision="attachmentsRevision" :content-version="contentVersion" :layout-version="version" :block-library-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"

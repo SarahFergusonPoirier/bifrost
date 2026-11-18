@@ -6,6 +6,9 @@
         </button>
     </nav>
     <p v-if="error" role="alert">{{ error }} <button v-if="!layout" type="button" @click="load">Réessayer</button></p>
+    <button v-if="conflict" type="button" :disabled="saving" @click="reloadAfterConflict">
+        Recharger la disposition et abandonner ses modifications locales
+    </button>
     <details v-if="layout" class="fiche-tab-settings">
         <summary>Gérer les onglets</summary>
         <form @submit.prevent="saveTabs">
@@ -102,7 +105,7 @@
             <button type="button" :disabled="revisions.current_page >= revisions.last_page" @click="loadRevisions(revisions.current_page + 1)">Page suivante</button>
         </template>
     </details>
-    <slot :version="layout?.version" :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
+    <slot :version="layout?.version" :reload-count="reloadCount" :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
         :persist="layout && !saving ? (next, transfers, defaults, copies) => savePlacements(next, transfers, defaults, copies) : null" />
 </template>
 

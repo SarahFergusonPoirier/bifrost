@@ -13,7 +13,9 @@ export async function contentRequest(path, method = 'GET', body) {
 
     const data = response.status === 204 ? null : await response.json();
     if (!response.ok) {
-        throw new Error(Object.values(data.errors ?? {}).flat()[0] ?? data.message ?? 'La demande a échoué.');
+        const error = new Error(Object.values(data.errors ?? {}).flat()[0] ?? data.message ?? 'La demande a échoué.');
+        error.status = response.status;
+        throw error;
     }
 
     return { data, version: response.headers.get('ETag')?.replaceAll('"', '') };

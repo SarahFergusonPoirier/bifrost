@@ -90,6 +90,25 @@ it('moves placements into an implicit layout when removing a tab and submits bot
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
 
+it('preserves edits after a stale write until the user reloads the layout', async () => {
+    const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [overview] } })
+        .mockRejectedValueOnce(Object.assign(new Error('La disposition a changé.'), { status: 409 }))
+        .mockResolvedValueOnce({ data: { version: 2, tabs: [{ ...overview, title: 'Titre distant' }] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview' } });
+    await flushPromises();
+    await wrapper.get('input[maxlength="80"]').setValue('Titre local');
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    expect(wrapper.get('input[maxlength="80"]').element.value).toBe('Titre local');
+
+    await wrapper.findAll('button').find(button => button.text().startsWith('Recharger la disposition')).trigger('click');
+    await flushPromises();
+    expect(wrapper.get('input[maxlength="80"]').element.value).toBe('Titre distant');
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+    wrapper.unmount();
+});
+
 it('navigates visible tabs with arrows and boundary keys', async () => {
     const wrapper = mount(FicheTabs, { props: { active: 'overview' }, attachTo: document.body });
     const [first, last] = wrapper.findAll('[data-tab]');
