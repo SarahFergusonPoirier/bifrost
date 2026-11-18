@@ -28,8 +28,8 @@
                     </template>
                     </slot>
                     <button v-if="kind === 'relations' && showDetails && connectionsPath && relation.link_id" type="button"
-                        :disabled="savingLink" @click="editLink(relation)">Modifier le lien</button>
-                    <button v-if="showDetails && connectionsPath && relation.link_id" type="button" :disabled="savingLink"
+                        :disabled="savingLink || !!editingLink" @click="editLink(relation)">Modifier le lien</button>
+                    <button v-if="showDetails && connectionsPath && relation.link_id" type="button" :disabled="savingLink || !!editingLink"
                         @click="removeLink(relation)">Retirer le lien</button>
                 </li>
             </ul>
@@ -70,8 +70,8 @@
         </form>
         <form v-if="editingLink" @submit.prevent="saveLink">
             <fieldset :disabled="savingLink">
-                <legend>Modifier la relation</legend>
-                <label>Type <input v-model="editingLink.type" :list="relationTypeListId" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
+                <legend>Modifier la relation avec {{ editingLink.title }}</legend>
+                <label>Type <input ref="relationTypeEditor" v-model="editingLink.type" :list="relationTypeListId" required pattern="[A-Za-z0-9_\-]+" maxlength="80" /></label>
                 <label>Libellé depuis cette fiche <input v-model="editingLink.outgoing" maxlength="255" /></label>
                 <label>Libellé depuis l’autre fiche <input v-model="editingLink.incoming" maxlength="255" /></label>
                 <label>Statut <input v-model="editingLink.status" maxlength="80" /></label>

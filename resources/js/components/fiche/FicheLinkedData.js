@@ -94,9 +94,11 @@ export default {
             }
         },
         editLink(entry) {
+            if (this.editingLink || this.savingLink) return;
             this.linkError = '';
             this.editingLink = {
                 id: entry.link_id,
+                title: entry.title,
                 type: entry.type_key,
                 forward: entry.forward,
                 outgoing: entry.outgoing_label ?? '',
@@ -107,10 +109,11 @@ export default {
                 end: entry.end ?? '',
                 note: entry.note ?? '',
             };
+            this.$nextTick(() => this.$refs.relationTypeEditor?.focus());
         },
         async saveLink() {
             if (!this.editingLink || this.savingLink) return;
-            const { id, type, forward, outgoing, incoming, ...properties } = this.editingLink;
+            const { id, title, type, forward, outgoing, incoming, ...properties } = this.editingLink;
             properties.forward_label = forward ? outgoing : incoming;
             properties.inverse_label = forward ? incoming : outgoing;
             this.savingLink = true;
@@ -129,7 +132,7 @@ export default {
             }
         },
         async removeLink(entry) {
-            if (this.savingLink || !window.confirm('Retirer la relation avec « ' + (entry.title || entry.label) + ' » ?')) return;
+            if (this.editingLink || this.savingLink || !window.confirm('Retirer la relation avec « ' + (entry.title || entry.label) + ' » ?')) return;
             this.savingLink = true;
             this.linkError = '';
             try {

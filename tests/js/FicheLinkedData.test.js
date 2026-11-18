@@ -141,6 +141,8 @@ it('saves directional labels in canonical order from the inverse fiche', async (
     await flushPromises();
     await wrapper.findAll('button').find(button => button.text() === 'Modifier le lien').trigger('click');
     const form = wrapper.get('form');
+    expect(form.get('legend').text()).toBe('Modifier la relation avec Mentor');
+    expect(wrapper.findAll('li button').filter(button => button.text().endsWith('le lien')).every(button => button.element.disabled)).toBe(true);
     await form.findAll('input')[1].setValue('Guide');
     await form.trigger('submit');
     await flushPromises();
