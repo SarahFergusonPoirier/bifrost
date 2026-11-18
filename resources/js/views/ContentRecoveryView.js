@@ -211,6 +211,7 @@ export default {
         }
 
         function selectFicheTab(id) {
+            if (ficheEditing.value && !discardFicheEdits()) return;
             ficheTab.value = id;
             ficheEditing.value = false;
             editTrigger = null;
@@ -218,6 +219,7 @@ export default {
         }
 
         function editFiche(blockId = null) {
+            clearTimeout(timer);
             editTrigger = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
             ficheEditing.value = true;
             compact.value = false;
@@ -230,6 +232,7 @@ export default {
         }
 
         function returnToFicheTab() {
+            if (!discardFicheEdits()) return;
             const trigger = editTrigger;
             ficheEditing.value = false;
             editTrigger = null;
@@ -237,6 +240,20 @@ export default {
                 const target = trigger?.isConnected ? trigger : editFicheButton.value;
                 target?.focus();
             });
+        }
+
+        function discardFicheEdits() {
+            if (saving.value) return false;
+            if (!dirty.value) return true;
+            if (!window.confirm('Annuler les modifications non enregistrées de cette fiche ?')) return false;
+            clearTimeout(timer);
+            draft.value = JSON.parse(baseline.value);
+            try {
+                localStorage.removeItem(draftKey());
+            } catch {
+                // The current editor can still be reset when browser storage is unavailable.
+            }
+            return true;
         }
 
         function editFicheField(fieldId) {
@@ -570,7 +587,7 @@ export default {
             } catch {
                 error.value = 'Le navigateur ne peut pas conserver le brouillon local.';
             }
-            timer = setTimeout(save, 1000);
+            if (!ficheEditing.value) timer = setTimeout(save, 1000);
         }, { deep: true });
 
         function preventLeave(event) {

@@ -127,6 +127,7 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         return { data: { data: [], current_page: 1, last_page: 1 } };
     });
     const wrapper = mount(ContentRecoveryView, { attachTo: document.body, props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     try {
         await flushPromises();
         expect(wrapper.get('button[data-tab="details"]').attributes('aria-pressed')).toBe('true');
@@ -137,7 +138,10 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('');
         expect(document.activeElement).toBe(wrapper.get('#fiche-title-editor').element);
         expect(wrapper.get('button[data-tab="overview"]').attributes('aria-pressed')).toBe('true');
+        await wrapper.get('#fiche-title-editor').setValue('Titre temporaire');
         await wrapper.findAll('button').find(button => button.text() === 'Revenir à l’onglet').trigger('click');
+        expect(confirm).toHaveBeenCalledWith('Annuler les modifications non enregistrées de cette fiche ?');
+        expect(wrapper.get('#fiche-title-editor').element.value).toBe('Élia');
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('none');
         expect(document.activeElement.textContent).toBe('Modifier');
         await wrapper.findAll('button').find(button => button.text() === 'Gérer les pièces jointes').trigger('click');
@@ -145,6 +149,7 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         expect(attachments.element.open).toBe(true);
         expect(document.activeElement).toBe(attachments.get('summary').element);
     } finally {
+        confirm.mockRestore();
         wrapper.unmount();
         window.history.replaceState(null, '', originalUrl);
     }
