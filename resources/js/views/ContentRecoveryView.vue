@@ -390,6 +390,7 @@
                                     :content-id="selected.public_id" :targets="allowedTargets(field)" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
                             </fieldset>
                             <FicheTextEditor v-else-if="field.richText" :label="field.label_override || field.field_definition.label"
+                                :id="'fiche-field-editor-' + field.field_definition_id"
                                 :model-value="fieldValue(field)" :targets="referenceTargets" @update:model-value="setField(field, $event)" />
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}

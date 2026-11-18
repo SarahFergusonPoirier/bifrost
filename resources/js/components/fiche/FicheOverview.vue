@@ -307,6 +307,8 @@
                             <FicheText v-else-if="field.richText && !field.empty" :text="field.value"
                                 :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                             <template v-else>{{ field.value }}</template>
+                            <button v-if="!editing && field.richText" type="button"
+                                :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)">Modifier</button>
                             <FicheFieldHistory v-if="contentId && field.historyField && formatHistoricalValue"
                                 :content-id="contentId" :field="field.historyField" :format-value="formatHistoricalValue" />
                         </dd>

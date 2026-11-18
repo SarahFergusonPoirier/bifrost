@@ -102,6 +102,8 @@ it('renders rich biography fields from existing templates', async () => {
     await wrapper.get('button[aria-expanded]').trigger('click');
     expect(wrapper.get('.fiche-text strong').text()).toBe('souvenir');
     expect(wrapper.get('.fiche-text li').text()).toBe('Premier voyage');
+    await wrapper.get('button[aria-label="Modifier Passé"]').trigger('click');
+    expect(wrapper.emitted('edit-field')).toEqual([[1]]);
     wrapper.unmount();
 });
 
