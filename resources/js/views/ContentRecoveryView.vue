@@ -224,7 +224,7 @@
             </div>
         </fieldset>
 
-        <template v-else>
+        <div v-else class="fiche-workspace">
             <header class="fiche-heading">
                 <div class="fiche-heading__identity">
                     <WorkspaceIcon :name="universeCategories.find(category => category.id === selected.content_type_id)?.key ?? 'catalogue'" />
@@ -495,7 +495,7 @@
                 </div>
             </section>
             </div>
-        </template>
+        </div>
     </section>
     </component>
 </template>

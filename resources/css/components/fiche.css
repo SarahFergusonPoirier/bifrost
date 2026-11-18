@@ -1,3 +1,7 @@
+.fiche-workspace {
+    container: fiche / inline-size;
+}
+
 .fiche-heading,
 .fiche-heading__identity,
 .fiche-tabs,
@@ -128,7 +132,7 @@
     margin-block: var(--space-2);
 }
 
-@media (max-width: 1000px) {
+@container fiche (max-width: 760px) {
     .fiche-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -138,7 +142,7 @@
     }
 }
 
-@media (max-width: 700px) {
+@container fiche (max-width: 540px) {
     .fiche-grid {
         grid-template-columns: minmax(0, 1fr);
     }
