@@ -13,7 +13,7 @@ export default {
     components: { WorkspaceIcon },
     props: { path: String, templatesPath: String, active: String, canCopy: Boolean, getDefaultPlacements: Function, resolveSource: Function },
     emits: ['select', 'copied'],
-    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
+    data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', pendingTemplateTab: null, removalId: null, removalDestination: null, revisions: null }),
     computed: {
         hasPendingText() {
             return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
@@ -138,8 +138,9 @@ export default {
             const definition = this.selectedTemplate?.definition;
             if (!definition || this.tabs.length >= 24) return;
             const textSlots = new Map();
+            const tabId = 'tab-' + crypto.randomUUID();
             this.tabs.push({
-                id: 'tab-' + crypto.randomUUID(),
+                id: tabId,
                 title: definition.title,
                 icon: definition.icon,
                 hidden: false,
@@ -150,9 +151,11 @@ export default {
                     return { ...placement, id, source: 'text:' + textSlots.get(placement.source), newText: true };
                 }),
             });
+            this.pendingTemplateTab = tabId;
         },
         reset() {
             this.tabs = this.layout.tabs.map(tab => ({ ...tab }));
+            this.pendingTemplateTab = null;
             this.cancelRemoval();
         },
         add(id = 'tab-' + crypto.randomUUID(), title = 'Nouvel onglet') {
@@ -211,7 +214,7 @@ export default {
                 return { ...tab, placements: mergePlacements(tab, added, defaults) };
             }), copies);
         },
-        saveTabs() {
+        async saveTabs() {
             if (this.hasPendingText && !this.canCopy) return;
             const copies = new Map();
             const tabs = this.tabs.map(tab => {
@@ -228,7 +231,10 @@ export default {
                 });
                 return { ...tab, placements };
             });
-            return this.save(tabs, [...copies.values()]);
+            const pendingTab = this.pendingTemplateTab;
+            const saved = await this.save(tabs, [...copies.values()]);
+            if (saved && this.visibleTabs.some(tab => tab.id === pendingTab)) this.$emit('select', pendingTab);
+            return saved;
         },
         async save(tabs, copies = []) {
             if (this.saving) return false;

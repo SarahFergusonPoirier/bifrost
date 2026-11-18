@@ -30,6 +30,7 @@ it('creates a fresh text source for each template slot and preserves sharing wit
     expect(request.copies).toEqual([{ id: first.source.slice(5), source: 'blank', title: 'Biographie' }]);
     expect(first).not.toHaveProperty('newText');
     expect(wrapper.emitted('copied')).toHaveLength(1);
+    expect(wrapper.emitted('select')).toEqual([[request.tabs[1].id]]);
 });
 
 it('keeps a visible restored tab and falls back when the active tab is hidden', async () => {
