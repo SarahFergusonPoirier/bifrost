@@ -243,7 +243,9 @@
             <FicheTabs :key="selected.public_id" :active="ficheTab" :can-copy="!dirty && !busy && !saving"
                 :path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout' : undefined"
                 :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
-                :get-default-placements="() => $refs.ficheOverview?.defaults" @select="selectFicheTab" @copied="refreshFiche">
+                :get-default-placements="() => $refs.ficheOverview?.defaults"
+                :resolve-source="source => $refs.ficheOverview ? ($refs.ficheOverview.bySource.get(source) ?? null) : undefined"
+                @select="selectFicheTab" @copied="refreshFiche">
                 <template #default="{ tab, tabs, persist, version, reloadCount }">
                     <div v-show="!ficheEditing">
                     <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab + ':' + reloadCount"

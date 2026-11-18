@@ -47,6 +47,30 @@ it('keeps a visible restored tab and falls back when the active tab is hidden', 
     expect(wrapper.emitted('select')).toEqual([['overview']]);
 });
 
+it('shows resolved block names and warns about missing template sources', async () => {
+    const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [overview] } });
+    const wrapper = mount(FicheTabs, { props: {
+        path: '/layout', templatesPath: '/library', active: 'overview',
+        resolveSource: source => source === 'section:identity' ? { title: 'Identité' } : null,
+    } });
+    await flushPromises();
+    wrapper.vm.templates = [{
+        id: 1, name: 'Modèle', definition: { title: 'Modèle', placements: [
+            { source: 'section:identity', width: 6, height: 2 },
+            { source: 'section:missing', width: 6, height: 2 },
+            { source: 'blank:0', width: 6, height: 2 },
+        ] },
+    }];
+    wrapper.vm.templateId = 1;
+    await wrapper.vm.$nextTick();
+    const blocks = wrapper.findAll('[aria-label="Aperçu du modèle"] article');
+    expect(blocks[0].get('strong').text()).toBe('Identité');
+    expect(blocks[1].text()).toContain('Source indisponible dans cette fiche');
+    expect(blocks[2].text()).not.toContain('indisponible');
+    wrapper.unmount();
+});
+
 it('keeps the pending tab changes when they would hide the last visible tab', async () => {
     const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
     contentRequest.mockClear().mockResolvedValueOnce({ data: { version: 1, tabs: [overview] } });

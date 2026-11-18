@@ -11,7 +11,7 @@ const fallbackTabs = [
 
 export default {
     components: { WorkspaceIcon },
-    props: { path: String, templatesPath: String, active: String, canCopy: Boolean, getDefaultPlacements: Function },
+    props: { path: String, templatesPath: String, active: String, canCopy: Boolean, getDefaultPlacements: Function, resolveSource: Function },
     emits: ['select', 'copied'],
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', removalId: null, removalDestination: null, revisions: null }),
     computed: {
@@ -37,12 +37,17 @@ export default {
     methods: {
         placementLabel(placement) {
             if (placement.title) return placement.title;
+            const source = this.resolveSource?.(placement.source);
+            if (source) return source.title;
             if (placement.source.startsWith('section:')) return placement.source.slice(8);
             if (placement.source.startsWith('blank:')) return 'Bloc de texte vide';
             return {
                 summary: 'Résumé', tags: 'Étiquettes', fields: 'Bloc de champs personnalisé', relations: 'Relations', timeline: 'Chronologie',
                 equipment: 'Équipements', capabilities: 'Capacités', gallery: 'Galerie', attachments: 'Pièces jointes',
             }[placement.source] ?? placement.source;
+        },
+        unavailableTemplateSource(source) {
+            return !source.startsWith('blank:') && this.resolveSource?.(source) === null;
         },
         navigateTabs(event) {
             const index = this.visibleTabs.findIndex(tab => tab.id === event.target.dataset.tab);

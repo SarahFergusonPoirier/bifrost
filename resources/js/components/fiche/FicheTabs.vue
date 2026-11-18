@@ -70,6 +70,7 @@
                                 <p>{{ placement.width }} × {{ placement.height }}</p>
                                 <p v-if="placement.hidden">Masqué</p>
                                 <p v-else-if="placement.collapsed">Réduit</p>
+                                <p v-if="unavailableTemplateSource(placement.source)">Source indisponible dans cette fiche</p>
                             </article>
                         </div>
                     </section>
