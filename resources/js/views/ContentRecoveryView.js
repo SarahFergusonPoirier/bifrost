@@ -248,6 +248,16 @@ export default {
             });
         }
 
+        function editFicheAttachments() {
+            editFiche();
+            nextTick(() => {
+                const attachments = document.getElementById('fiche-attachments-editor');
+                if (!attachments) return;
+                attachments.open = true;
+                attachments.querySelector('summary')?.focus();
+            });
+        }
+
         function toggleHidden(id) {
             hiddenFields.value = hiddenFields.value.includes(id)
                 ? hiddenFields.value.filter(field => field !== id)
@@ -603,7 +613,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheButton, returnToFicheTab, editFicheField, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheButton, returnToFicheTab, editFicheField, editFicheAttachments, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {

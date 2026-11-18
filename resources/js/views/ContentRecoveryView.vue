@@ -258,14 +258,14 @@
                         :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
-                        @open="openPanelContent" @select="selectFicheTab" @edit-text="editFiche" @edit-field="editFicheField"
+                        @open="openPanelContent" @select="selectFicheTab" @edit-text="editFiche" @edit-field="editFicheField" @edit-attachments="editFicheAttachments"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :format-historical-value="formatHistoricalValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab)" />
                     </div>
                 </template>
             </FicheTabs>
             <div v-show="ficheEditing || ficheTab === 'details'" class="fiche-editor">
-            <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" @changed="attachmentsRevision++" />
+            <ContentAttachments id="fiche-attachments-editor" :key="selected.public_id" :content-id="selected.public_id" @changed="attachmentsRevision++" />
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.
                 <button type="button" :disabled="busy || saving" @click="openPanel('ideas')">Ouvrir les idées du projet</button>

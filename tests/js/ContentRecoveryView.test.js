@@ -116,7 +116,9 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
     contentRequest.mockImplementation(async path => {
         if (path === '/contents/fiche') return { data: content };
         if (path.endsWith('/fiche-layout')) return { data: { version: 0, tabs: [
-            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
+            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false, placements: [
+                { id: 'gallery', source: 'gallery', width: 6, height: 2 },
+            ] },
             { id: 'details', title: 'Informations générales', icon: 'catalogue', hidden: false },
         ] } };
         if (path.endsWith('/folders') || path.endsWith('/tree') || ['/content-types', '/projects', '/tags'].includes(path)) {
@@ -138,6 +140,10 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         await wrapper.findAll('button').find(button => button.text() === 'Revenir à l’onglet').trigger('click');
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('none');
         expect(document.activeElement.textContent).toBe('Modifier');
+        await wrapper.findAll('button').find(button => button.text() === 'Gérer les pièces jointes').trigger('click');
+        const attachments = wrapper.get('details#fiche-attachments-editor');
+        expect(attachments.element.open).toBe(true);
+        expect(document.activeElement).toBe(attachments.get('summary').element);
     } finally {
         wrapper.unmount();
         window.history.replaceState(null, '', originalUrl);
