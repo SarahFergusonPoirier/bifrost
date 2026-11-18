@@ -311,6 +311,7 @@ export default {
                 item, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
                 width: item.width, height: item.height, widthStep, heightStep,
             };
+            event.currentTarget.focus({ preventScroll: true });
             event.currentTarget.setPointerCapture(event.pointerId);
         },
         resize(event) {
@@ -334,6 +335,15 @@ export default {
             this.resizing = null;
         },
         resizeWithKeyboard(event, item) {
+            if (event.key === 'Escape' && this.resizing?.item === item) {
+                event.preventDefault();
+                const { pointerId } = this.resizing;
+                this.cancelResize({ pointerId });
+                if (event.currentTarget.hasPointerCapture?.(pointerId)) {
+                    event.currentTarget.releasePointerCapture(pointerId);
+                }
+                return;
+            }
             const deltas = { ArrowLeft: ['width', -1], ArrowRight: ['width', 1], ArrowUp: ['height', -1], ArrowDown: ['height', 1] };
             const delta = deltas[event.key];
             if (!delta) return;

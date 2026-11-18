@@ -174,11 +174,20 @@ it('restores the dimensions after a cancelled pointer resize and saves a complet
     block.style.minHeight = '160px';
     const handle = wrapper.get('.fiche-resize');
     handle.element.setPointerCapture = vi.fn();
+    handle.element.hasPointerCapture = vi.fn().mockReturnValue(true);
+    handle.element.releasePointerCapture = vi.fn();
     const pointer = async (type, clientX = 0, clientY = 0) => {
         handle.element.dispatchEvent(new PointerEvent(type, { pointerId: 1, clientX, clientY }));
         await wrapper.vm.$nextTick();
     };
 
+
+    await pointer('pointerdown');
+    await pointer('pointermove', 100, 80);
+    await handle.trigger('keydown', { key: 'Escape' });
+    expect(block.style.getPropertyValue('--fiche-width')).toBe('6');
+    expect(block.style.getPropertyValue('--fiche-height')).toBe('2');
+    expect(handle.element.releasePointerCapture).toHaveBeenCalledWith(1);
 
     await pointer('pointerdown');
     await pointer('pointermove', 100, 80);
