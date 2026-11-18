@@ -372,9 +372,9 @@ export default {
             this.transfers.splice(index, 1);
         },
         formatTemporalDate,
-        blockLabel(item) {
+        blockLabel(item, fallback = 'Texte vierge') {
             if (item.title) return item.title;
-            if (item.source.startsWith('blank:')) return 'Texte vierge';
+            if (item.source.startsWith('blank:')) return fallback;
             return this.bySource.get(item.source)?.title ?? 'Bloc indisponible';
         },
         async loadBlockTemplates() {
@@ -416,7 +416,7 @@ export default {
             if (!template || this.draft.length >= 80) return;
             if (template.source.startsWith('blank:')) {
                 if (!this.canCopy) return;
-                this.addTextPlacement(template.title || 'Texte', '', template);
+                this.addTextPlacement(this.blockLabel(template, this.selectedLibraryEntry.name), '', template);
             } else if (this.bySource.has(template.source)) {
                 this.draft.push({ ...template, id: crypto.randomUUID() });
             }

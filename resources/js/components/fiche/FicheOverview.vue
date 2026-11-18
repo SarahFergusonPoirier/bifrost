@@ -52,7 +52,7 @@
             </label>
             <p v-if="query.trim() && blockTemplates.length && !matchingBlockTemplates.length" role="status">Aucun modèle enregistré ne correspond à cette recherche.</p>
             <div v-if="selectedBlockTemplate" aria-label="Aperçu du modèle de bloc">
-                <strong>{{ blockLabel(selectedBlockTemplate) }}</strong>
+                <strong>{{ blockLabel(selectedBlockTemplate, selectedLibraryEntry.name) }}</strong>
                 <p>{{ selectedBlockTemplate.width }} colonnes × {{ selectedBlockTemplate.height }} rangées</p>
                 <p v-if="selectedBlockTemplate.source.startsWith('blank:')">Un nouveau texte vide sera créé.</p>
                 <p v-else-if="!bySource.has(selectedBlockTemplate.source)" role="status">Le bloc source est indisponible dans cette fiche.</p>

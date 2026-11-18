@@ -219,7 +219,10 @@ export default {
                 const placements = tab.placements.map(({ newText, ...placement }) => {
                     if (newText) {
                         const id = placement.source.slice(5);
-                        copies.set(id, { id, source: 'blank', title: 'Texte' });
+                        const existing = copies.get(id);
+                        if (!existing || existing.title === 'Texte') {
+                            copies.set(id, { id, source: 'blank', title: placement.title || 'Texte' });
+                        }
                     }
                     return placement;
                 });
