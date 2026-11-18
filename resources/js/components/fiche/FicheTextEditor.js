@@ -9,17 +9,20 @@ export default {
         targets: { type: Array, default: () => [] },
     },
     emits: ['update:modelValue'],
+    data: () => ({ limitReached: false }),
     methods: {
         replaceSelection(text, start, end, selectionStart, selectionEnd) {
             const editor = this.$refs.editor;
-            if (this.maxLength && editor.value.length - (end - start) + text.length > this.maxLength) return;
+            this.limitReached = !!this.maxLength && editor.value.length - (end - start) + text.length > this.maxLength;
+            if (this.limitReached) return;
             editor.setRangeText(text, start, end, 'end');
             this.$emit('update:modelValue', editor.value);
             editor.focus();
             editor.setSelectionRange(selectionStart, selectionEnd);
         },
         updateText(text) {
-            if (!this.maxLength || text.length <= this.maxLength) this.$emit('update:modelValue', text);
+            this.limitReached = !!this.maxLength && text.length > this.maxLength;
+            if (!this.limitReached) this.$emit('update:modelValue', text);
         },
         insertReference(id) {
             const { value, selectionStart: start, selectionEnd: end } = this.$refs.editor;

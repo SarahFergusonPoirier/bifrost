@@ -9,6 +9,7 @@
             <button type="button" @click="prefixLines('- ')">Liste à puces</button>
         </div>
         <FicheReferencePicker v-if="targets.length" :targets="targets" @insert="insertReference" />
+        <p v-if="limitReached" role="status">Cette modification dépasserait la limite de {{ maxLength }} caractères.</p>
     </div>
 </template>
 

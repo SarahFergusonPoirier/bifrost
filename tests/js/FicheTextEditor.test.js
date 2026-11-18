@@ -15,6 +15,20 @@ it('links the selected words in the middle of the text', async () => {
     wrapper.unmount();
 });
 
+it('preserves selected text and reports when formatting exceeds the limit', async () => {
+    const wrapper = mount(FicheTextEditor, { props: { label: 'Description', modelValue: 'Kael', maxLength: 7 } });
+    const textarea = wrapper.get('textarea');
+    textarea.element.setSelectionRange(0, 4);
+    await wrapper.get('button').trigger('click');
+
+    expect(textarea.element.value).toBe('Kael');
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+    expect(wrapper.get('[role="status"]').text()).toContain('7 caractères');
+    await textarea.setValue('Élia');
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    wrapper.unmount();
+});
+
 it('formats selected text and lines using markup the fiche can render', async () => {
     const editor = mount(FicheTextEditor, { props: { label: 'Résumé', modelValue: 'Titre\nPremier\nSecond' } });
     const textarea = editor.get('textarea').element;
