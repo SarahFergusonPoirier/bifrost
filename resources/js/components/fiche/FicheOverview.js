@@ -137,12 +137,12 @@ export default {
         },
         localCapabilities() {
             return [...this.templateSections.values()].flatMap(fields => fields
-                .filter(field => field.format === 'capabilities')
+                .filter(field => field.format === 'capabilities' && !this.hiddenFields.includes(field.field_definition_id))
                 .flatMap(field => this.fieldValue?.(field) || []));
         },
         localEquipment() {
             return [...this.templateSections.values()].flatMap(fields => fields
-                .filter(field => field.format === 'equipment')
+                .filter(field => field.format === 'equipment' && !this.hiddenFields.includes(field.field_definition_id))
                 .flatMap(field => {
                     const entries = this.fieldValue?.(field);
                     if (!Array.isArray(entries)) return [];

@@ -431,6 +431,30 @@ it('uses different mastery displays for placements of the same capability', () =
     expect(hidden.text()).not.toContain('Maîtrise');
 });
 
+it('hides local ability entries without hiding linked abilities or losing their navigation', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({
+        capabilities: [{ id: 'linked', public_id: 'flight', label: 'Vol lié' }],
+    }));
+    const field = { id: 1, field_definition_id: 1, format: 'capabilities', field_definition: { label: 'Capacités' } };
+    const wrapper = mount(FicheOverview, { props: {
+        contentId: 'character', linksPath: '/fiche-links',
+        templateSections: new Map([['Capacités', [field]]]), hiddenFields: [1],
+        fieldValue: () => [{ label: 'Vol local' }], displayValue: () => '',
+        placements: [{ id: 'abilities', source: 'capabilities', width: 6, height: 2 }],
+    } });
+    try {
+        await flushPromises();
+        expect(wrapper.text()).not.toContain('Vol local');
+        const link = wrapper.get('.fiche-relations button');
+        expect(link.text()).toBe('Vol lié');
+        await link.trigger('click');
+        expect(wrapper.emitted('open')).toEqual([['flight']]);
+    } finally {
+        wrapper.unmount();
+        fetch.mockRestore();
+    }
+});
+
 it('renders supported formatting without interpreting embedded HTML or unsafe links', () => {
     const wrapper = mount(FicheOverview, { props: {
         summary: '# Origines\n- **Élia**\n- [Source](https://example.test)\n<img src=x onerror=alert(1)>\n[Interdit](javascript:alert(1))',
