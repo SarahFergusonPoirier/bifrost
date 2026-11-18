@@ -236,8 +236,8 @@
                 <div>
                     <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
                     <a v-if="ficheTabUrl" :href="ficheTabUrl">Lien vers cet onglet</a>
-                    <button v-if="!ficheEditing" type="button" @click="editFiche()">Modifier</button>
-                    <button v-else type="button" @click="ficheEditing = false">Revenir à l’onglet</button>
+                    <button v-if="!ficheEditing" ref="editFicheButton" type="button" @click="editFiche()">Modifier</button>
+                    <button v-else type="button" @click="returnToFicheTab">Revenir à l’onglet</button>
                 </div>
             </header>
             <FicheTabs :key="selected.public_id" :active="ficheTab" :can-copy="!dirty && !busy && !saving"
@@ -343,7 +343,7 @@
             <form v-else @submit.prevent="save">
                 <fieldset :disabled="busy || saving">
                     <legend>Modifier la fiche</legend>
-                    <p><label>Titre <input v-model="draft.title" required maxlength="255" /></label></p>
+                    <p><label>Titre <input id="fiche-title-editor" v-model="draft.title" required maxlength="255" /></label></p>
                     <button v-if="suggestedFullName && suggestedFullName !== draft.title" type="button" @click="useSuggestedFullName">
                         Utiliser « {{ suggestedFullName }} » comme nom complet
                     </button>

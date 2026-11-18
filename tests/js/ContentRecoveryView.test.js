@@ -124,7 +124,7 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         }
         return { data: { data: [], current_page: 1, last_page: 1 } };
     });
-    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    const wrapper = mount(ContentRecoveryView, { attachTo: document.body, props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
     try {
         await flushPromises();
         expect(wrapper.get('button[data-tab="details"]').attributes('aria-pressed')).toBe('true');
@@ -133,9 +133,11 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         expect(new URL(link.attributes('href')).searchParams.get('onglet')).toBe('overview');
         await wrapper.findAll('button').find(button => button.text() === 'Modifier').trigger('click');
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('');
+        expect(document.activeElement).toBe(wrapper.get('#fiche-title-editor').element);
         expect(wrapper.get('button[data-tab="overview"]').attributes('aria-pressed')).toBe('true');
         await wrapper.findAll('button').find(button => button.text() === 'Revenir à l’onglet').trigger('click');
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('none');
+        expect(document.activeElement.textContent).toBe('Modifier');
     } finally {
         wrapper.unmount();
         window.history.replaceState(null, '', originalUrl);

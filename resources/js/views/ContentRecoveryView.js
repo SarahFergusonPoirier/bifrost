@@ -169,6 +169,8 @@ export default {
         const selected = ref(null);
         const ficheTab = ref('overview');
         const ficheEditing = ref(false);
+        const editFicheButton = ref(null);
+        let editTrigger = null;
         const compact = ref(false);
         const hiddenFields = ref([]);
         const showHidden = ref(false);
@@ -184,6 +186,7 @@ export default {
         function loadDisplay() {
             ficheTab.value = 'overview';
             ficheEditing.value = false;
+            editTrigger = null;
             compact.value = false;
             hiddenFields.value = [];
             showHidden.value = false;
@@ -210,13 +213,30 @@ export default {
         function selectFicheTab(id) {
             ficheTab.value = id;
             ficheEditing.value = false;
+            editTrigger = null;
             rememberDisplay();
         }
 
         function editFiche(blockId = null) {
+            editTrigger = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
             ficheEditing.value = true;
             compact.value = false;
-            if (blockId) nextTick(() => document.getElementById('fiche-text-editor-' + blockId)?.querySelector('textarea')?.focus());
+            nextTick(() => {
+                const input = blockId
+                    ? document.getElementById('fiche-text-editor-' + blockId)?.querySelector('textarea')
+                    : document.getElementById('fiche-title-editor');
+                input?.focus();
+            });
+        }
+
+        function returnToFicheTab() {
+            const trigger = editTrigger;
+            ficheEditing.value = false;
+            editTrigger = null;
+            nextTick(() => {
+                const target = trigger?.isConnected ? trigger : editFicheButton.value;
+                target?.focus();
+            });
         }
 
         function editFicheField(fieldId) {
@@ -583,7 +603,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheField, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheButton, returnToFicheTab, editFicheField, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
