@@ -70,6 +70,49 @@ it('restaure un projet depuis la corbeille globale', async () => {
     wrapper.unmount();
 });
 
+it('keeps explicit edits after a failed save and retries with the same version', async () => {
+    vi.useFakeTimers();
+    const originalUrl = window.location.href;
+    window.history.replaceState(null, '', '/projects/1?fiche=fiche');
+    const content = { public_id: 'fiche', project_id: 1, title: 'Original', summary: null, blocks: [] };
+    const page = { data: { data: [], current_page: 1, last_page: 1 } };
+    const write = vi.fn().mockRejectedValueOnce(new Error('Enregistrement interrompu.'))
+        .mockResolvedValueOnce({ data: { ...content, title: 'Révisé' }, version: 'next' });
+    contentRequest.mockImplementation(async (path, method, payload) => {
+        if (method === 'PATCH') return write(payload);
+        if (path === '/contents/fiche') return { data: content, version: 'initial' };
+        if (path.endsWith('/fiche-layout')) return { data: { version: 0, tabs: [
+            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false },
+        ] } };
+        if (path.endsWith('/folders') || path.endsWith('/tree') || ['/content-types', '/projects', '/tags'].includes(path)) return { data: [] };
+        return page;
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    try {
+        await flushPromises();
+        await wrapper.findAll('button').find(button => button.text() === 'Modifier').trigger('click');
+        const form = wrapper.get('.fiche-editor form:has(#fiche-title-editor)');
+        await form.get('#fiche-title-editor').setValue('Révisé');
+        await vi.advanceTimersByTimeAsync(1500);
+        expect(write).not.toHaveBeenCalled();
+        await form.trigger('submit');
+        await flushPromises();
+        expect(wrapper.get('[role="alert"]').text()).toBe('Enregistrement interrompu.');
+        expect(form.get('#fiche-title-editor').element.value).toBe('Révisé');
+        expect(localStorage.getItem('bifrost:draft:fiche')).not.toBeNull();
+        await form.trigger('submit');
+        await flushPromises();
+        expect(write.mock.calls).toEqual([
+            [expect.objectContaining({ title: 'Révisé', version: 'initial' })],
+            [expect.objectContaining({ title: 'Révisé', version: 'initial' })],
+        ]);
+        expect(localStorage.getItem('bifrost:draft:fiche')).toBeNull();
+    } finally {
+        wrapper.unmount();
+        window.history.replaceState(null, '', originalUrl);
+    }
+});
+
 it('masque une valeur en lecture compacte sans la retirer de la fiche', async () => {
     const content = {
         public_id: 'fiche', title: 'Original', summary: null, blocks: [],
