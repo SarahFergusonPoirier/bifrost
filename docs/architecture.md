@@ -91,6 +91,9 @@ individuellement avant l’enregistrement.
 Une disposition enregistrée sans placements explicites conserve son aperçu
 par défaut. La grille utilise douze colonnes sur grand écran comme choix
 technique réversible et réduit le nombre de colonnes sur écran étroit.
+Les seuils dépendent de la largeur du panneau de fiche. Le thème peut définir
+`--fiche-row-height` pour ajuster la hauteur minimale d’une rangée. La poignée
+de redimensionnement utilise la hauteur calculée du bloc comme référence.
 
 `FicheTabs` sélectionne un onglet visible à partir de la disposition de la
 fiche. `ContentRecoveryView` ouvre les liens directs à partir des paramètres

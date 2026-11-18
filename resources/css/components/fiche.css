@@ -119,7 +119,7 @@
 
 .fiche-grid > .fiche-block {
     grid-column: span var(--fiche-width, 6);
-    min-height: calc(var(--fiche-height, 2) * var(--space-8));
+    min-height: calc(var(--fiche-height, 2) * var(--fiche-row-height, var(--space-8)));
 }
 
 .fiche-grid > p {
