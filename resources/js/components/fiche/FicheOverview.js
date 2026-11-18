@@ -56,7 +56,7 @@ export default {
         destinations: { type: Array, default: () => [] },
         useDefaults: { type: Boolean, default: true },
     },
-    emits: ['open', 'select', 'block-deleted'],
+    emits: ['open', 'select', 'block-deleted', 'edit-text'],
     data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], draftVersion: null, dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
         textBlockTitles() {

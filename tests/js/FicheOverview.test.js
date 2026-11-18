@@ -447,7 +447,7 @@ it('opens a scoped internal text reference and marks missing targets', async () 
     expect(wrapper.emitted('open')).toEqual([[id]]);
 });
 
-it('shows empty template text blocks and distinguishes unavailable sources', () => {
+it('opens the editor for empty template text blocks and distinguishes unavailable sources', async () => {
     const base = { width: 6, height: 2, hidden: false, collapsed: false };
     const wrapper = mount(FicheOverview, { props: {
         blocks: [{ public_id: 'empty', title: 'Texte à compléter', body: null }],
@@ -456,7 +456,9 @@ it('shows empty template text blocks and distinguishes unavailable sources', () 
     } });
     const [empty, missing] = wrapper.findAll('.fiche-block');
     expect(empty.text()).toContain('Texte à compléter');
-    expect(empty.text()).toContain('Ce bloc est vide');
+    expect(empty.get('button').text()).toBe('Rédiger le texte');
+    await empty.get('button').trigger('click');
+    expect(wrapper.emitted('edit-text')).toEqual([[wrapper.props('blocks')[0].public_id]]);
     expect(missing.text()).toContain('La source de ce placement est indisponible');
 });
 

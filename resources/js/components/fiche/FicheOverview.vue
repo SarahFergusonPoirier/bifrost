@@ -239,6 +239,8 @@
                 </FicheLinkedData>
                 <p v-else-if="card.source === 'external-links' && !fields.length">Aucun lien externe disponible.</p>
                 <FicheText v-else-if="card.text" :text="card.text" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
+                <button v-else-if="!editing && card.source?.startsWith('text:')" type="button"
+                    @click="$emit('edit-text', card.source.slice(5))">Rédiger le texte</button>
                 <template v-else-if="card.source === 'tags'">
                     <section v-if="card.tags.length">
                         <h3>Étiquettes du projet</h3>

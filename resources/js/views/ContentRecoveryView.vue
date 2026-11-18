@@ -236,7 +236,7 @@
                 <div>
                     <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
                     <a v-if="ficheTabUrl" :href="ficheTabUrl">Lien vers cet onglet</a>
-                    <button v-if="!ficheEditing" type="button" @click="editFiche">Modifier</button>
+                    <button v-if="!ficheEditing" type="button" @click="editFiche()">Modifier</button>
                     <button v-else type="button" @click="ficheEditing = false">Revenir à l’onglet</button>
                 </div>
             </header>
@@ -258,7 +258,7 @@
                         :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
                         :linked-tabs="tabs.filter(item => !item.hidden && (item.placements === undefined || item.placements.some(placement => placement.source === item.id && !placement.hidden && !placement.collapsed))).map(item => item.id)"
-                        @open="openPanelContent" @select="selectFicheTab"
+                        @open="openPanelContent" @select="selectFicheTab" @edit-text="editFiche"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :format-historical-value="formatHistoricalValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab)" />
                     </div>
@@ -426,7 +426,8 @@
                     <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
                         <legend>Bloc {{ index + 1 }}</legend>
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>
-                        <FicheTextEditor v-model="block.body" label="Texte" :targets="referenceTargets" />
+                        <FicheTextEditor :id="block.public_id ? 'fiche-text-editor-' + block.public_id : undefined"
+                            v-model="block.body" label="Texte" :targets="referenceTargets" />
                         <button type="button" @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
                     </fieldset>
                     <button type="button" @click="draft.blocks.push({ block_type: 'text', title: null, body: null })">Ajouter un bloc</button>

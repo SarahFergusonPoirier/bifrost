@@ -213,9 +213,10 @@ export default {
             rememberDisplay();
         }
 
-        function editFiche() {
+        function editFiche(blockId = null) {
             ficheEditing.value = true;
             compact.value = false;
+            if (blockId) nextTick(() => document.getElementById('fiche-text-editor-' + blockId)?.querySelector('textarea')?.focus());
         }
 
         function toggleHidden(id) {
