@@ -78,7 +78,7 @@ export default {
                     label: field.label_override || field.field_definition.label,
                     value: this.displayValue(field),
                     richText: field.richText && !this.fieldState?.(field),
-                    empty: !this.fieldState?.(field) && this.fieldValue?.(field) === '',
+                    empty: this.isEmptyField(field),
                     references: this.fieldReferences(field),
                     badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)
                         ? field.display_options?.badge_color : null,
@@ -229,6 +229,11 @@ export default {
         },
     },
     methods: {
+        isEmptyField(field) {
+            if (!this.fieldValue || this.fieldState?.(field)) return false;
+            const value = this.fieldValue(field);
+            return value == null || value === '' || (Array.isArray(value) && value.length === 0);
+        },
         linkedTabFor(source) {
             if (this.active === source || this.linkedTabs.includes(source)) return source;
             const containsBlock = placements => placements?.some(item =>
