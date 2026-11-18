@@ -686,7 +686,7 @@ it('refreshes the timeline when a new content version is saved', async () => {
     }
 });
 
-it('groups only safe external links from visible fields in a media block', () => {
+it('groups only safe external links and edits their canonical fields', async () => {
     const field = (id, label, url) => ({
         id, field_definition_id: id, field_definition: { label }, format: 'external_link', url,
     });
@@ -705,6 +705,8 @@ it('groups only safe external links from visible fields in a media block', () =>
 
     expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual(['https://example.test/reference']);
     expect(wrapper.get('a').text()).toBe('Référence');
+    await wrapper.get('button[aria-label="Modifier le lien Référence"]').trigger('click');
+    expect(wrapper.emitted('edit-field')).toEqual([[1]]);
     wrapper.unmount();
 });
 

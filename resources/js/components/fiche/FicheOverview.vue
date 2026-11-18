@@ -297,7 +297,12 @@
                             </ul>
                             <FicheScale v-else-if="field.scale" :label="field.label" :level="Number(field.scale.level)" :levels="field.scale.levels"
                                 :mode="field.scale.mode" :descriptions="field.scale.descriptions" />
-                            <a v-else-if="field.url" :href="field.url" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
+                            <template v-else-if="field.url">
+                                <a :href="field.url" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
+                                <button v-if="!editing && card.source === 'external-links'" type="button"
+                                    :aria-label="'Modifier le lien ' + field.label"
+                                    @click="$emit('edit-field', field.definitionId)">Modifier le lien</button>
+                            </template>
                             <span v-else-if="field.badgeColor" class="fiche-choice-badge" :data-color="field.badgeColor">{{ field.value }}</span>
                             <FicheText v-else-if="field.richText && !field.empty" :text="field.value"
                                 :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
