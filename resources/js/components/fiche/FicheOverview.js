@@ -333,7 +333,7 @@ export default {
         },
         canTransfer(item) {
             const target = this.destinations.find(tab => tab.id === this.destination);
-            if (!target) return false;
+            if (!target || target.hidden) return false;
             const pending = this.transfers.filter(transfer => transfer.tab === target.id).map(transfer => transfer.placement);
             return mergePlacements(target, [...pending, item], this.defaults).length <= 80;
         },

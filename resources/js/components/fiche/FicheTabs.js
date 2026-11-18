@@ -189,6 +189,11 @@ export default {
             this.cancelRemoval();
         },
         savePlacements(next, transfers, defaults, copies) {
+            const available = new Set(this.layout.tabs.filter(tab => !tab.hidden && tab.id !== this.active).map(tab => tab.id));
+            if (transfers.some(transfer => !available.has(transfer.tab))) {
+                this.error = 'Un onglet de destination a été masqué ou supprimé. Annule le transfert concerné avant d’enregistrer.';
+                return false;
+            }
             return this.save(this.layout.tabs.map(tab => {
                 if (tab.id === this.active) return { ...tab, placements: next };
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);

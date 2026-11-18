@@ -243,15 +243,20 @@ it('counts pending transfers toward the destination placement limit', async () =
     const wrapper = mount(FicheOverview, { props: {
         summary: 'Résumé', templateSections: new Map(), hiddenFields: [], displayValue: () => '',
         placements: [{ id: 'summary', source: 'summary', width: 8, height: 3 }],
-        destinations: [{ id: 'details', title: 'Détails', placements: existing }],
+        destinations: [
+            { id: 'details', title: 'Détails', placements: existing },
+            { id: 'hidden', title: 'Notes', hidden: true },
+        ],
         persist: vi.fn(),
     } });
     await wrapper.get('button').trigger('click');
-    await wrapper.findAll('select').find(select => select.text().includes('Choisir un onglet')).setValue('details');
+    const destination = wrapper.findAll('select').find(select => select.text().includes('Choisir un onglet'));
+    expect(destination.get('option[value="hidden"]').element.disabled).toBe(true);
+    await destination.setValue('details');
     const share = wrapper.findAll('button').find(button => button.text() === 'Afficher aussi (données partagées)');
     await share.trigger('click');
     expect(share.element.disabled).toBe(true);
-    expect(wrapper.text()).toContain('L’onglet de destination est plein.');
+    expect(wrapper.text()).toContain('L’onglet de destination est plein ou indisponible.');
     await wrapper.get('ul[aria-label="Transferts en attente"] button').trigger('click');
     expect(share.element.disabled).toBe(false);
     wrapper.unmount();

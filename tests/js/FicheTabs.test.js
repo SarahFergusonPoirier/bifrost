@@ -119,3 +119,17 @@ it('navigates visible tabs with arrows and boundary keys', async () => {
     expect(wrapper.emitted('select')).toEqual([['details'], ['overview']]);
     wrapper.unmount();
 });
+
+it('rejects saving a move to a destination removed after the move was staged', async () => {
+    const overview = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    contentRequest.mockClear().mockResolvedValueOnce({ data: { version: 2, tabs: [overview] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview' } });
+    await flushPromises();
+    const transfer = { tab: 'removed', placement: { id: 'summary', source: 'summary' } };
+
+    expect(wrapper.vm.savePlacements([], [transfer], [], [])).toBe(false);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get('[role="alert"]').text()).toContain('masqué ou supprimé');
+    expect(contentRequest).toHaveBeenCalledTimes(1);
+    wrapper.unmount();
+});
