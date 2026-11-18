@@ -586,7 +586,9 @@ it('adds a reusable block as a new placement with its saved dimensions', async (
 
 it('publishes a new block template revision using the selected saved placement', async () => {
     const placement = { id: 'saved', source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
-    const entry = { id: 1, name: 'Résumé', scope: 'global', definition: { revision: 2, placements: [placement] } };
+    const entry = { id: 1, name: 'Résumé', scope: 'global', definition: { revision: 2, placements: [
+        { ...placement, width: 6, hidden: true, text_limit: 100 },
+    ] } };
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) =>
         options.method === 'POST'
             ? Response.json({ ...entry, definition: { ...entry.definition, revision: 3 } })
@@ -607,6 +609,11 @@ it('publishes a new block template revision using the selected saved placement',
         const [model, source] = library.findAll('select');
         await model.setValue('1');
         await source.setValue('saved');
+        const preview = library.get('[aria-label="Aperçu de la mise à jour"]');
+        expect(preview.findAll('dd').map(item => item.text())).toEqual([
+            'Résumé · 6 × 3 · Masqué  · Aperçu de 100 caractères',
+            'Résumé · 8 × 3 · Visible',
+        ]);
         await library.get('input').setValue('Résumé');
         await library.findAll('button').find(button => button.text().startsWith('Publier')).trigger('click');
         await flushPromises();

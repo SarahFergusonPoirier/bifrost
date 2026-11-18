@@ -13,6 +13,7 @@ import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
+import WorkspaceIcon from '../WorkspaceIcon.vue';
 
 function clampSize(size) {
     return Math.max(1, Math.min(12, size));
@@ -23,7 +24,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheTags, FicheScale, FicheLinkedData, ContentAttachments },
+    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
     props: {
         summary: String,
         fullName: String,

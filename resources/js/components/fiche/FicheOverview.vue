@@ -73,16 +73,19 @@
                 </label>
                 <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !templatePlacementId || !blockTemplateName.trim()" @click="saveBlockTemplate()">Enregistrer comme nouveau modèle</button>
                 <template v-if="selectedLibraryEntry && selectedSavedPlacement">
-                    <p>
-                        {{ selectedLibraryEntry.name }} · version {{ selectedLibraryEntry.definition.revision ?? 1 }}.
-                        {{ selectedBlockTemplate.width }} × {{ selectedBlockTemplate.height }}
-                        → {{ selectedSavedPlacement.width }} × {{ selectedSavedPlacement.height }}.
-                        Cette mise à jour s’applique aux prochains ajouts. Les placements existants restent indépendants.
-                    </p>
-                    <p>
-                        Bloc actuel · {{ blockLabel(selectedBlockTemplate) }}
-                        → {{ blockLabel(selectedSavedPlacement) }}
-                    </p>
+                    <p>{{ selectedLibraryEntry.name }} · version {{ selectedLibraryEntry.definition.revision ?? 1 }}</p>
+                    <dl aria-label="Aperçu de la mise à jour">
+                        <template v-for="[label, item] in [['Version actuelle', selectedBlockTemplate], ['Version proposée', selectedSavedPlacement]]" :key="label">
+                            <dt>{{ label }}</dt>
+                            <dd>
+                                <WorkspaceIcon :name="item.icon || bySource.get(item.source)?.icon || 'catalogue'" />
+                                {{ blockLabel(item) }} · {{ item.width }} × {{ item.height }}
+                                · {{ item.hidden ? 'Masqué' : item.collapsed ? 'Réduit' : 'Visible' }}
+                                <span v-if="item.text_limit != null"> · {{ item.text_limit === 0 ? 'Texte intégral' : 'Aperçu de ' + item.text_limit + ' caractères' }}</span>
+                            </dd>
+                        </template>
+                    </dl>
+                    <p>La nouvelle version s’appliquera aux prochains ajouts.</p>
                     <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !blockTemplateName.trim()"
                         @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>
                 </template>
