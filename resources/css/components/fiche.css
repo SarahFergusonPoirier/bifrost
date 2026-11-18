@@ -61,13 +61,15 @@
 }
 
 .fiche-block__header {
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--workspace-border);
     padding-bottom: var(--space-2);
     margin-bottom: var(--space-3);
 }
 
 .fiche-block__header h2 {
-    flex: 1;
+    flex: 1 1 min(8rem, 100%);
+    min-inline-size: 0;
     margin: 0;
 }
 
@@ -160,14 +162,6 @@
         max-inline-size: 100%;
         white-space: normal;
         overflow-wrap: anywhere;
-    }
-
-    .fiche-block__header {
-        flex-wrap: wrap;
-    }
-
-    .fiche-block__header h2 {
-        min-inline-size: min(8rem, 100%);
     }
 
     .fiche-tab-settings__row > :is(label, .fiche-tab-removal) {
