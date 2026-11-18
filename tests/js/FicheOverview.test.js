@@ -43,6 +43,27 @@ it('finds and creates a biography without an existing biography section', async 
     wrapper.unmount();
 });
 
+it('saves a duplicate of a new text block after removing the original placement', async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', canCopy: true, persist,
+    } });
+    const action = text => wrapper.findAll('button').find(button => button.text() === text);
+    await action('Personnaliser les blocs').trigger('click');
+    await wrapper.get('textarea').setValue('Un texte à conserver.');
+    await action('Ajouter le bloc').trigger('click');
+    const original = wrapper.vm.draft[0].source;
+    await action('Dupliquer indépendamment').trigger('click');
+    const duplicate = wrapper.vm.draft[1].source;
+    expect(duplicate).not.toBe(original);
+    await wrapper.findAll('button[aria-label="Retirer Texte"]')[0].trigger('click');
+    await wrapper.get('form').trigger('submit');
+    expect(persist.mock.calls[0][3]).toEqual([{
+        id: duplicate.slice(5), source: 'blank', title: 'Texte', body: 'Un texte à conserver.',
+    }]);
+    wrapper.unmount();
+});
+
 it('keeps reference markup out of a truncated preview and restores the link on expansion', async () => {
     const id = '11111111-1111-1111-1111-111111111111';
     const wrapper = mount(FicheOverview, { props: {

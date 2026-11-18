@@ -442,7 +442,10 @@ export default {
             const original = this.draft[index];
             const card = this.bySource.get(original.source);
             const id = crypto.randomUUID();
-            this.copies.push({ id, source: original.source, card });
+            const staged = this.copies.some(copy => original.source === 'text:' + copy.id);
+            this.copies.push(staged
+                ? { id, source: 'blank', title: card.title, body: card.text, card }
+                : { id, source: original.source, card });
             this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'text:' + id });
         },
         cancel() {
