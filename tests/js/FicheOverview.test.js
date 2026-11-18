@@ -587,7 +587,7 @@ it('adds a reusable block as a new placement with its saved dimensions', async (
 it('publishes a new block template revision using the selected saved placement', async () => {
     const placement = { id: 'saved', source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
     const entry = { id: 1, name: 'Résumé', scope: 'global', definition: { revision: 2, placements: [
-        { ...placement, width: 6, hidden: true, text_limit: 100 },
+        { ...placement, source: 'fields', width: 6, hidden: true, text_limit: 100, field_order: [1], field_columns: 2, hide_empty: true },
     ] } };
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) =>
         options.method === 'POST'
@@ -596,7 +596,9 @@ it('publishes a new block template revision using the selected saved placement',
     try {
         const wrapper = mount(FicheOverview, {
             props: {
-                summary: 'Résumé', active: 'overview', templateSections: new Map(), hiddenFields: [],
+                summary: 'Résumé', active: 'overview', templateSections: new Map([['Identité', [
+                    { id: 1, field_definition_id: 1, field_definition: { label: 'Nom' } },
+                ]]]), hiddenFields: [],
                 displayValue: () => '', placements: [placement], persist: vi.fn(), layoutVersion: 4,
                 blockLibraryPath: '/library', blockSavePath: '/save',
             },
@@ -610,10 +612,13 @@ it('publishes a new block template revision using the selected saved placement',
         await model.setValue('1');
         await source.setValue('saved');
         const preview = library.get('[aria-label="Aperçu de la mise à jour"]');
-        expect(preview.findAll('dd').map(item => item.text())).toEqual([
-            'Résumé · 6 × 3 · Masqué  · Aperçu de 100 caractères',
-            'Résumé · 8 × 3 · Visible',
+        const [current, proposed] = preview.findAll('dd');
+        expect(current.text()).toContain('Bloc de champs personnalisé · 6 × 3 · Masqué');
+        expect(current.text()).toContain('Aperçu de 100 caractères');
+        expect(current.findAll('p').map(item => item.text())).toEqual([
+            '2 colonne(s) de champs', 'Champs vides masqués', 'Champs sélectionnés : Nom',
         ]);
+        expect(proposed.text()).toBe('Résumé · 8 × 3 · Visible');
         await library.get('input').setValue('Résumé');
         await library.findAll('button').find(button => button.text().startsWith('Publier')).trigger('click');
         await flushPromises();

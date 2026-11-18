@@ -82,10 +82,18 @@
                                 {{ blockLabel(item) }} · {{ item.width }} × {{ item.height }}
                                 · {{ item.hidden ? 'Masqué' : item.collapsed ? 'Réduit' : 'Visible' }}
                                 <span v-if="item.text_limit != null"> · {{ item.text_limit === 0 ? 'Texte intégral' : 'Aperçu de ' + item.text_limit + ' caractères' }}</span>
+                                <div v-if="item.field_order || item.field_columns || item.hide_empty">
+                                    <p v-if="item.field_columns">{{ item.field_columns }} colonne(s) de champs</p>
+                                    <p v-if="item.hide_empty">Champs vides masqués</p>
+                                    <p v-if="item.field_order">Champs sélectionnés : {{ orderedFields(item, bySource.get(item.source)?.fields).map(field => field.label).join(', ') || 'Aucun champ disponible' }}</p>
+                                </div>
                             </dd>
                         </template>
                     </dl>
                     <p>La nouvelle version s’appliquera aux prochains ajouts.</p>
+                    <p v-if="selectedLibraryEntry.scope === 'global' && selectedSavedPlacement.field_order?.length">
+                        Un modèle global conserve uniquement les sélections de champs globaux.
+                    </p>
                     <button type="button" :disabled="loadingBlockTemplates || savingBlockTemplate || !blockTemplateName.trim()"
                         @click="saveBlockTemplate(true)">Publier une nouvelle version du modèle sélectionné</button>
                 </template>
