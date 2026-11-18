@@ -24,7 +24,14 @@
                     <button type="button" @click="requestRemoval(tab)" :aria-label="`Supprimer « ${tab.title} »`">Supprimer</button>
                     <div v-if="removalId === tab.id" class="fiche-tab-removal">
                         <p>Retirer « {{ tab.title }} » de la fiche ?</p>
-                        <p>{{ placementsForRemoval(tab).length }} placement(s). Les données enregistrées sont conservées.</p>
+                        <p>Les données enregistrées sont conservées.</p>
+                        <ul v-if="placementsForRemoval(tab).length" aria-label="Blocs concernés">
+                            <li v-for="placement in placementsForRemoval(tab)" :key="placement.id">
+                                {{ placementLabel(placement) }}
+                                <small v-if="placement.hidden">Masqué</small>
+                            </li>
+                        </ul>
+                        <p v-else>Aucun bloc dans cet onglet.</p>
                         <label v-if="placementsForRemoval(tab).length">Placements
                             <select v-model="removalDestination">
                                 <option :value="null">Retirer les placements</option>

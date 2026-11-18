@@ -76,6 +76,7 @@ it('moves placements into an implicit layout when removing a tab and submits bot
 
     await wrapper.findAll('button').filter(button => button.text() === 'Supprimer')[1].trigger('click');
     const confirmation = wrapper.get('.fiche-tab-removal');
+    expect(confirmation.get('ul[aria-label="Blocs concernés"]').text()).toBe('Résumé');
     expect(confirmation.findAll('option').map(option => option.element.value)).toEqual(['Retirer les placements', 'overview']);
     await confirmation.get('select').setValue('overview');
     await confirmation.findAll('button')[0].trigger('click');
