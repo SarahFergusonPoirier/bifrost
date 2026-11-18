@@ -208,6 +208,9 @@
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <small v-if="shared" class="fiche-shared-label">Données partagées</small>
+                <button v-if="!editing && card.text && card.source.startsWith('text:')" type="button"
+                    :aria-label="'Modifier le texte de ' + (placement.title || card.title)"
+                    @click="$emit('edit-text', card.source.slice(5))">Modifier le texte</button>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize" :disabled="savingLayout"
                     :aria-label="'Redimensionner ' + (placement.title || card.title) + ' avec les flèches. Largeur ' + placement.width + ' colonnes, hauteur ' + placement.height + ' rangées'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"

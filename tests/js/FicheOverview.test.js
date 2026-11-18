@@ -43,6 +43,17 @@ it('finds and creates a biography without an existing biography section', async 
     wrapper.unmount();
 });
 
+it('edits the canonical source from a renamed text placement', async () => {
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '',
+        blocks: [{ public_id: 'bio', title: 'Biographie', body: 'Un souvenir.' }],
+        placements: [{ id: 'bio-placement', source: 'text:bio', title: 'Parcours', width: 6, height: 2 }],
+    } });
+    await wrapper.get('button[aria-label="Modifier le texte de Parcours"]').trigger('click');
+    expect(wrapper.emitted('edit-text')).toEqual([['bio']]);
+    wrapper.unmount();
+});
+
 it('saves a duplicate of a new text block after removing the original placement', async () => {
     const persist = vi.fn().mockResolvedValue(true);
     const wrapper = mount(FicheOverview, { props: {
