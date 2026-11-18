@@ -26,6 +26,21 @@ it('reads canonical fields and expands long text in place', async () => {
     expect(wrapper.find('dl').exists()).toBe(false);
 });
 
+it('finds and creates a biography without an existing biography section', async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', canCopy: true, persist,
+    } });
+    await wrapper.get('button').trigger('click');
+    await wrapper.get('input[type="search"]').setValue('biographie');
+    await wrapper.get('[aria-label="Types de blocs de texte"] button').trigger('click');
+    await wrapper.get('textarea').setValue('## Enfance');
+    await wrapper.findAll('button').find(button => button.text() === 'Ajouter le bloc').trigger('click');
+    await wrapper.get('form').trigger('submit');
+    expect(persist.mock.calls[0][3]).toEqual([expect.objectContaining({ source: 'blank', title: 'Biographie', body: '## Enfance' })]);
+    wrapper.unmount();
+});
+
 it('keeps reference markup out of a truncated preview and restores the link on expansion', async () => {
     const id = '11111111-1111-1111-1111-111111111111';
     const wrapper = mount(FicheOverview, { props: {

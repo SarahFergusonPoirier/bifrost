@@ -22,17 +22,15 @@
                     <p v-else-if="selectedCard.text">{{ selectedCard.text.slice(0, 140) }}</p>
                 </FicheBlock>
             </section>
-            <p v-if="!matchingCards.length" role="status">Aucun bloc ne correspond à cette recherche.</p>
+            <p v-if="!matchingCards.length && (!canCopy || !textBlockTitles.length)" role="status">Aucun bloc ne correspond à cette recherche.</p>
             <button type="button" :disabled="!selectedCard || draft.length >= 80" @click="add">Ajouter un placement</button>
             <fieldset v-if="canCopy">
                 <legend>Nouveau bloc de texte</legend>
-                <label>Titre <input v-model="newTitle" maxlength="255" list="fiche-text-block-types" /></label>
-                <datalist id="fiche-text-block-types">
-                    <option value="Texte" />
-                    <option value="Biographie" />
-                    <option value="Personnalité" />
-                    <option value="Résumé" />
-                </datalist>
+                <div v-if="textBlockTitles.length" role="group" aria-label="Types de blocs de texte">
+                    <button v-for="title in textBlockTitles" :key="title" type="button"
+                        @click="chooseTextBlockTitle(title)">{{ title }}</button>
+                </div>
+                <label>Titre <input ref="textBlockTitle" v-model="newTitle" maxlength="255" /></label>
                 <FicheTextEditor v-model="newBody" label="Texte" :targets="referenceTargets" />
                 <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
             </fieldset>

@@ -59,6 +59,10 @@ export default {
     emits: ['open', 'select', 'block-deleted'],
     data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
+        textBlockTitles() {
+            const query = this.query.trim().toLocaleLowerCase('fr');
+            return ['Texte', 'Biographie', 'Personnalité', 'Résumé'].filter(title => title.toLocaleLowerCase('fr').includes(query));
+        },
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
@@ -400,6 +404,10 @@ export default {
             } else if (this.bySource.has(template.source)) {
                 this.draft.push({ ...template, id: crypto.randomUUID() });
             }
+        },
+        chooseTextBlockTitle(title) {
+            this.newTitle = title;
+            this.$nextTick(() => this.$refs.textBlockTitle?.focus());
         },
         createTextBlock() {
             const title = this.newTitle.trim();
