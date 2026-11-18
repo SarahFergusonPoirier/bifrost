@@ -193,7 +193,12 @@ export default {
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
             this.cancelRemoval();
         },
-        savePlacements(next, transfers, defaults, copies) {
+        savePlacements(next, transfers, defaults, copies, draftVersion = this.layout.version) {
+            if (draftVersion !== this.layout.version) {
+                this.error = 'La disposition a changé depuis l’ouverture de l’éditeur de blocs.';
+                this.conflict = true;
+                return false;
+            }
             const available = new Set(this.layout.tabs.filter(tab => !tab.hidden && tab.id !== this.active).map(tab => tab.id));
             if (transfers.some(transfer => !available.has(transfer.tab))) {
                 this.error = 'Un onglet de destination a été masqué ou supprimé. Annule le transfert concerné avant d’enregistrer.';

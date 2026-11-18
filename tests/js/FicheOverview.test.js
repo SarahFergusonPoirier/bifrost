@@ -29,15 +29,17 @@ it('reads canonical fields and expands long text in place', async () => {
 it('finds and creates a biography without an existing biography section', async () => {
     const persist = vi.fn().mockResolvedValue(true);
     const wrapper = mount(FicheOverview, { props: {
-        templateSections: new Map(), hiddenFields: [], displayValue: () => '', canCopy: true, persist,
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', canCopy: true, persist, layoutVersion: 1,
     } });
     await wrapper.get('button').trigger('click');
     await wrapper.get('input[type="search"]').setValue('biographie');
     await wrapper.get('[aria-label="Types de blocs de texte"] button').trigger('click');
     await wrapper.get('textarea').setValue('## Enfance');
     await wrapper.findAll('button').find(button => button.text() === 'Ajouter le bloc').trigger('click');
+    await wrapper.setProps({ layoutVersion: 2 });
     await wrapper.get('form').trigger('submit');
     expect(persist.mock.calls[0][3]).toEqual([expect.objectContaining({ source: 'blank', title: 'Biographie', body: '## Enfance' })]);
+    expect(persist.mock.calls[0][4]).toBe(1);
     wrapper.unmount();
 });
 

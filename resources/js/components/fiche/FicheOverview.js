@@ -57,7 +57,7 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select', 'block-deleted'],
-    data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
+    data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], draftVersion: null, dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
         textBlockTitles() {
             const query = this.query.trim().toLocaleLowerCase('fr');
@@ -268,6 +268,7 @@ export default {
             placement.field_order = order;
         },
         begin() {
+            this.draftVersion = this.layoutVersion;
             this.draft = this.placements?.map(item => ({ ...item }))
                 ?? this.initialPlacements.map(item => placement(item.source));
             this.transfers = [];
@@ -443,7 +444,7 @@ export default {
             this.savingLayout = true;
             try {
                 const transfers = this.transfers.map(({ tab, placement }) => ({ tab, placement }));
-                if (await this.persist(this.draft, transfers, defaults, copies)) this.cancel();
+                if (await this.persist(this.draft, transfers, defaults, copies, this.draftVersion)) this.cancel();
             } finally {
                 this.savingLayout = false;
             }

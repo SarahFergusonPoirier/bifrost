@@ -107,7 +107,7 @@
         </template>
     </details>
     <slot :version="layout?.version" :reload-count="reloadCount" :tab="visibleTabs.find(tab => tab.id === active)" :tabs="layout?.tabs ?? visibleTabs"
-        :persist="layout && !saving ? (next, transfers, defaults, copies) => savePlacements(next, transfers, defaults, copies) : null" />
+        :persist="layout && !saving ? (next, transfers, defaults, copies, draftVersion) => savePlacements(next, transfers, defaults, copies, draftVersion) : null" />
 </template>
 
 <script src="./FicheTabs.js"></script>

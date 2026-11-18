@@ -155,5 +155,9 @@ it('rejects saving a move to a destination removed after the move was staged', a
     await wrapper.vm.$nextTick();
     expect(wrapper.get('[role="alert"]').text()).toContain('masqué ou supprimé');
     expect(contentRequest).toHaveBeenCalledTimes(1);
+    expect(wrapper.vm.savePlacements([], [], [], [], 1)).toBe(false);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get('[role="alert"]').text()).toContain('depuis l’ouverture');
+    expect(contentRequest).toHaveBeenCalledTimes(1);
     wrapper.unmount();
 });
