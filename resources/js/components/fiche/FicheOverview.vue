@@ -208,6 +208,8 @@
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <small v-if="shared" class="fiche-shared-label">Données partagées</small>
+                <button v-if="!editing && card.source === 'summary'" type="button"
+                    @click="$emit('edit-text', 'summary')">{{ card.text ? 'Modifier le résumé' : 'Rédiger le résumé' }}</button>
                 <button v-if="!editing && card.text && card.source.startsWith('text:')" type="button"
                     :aria-label="'Modifier le texte de ' + (placement.title || card.title)"
                     @click="$emit('edit-text', card.source.slice(5))">Modifier le texte</button>

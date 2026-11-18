@@ -18,9 +18,9 @@ it('reads canonical fields and expands long text in place', async () => {
     expect(wrapper.get('dd').text()).toBe('Élia');
     expect(wrapper.get('.fiche-text').text()).not.toBe(summary);
 
-    await wrapper.get('button').trigger('click');
+    await wrapper.get('button[aria-expanded]').trigger('click');
     expect(wrapper.get('.fiche-text').text()).toBe(summary);
-    expect(wrapper.get('button').attributes('aria-expanded')).toBe('true');
+    expect(wrapper.get('button[aria-expanded]').attributes('aria-expanded')).toBe('true');
 
     await wrapper.setProps({ hiddenFields: [2] });
     expect(wrapper.find('dl').exists()).toBe(false);
@@ -361,8 +361,10 @@ it('applies a local title and text limit without changing the shared source', as
     expect(short.get('h2').text()).toBe('Aperçu');
     expect(short.get('.fiche-text').text()).toBe('Un résumé…');
     expect(full.get('.fiche-text').text()).toBe(summary);
-    expect(full.find('button').exists()).toBe(false);
-    await short.get('button').trigger('click');
+    expect(full.find('button[aria-expanded]').exists()).toBe(false);
+    await full.get('header button').trigger('click');
+    expect(wrapper.emitted('edit-text')).toEqual([['summary']]);
+    await short.get('button[aria-expanded]').trigger('click');
     expect(short.get('.fiche-text').text()).toBe(summary);
 });
 

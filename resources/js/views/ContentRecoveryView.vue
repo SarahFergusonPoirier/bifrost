@@ -353,7 +353,7 @@
                             <option value="completed">Terminé</option><option value="abandoned">Abandonné</option>
                         </select>
                     </label></p>
-                    <FicheTextEditor :key="selected.public_id" v-model="draft.summary" label="Résumé" :targets="referenceTargets" />
+                    <FicheTextEditor id="fiche-text-editor-summary" :key="selected.public_id" v-model="draft.summary" label="Résumé" :targets="referenceTargets" />
                     <p>Pour mettre en forme le résumé et les blocs de texte, utilise **gras**, # Titre, - Puce ou [libellé](https://adresse). Pour une autre fiche, utilise [[identifiant|libellé]].</p>
                     <fieldset v-if="draft.tag_ids">
                         <legend>Étiquettes</legend>
