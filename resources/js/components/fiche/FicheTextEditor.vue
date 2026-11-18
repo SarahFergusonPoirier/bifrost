@@ -8,8 +8,7 @@
             <button type="button" @click="prefixLines('## ')">Sous-titre</button>
             <button type="button" @click="prefixLines('- ')">Liste à puces</button>
         </div>
-        <FicheReferencePicker v-if="targets.length" :model-value="modelValue" :targets="targets"
-            @update:model-value="updateText" />
+        <FicheReferencePicker v-if="targets.length" :targets="targets" @insert="insertReference" />
     </div>
 </template>
 

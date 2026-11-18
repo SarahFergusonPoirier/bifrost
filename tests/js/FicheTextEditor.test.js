@@ -3,6 +3,18 @@ import { expect, it } from 'vitest';
 import FicheTextEditor from '../../resources/js/components/fiche/FicheTextEditor.vue';
 import FicheText from '../../resources/js/components/fiche/FicheText.vue';
 
+it('links the selected words in the middle of the text', async () => {
+    const id = '11111111-1111-1111-1111-111111111111';
+    const wrapper = mount(FicheTextEditor, { props: {
+        label: 'Résumé', modelValue: 'Voir Kael demain.', targets: [{ public_id: id, title: 'Kael' }],
+    } });
+    wrapper.get('textarea').element.setSelectionRange(5, 9);
+    await wrapper.get('select').setValue(id);
+    await wrapper.findAll('button').find(button => button.text() === 'Insérer le lien').trigger('click');
+    expect(wrapper.emitted('update:modelValue')).toEqual([['Voir [[' + id + '|Kael]] demain.']]);
+    wrapper.unmount();
+});
+
 it('formats selected text and lines using markup the fiche can render', async () => {
     const editor = mount(FicheTextEditor, { props: { label: 'Résumé', modelValue: 'Titre\nPremier\nSecond' } });
     const textarea = editor.get('textarea').element;

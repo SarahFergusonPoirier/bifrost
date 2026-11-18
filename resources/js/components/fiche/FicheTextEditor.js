@@ -21,6 +21,17 @@ export default {
         updateText(text) {
             if (!this.maxLength || text.length <= this.maxLength) this.$emit('update:modelValue', text);
         },
+        insertReference(id) {
+            const { value, selectionStart: start, selectionEnd: end } = this.$refs.editor;
+            const label = value.slice(start, end);
+            const canUseLabel = label && !/[\]\r\n]/.test(label);
+            const marker = canUseLabel
+                ? '[[' + id + '|' + label + ']]'
+                : '[[' + id + ']]';
+            const replaceEnd = canUseLabel ? end : start;
+            const cursor = start + marker.length;
+            this.replaceSelection(marker, start, replaceEnd, cursor, cursor);
+        },
         bold() {
             const { value, selectionStart: start, selectionEnd: end } = this.$refs.editor;
             const selection = value.slice(start, end);

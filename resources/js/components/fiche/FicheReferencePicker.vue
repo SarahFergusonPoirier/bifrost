@@ -14,16 +14,13 @@
 import { ref } from 'vue';
 
 const props = defineProps({
-    modelValue: String,
     targets: { type: Array, required: true },
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['insert']);
 const selected = ref('');
 
 function insert() {
     if (!props.targets.some(target => target.public_id === selected.value)) return;
-    const marker = '[[' + selected.value + ']]';
-    emit('update:modelValue', [props.modelValue, marker].filter(Boolean).join(' '));
-    selected.value = '';
+    emit('insert', selected.value);
 }
 </script>
