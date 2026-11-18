@@ -131,6 +131,11 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         await wrapper.get('button[data-tab="overview"]').trigger('click');
         const link = wrapper.findAll('a').find(anchor => anchor.text() === 'Lien vers cet onglet');
         expect(new URL(link.attributes('href')).searchParams.get('onglet')).toBe('overview');
+        await wrapper.findAll('button').find(button => button.text() === 'Modifier').trigger('click');
+        expect(wrapper.get('.fiche-editor').element.style.display).toBe('');
+        expect(wrapper.get('button[data-tab="overview"]').attributes('aria-pressed')).toBe('true');
+        await wrapper.findAll('button').find(button => button.text() === 'Revenir à l’onglet').trigger('click');
+        expect(wrapper.get('.fiche-editor').element.style.display).toBe('none');
     } finally {
         wrapper.unmount();
         window.history.replaceState(null, '', originalUrl);

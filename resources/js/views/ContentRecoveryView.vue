@@ -236,7 +236,8 @@
                 <div>
                     <button type="button" :disabled="busy || saving" @click="close">Retour au catalogue</button>
                     <a v-if="ficheTabUrl" :href="ficheTabUrl">Lien vers cet onglet</a>
-                    <button type="button" @click="ficheTab = 'details'">Modifier</button>
+                    <button v-if="!ficheEditing" type="button" @click="editFiche">Modifier</button>
+                    <button v-else type="button" @click="ficheEditing = false">Revenir à l’onglet</button>
                 </div>
             </header>
             <FicheTabs :key="selected.public_id" :active="ficheTab" :can-copy="!dirty && !busy && !saving"
@@ -244,6 +245,7 @@
                 :templates-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                 :get-default-placements="() => $refs.ficheOverview?.defaults" @select="selectFicheTab" @copied="refreshFiche">
                 <template #default="{ tab, tabs, persist, version, reloadCount }">
+                    <div v-show="!ficheEditing">
                     <FicheOverview v-if="tab" ref="ficheOverview" :key="selected.public_id + ':' + ficheTab + ':' + reloadCount"
                         :block-deletion-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-layout/blocks' : undefined"
                         @block-deleted="refreshFiche"
@@ -257,9 +259,10 @@
                         @open="openPanelContent" @select="selectFicheTab"
                         :template-sections="templateSections" :hidden-fields="hiddenFields" :display-value="displayValue" :format-historical-value="formatHistoricalValue" :field-value="effectiveFieldValue" :field-state="fieldState" :field-references="fieldReferences" :resolve-reference="resolveFicheReference"
                         :can-copy="!dirty && !busy && !saving" :use-defaults="ficheTab === 'overview'" :placements="tab.placements" :persist="persist" :destinations="tabs.filter(item => item.id !== ficheTab)" />
+                    </div>
                 </template>
             </FicheTabs>
-            <div v-show="ficheTab === 'details'">
+            <div v-show="ficheEditing || ficheTab === 'details'" class="fiche-editor">
             <ContentAttachments :key="selected.public_id" :content-id="selected.public_id" @changed="attachmentsRevision++" />
             <p v-if="selected.origin_idea">
                 Issue de l’idée {{ selected.origin_idea.title || 'sans titre' }}.

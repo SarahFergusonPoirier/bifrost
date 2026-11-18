@@ -168,6 +168,7 @@ export default {
         });
         const selected = ref(null);
         const ficheTab = ref('overview');
+        const ficheEditing = ref(false);
         const compact = ref(false);
         const hiddenFields = ref([]);
         const showHidden = ref(false);
@@ -182,6 +183,7 @@ export default {
 
         function loadDisplay() {
             ficheTab.value = 'overview';
+            ficheEditing.value = false;
             compact.value = false;
             hiddenFields.value = [];
             showHidden.value = false;
@@ -207,7 +209,13 @@ export default {
 
         function selectFicheTab(id) {
             ficheTab.value = id;
+            ficheEditing.value = false;
             rememberDisplay();
+        }
+
+        function editFiche() {
+            ficheEditing.value = true;
+            compact.value = false;
         }
 
         function toggleHidden(id) {
@@ -565,7 +573,7 @@ export default {
                 const response = await contentRequest('/contents/' + id);
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
-            ficheTab, ficheTabUrl, selectFicheTab, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
+            ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
             suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
