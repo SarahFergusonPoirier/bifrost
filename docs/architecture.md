@@ -89,6 +89,12 @@ une nouvelle source dans la même transaction que sa disposition. Les transferts
 en attente font partie du brouillon de disposition. Ils peuvent être annulés
 individuellement avant l’enregistrement.
 
+Le signalement des données partagées compare les identifiants canoniques des
+champs sélectionnés, même lorsque leurs placements proviennent de sources
+différentes. Des sélections sans champs communs ne sont pas signalées comme
+partagées. Les copies indépendantes en préparation possèdent une identité
+distincte jusqu’à l’enregistrement de leurs nouvelles définitions.
+
 Les sources `fields:<identifiant de bloc>` utilisent `content_blocks` comme
 instances. Leur `field_schema` conserve la présentation et les identifiants de
 définitions propres au bloc ; leurs valeurs restent dans `content_field_values`.

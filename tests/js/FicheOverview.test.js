@@ -48,6 +48,7 @@ it('duplicates selected canonical fields as a new independent block', async () =
     await wrapper.get('button').trigger('click');
     await wrapper.findAll('button').find(button => button.text() === 'Dupliquer indépendamment').trigger('click');
     expect(wrapper.findAll('.fiche-block')).toHaveLength(2);
+    expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
     await wrapper.get('form').trigger('submit');
     const copy = persist.mock.calls[0][3][0];
     expect(copy).toEqual({ id: expect.any(String), source: 'section:Identité', field_ids: [7] });
@@ -70,6 +71,27 @@ it('keeps independent blocks separate when their titles match the template secti
     expect(wrapper.findAll('.fiche-block')).toHaveLength(2);
     expect(wrapper.findAll('dd').map(field => field.text())).toEqual(['Source', 'Copie']);
     expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
+    wrapper.unmount();
+});
+
+it('identifies shared fields across different block sources without marking disjoint selections', async () => {
+    const fields = [1, 2].map(id => ({ id, field_definition_id: id, field_definition: { label: 'Champ ' + id } }));
+    const base = { width: 6, height: 2 };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', [fields[0]]], ['Description', [fields[1]]]]), hiddenFields: [], displayValue: () => 'Valeur',
+        placements: [{ ...base, id: 'section', source: 'section:Identité' }, { ...base, id: 'custom', source: 'fields', field_order: [1] }],
+    } });
+    expect(wrapper.findAll('.fiche-shared-label')).toHaveLength(2);
+    await wrapper.setProps({ placements: [
+        { ...base, id: 'section', source: 'section:Identité' }, { ...base, id: 'custom', source: 'fields', field_order: [2] },
+    ] });
+    expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
+    await wrapper.setProps({ placements: [
+        { ...base, id: 'first', source: 'fields', field_order: [1] }, { ...base, id: 'second', source: 'fields', field_order: [2] },
+    ] });
+    expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
+    await wrapper.setProps({ destinations: [{ id: 'details', placements: [{ ...base, id: 'shared', source: 'fields', field_order: [1] }] }] });
+    expect(wrapper.findAll('.fiche-shared-label')).toHaveLength(1);
     wrapper.unmount();
 });
 

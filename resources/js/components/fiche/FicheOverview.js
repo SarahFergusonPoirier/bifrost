@@ -223,16 +223,21 @@ export default {
             const currentSources = new Set();
             const currentPlacements = this.editing ? this.draft : this.placements ?? this.initialPlacements;
             for (const item of currentPlacements) {
-                const source = this.resolvedSource(item.source);
-                if (currentSources.has(source)) sources.add(source);
-                currentSources.add(source);
+                for (const source of this.canonicalSources(item)) {
+                    if (currentSources.has(source)) sources.add(source);
+                    currentSources.add(source);
+                }
             }
             for (const tab of this.destinations) {
                 const placements = tab.placements ?? defaultPlacementsFor(tab.id, this.defaults);
-                for (const item of placements) sources.add(this.resolvedSource(item.source));
+                for (const item of placements) {
+                    for (const source of this.canonicalSources(item)) sources.add(source);
+                }
             }
             for (const transfer of this.transfers) {
-                if (this.editing) sources.add(this.resolvedSource(transfer.placement.source));
+                if (this.editing) {
+                    for (const source of this.canonicalSources(transfer.placement)) sources.add(source);
+                }
             }
             return sources;
         },
@@ -243,13 +248,23 @@ export default {
                     const card = this.bySource.get(item.source) ?? { title: 'Bloc indisponible', icon: 'catalogue', unavailable: true };
                     const ordered = this.orderedFields(item, card.fields);
                     const fields = item.hide_empty ? ordered.filter(field => !field.empty) : ordered;
-                    return { placement: item, card, fields, shared: this.sharedSources.has(this.resolvedSource(item.source)) };
+                    return { placement: item, card, fields, shared: this.canonicalSources(item).some(source => this.sharedSources.has(source)) };
                 });
         },
     },
     methods: {
         copyTarget(copy) {
             return (copy.field_ids || copy.source === 'template-fields' ? 'fields:' : 'text:') + copy.id;
+        },
+        canonicalSources(item) {
+            const card = this.bySource.get(item.source);
+            if (!card) return [];
+            if (!card.fields) return ['source:' + this.resolvedSource(item.source)];
+            const pending = this.copies.find(copy => this.copyTarget(copy) === item.source);
+            const prefix = pending ? 'pending:' + pending.id + ':' : '';
+            const sources = this.orderedFields(item, card.fields).map(field => prefix + 'field:' + field.definitionId);
+            if (card.fullName) sources.push('content:title');
+            return sources;
         },
         isEmptyField(field) {
             if (!this.fieldValue || this.fieldState?.(field)) return false;
@@ -483,7 +498,7 @@ export default {
                 if (!fields.length) return;
                 this.copies.push({ id, source: staged?.source ?? original.source, field_ids: fields.map(field => field.definitionId),
                     ...(staged?.source === 'template-fields' ? { template_id: staged.template_id, template_revision: staged.template_revision, slot: staged.slot } : {}),
-                    card: { ...card, fields } });
+                    card: { ...card, fullName: null, fields } });
                 this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'fields:' + id });
                 return;
             }
