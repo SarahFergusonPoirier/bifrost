@@ -1,6 +1,15 @@
 <template>
     <header class="overview-toolbar">
-        <nav aria-label="Fil d’Ariane"><RouterLink :to="{ name: 'projects' }">Projets</RouterLink> › <strong>{{ project?.name ?? 'Projet' }}</strong></nav>
+        <nav aria-label="Fil d’Ariane">
+            <RouterLink :to="{ name: 'projects' }">Projets</RouterLink> ›
+            <template v-if="contentTitle">
+                <button type="button" class="overview-breadcrumb" :disabled="busy" @click="$emit('overview')">{{ project?.name ?? 'Projet' }}</button> ›
+                <button type="button" class="overview-breadcrumb" :disabled="busy" @click="$emit('catalogue')">Catalogue</button> ›
+                <span v-if="contentType">{{ contentType }} › </span>
+                <strong aria-current="page">{{ contentTitle }}</strong>
+            </template>
+            <strong v-else>{{ project?.name ?? 'Projet' }}</strong>
+        </nav>
         <form class="overview-search" role="search" @submit.prevent="!busy && $emit('search', query)">
             <label class="project-search-field">
                 <WorkspaceIcon name="search" />
@@ -22,8 +31,8 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import WorkspaceIcon from './WorkspaceIcon.vue';
 
-defineProps({ project: Object, busy: Boolean });
-defineEmits(['search']);
+defineProps({ project: Object, busy: Boolean, contentTitle: String, contentType: String });
+defineEmits(['search', 'overview', 'catalogue']);
 
 const query = ref('');
 const search = ref(null);

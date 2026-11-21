@@ -256,6 +256,26 @@ export default {
             return true;
         }
 
+        function closeSelectedContent() {
+            if (saving.value) return false;
+            if (dirty.value && !window.confirm('Fermer et conserver le brouillon local ?')) return false;
+            if (dirty.value && !storeLocalDraft()) return false;
+            clearTimeout(timer);
+            selected.value = null;
+            draft.value = null;
+            return true;
+        }
+
+        function storeLocalDraft() {
+            try {
+                localStorage.setItem(draftKey(), JSON.stringify({ version: version.value, draft: draft.value }));
+                return true;
+            } catch {
+                error.value = 'Le navigateur ne peut pas conserver le brouillon local. La fiche reste ouverte pour préserver les modifications.';
+                return false;
+            }
+        }
+
         function editFicheField(fieldId) {
             editFiche();
             nextTick(() => {
@@ -584,11 +604,7 @@ export default {
         watch(draft, () => {
             clearTimeout(timer);
             if (!dirty.value) return;
-            try {
-                localStorage.setItem(draftKey(), JSON.stringify({ version: version.value, draft: draft.value }));
-            } catch {
-                error.value = 'Le navigateur ne peut pas conserver le brouillon local.';
-            }
+            storeLocalDraft();
             if (!ficheEditing.value) timer = setTimeout(save, 1000);
         }, { deep: true });
 
@@ -656,6 +672,7 @@ export default {
             overviewFolders: computed(() => folders.value.filter(folder => folder.parent_id === null).slice(0, 5)),
             overviewCatalogue: async focus => {
                 await run(async () => {
+                    if (!closeSelectedContent()) return;
                     panel.value = 'catalogue';
                     trash.value = false;
                     selectFolder(0);
@@ -670,6 +687,7 @@ export default {
                 if (focus) document.getElementById(focus)?.focus();
             },
             overviewSearch: query => run(async () => {
+                if (!closeSelectedContent()) return;
                 panel.value = 'catalogue';
                 trash.value = false;
                 catalogueSearch.value = query.trim();
@@ -681,31 +699,25 @@ export default {
                 await loadList();
             }),
             openPanel: next => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et changer de vue ?')) return;
-                selected.value = null;
-                draft.value = null;
+                if (!closeSelectedContent()) return;
                 panel.value = next;
             },
             openPanelContent: id => run(async () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cette fiche ?')) return;
+                if (!closeSelectedContent()) return;
                 panel.value = 'catalogue';
                 trash.value = false;
                 await loadList();
                 await open(id);
             }),
             openProjectTrash: () => run(async () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir la corbeille ?')) return;
+                if (!closeSelectedContent()) return;
                 panel.value = 'catalogue';
-                selected.value = null;
-                draft.value = null;
                 trash.value = true;
                 await loadList();
             }),
             openTreeItem: item => run(async () => {
-                if (dirty.value && !window.confirm('Conserver le brouillon et ouvrir cet élément ?')) return;
+                if (!closeSelectedContent()) return;
                 panel.value = 'catalogue';
-                selected.value = null;
-                draft.value = null;
                 trash.value = false;
                 selectFolder(item.folder?.id ?? item.content?.folder_id ?? 0);
                 await loadList();
@@ -794,12 +806,7 @@ export default {
             }),
             browse: page => run(() => loadList(page)),
             openContent: id => run(() => open(id)),
-            close: () => {
-                if (!dirty.value || window.confirm('Fermer et conserver le brouillon local ?')) {
-                    selected.value = null;
-                    draft.value = null;
-                }
-            },
+            close: closeSelectedContent,
             create: () => run(async () => {
                 const { data } = await contentRequest('/contents', 'POST', { title: newTitle.value, content_type_id: typeId.value, project_id: projectId.value, folder_id: props.projectId ? folderId.value || null : null, template_version_id: versionId.value || null });
                 newTitle.value = '';

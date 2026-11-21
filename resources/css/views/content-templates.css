@@ -191,6 +191,15 @@
     overflow-wrap: anywhere;
 }
 
+.overview-toolbar .overview-breadcrumb {
+    min-height: 2rem;
+    padding: 0 var(--space-1);
+    border-color: transparent;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+}
+
 .overview-search {
     flex: 0 1 clamp(16rem, 36vw, 34rem);
     max-width: 100%;

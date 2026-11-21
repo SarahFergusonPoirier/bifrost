@@ -207,6 +207,25 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         const attachments = wrapper.get('details#fiche-attachments-editor');
         expect(attachments.element.open).toBe(true);
         expect(document.activeElement).toBe(attachments.get('summary').element);
+        expect(wrapper.get('nav[aria-label="Fil d’Ariane"]').text()).toContain('Catalogue');
+        expect(wrapper.get('nav[aria-label="Fil d’Ariane"]').text()).toContain('Élia');
+        await wrapper.get('#fiche-title-editor').setValue('Brouillon conservé');
+        await wrapper.get('input[aria-label="Rechercher dans le projet"]').setValue('Mira');
+        confirm.mockReturnValueOnce(false);
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+        expect(wrapper.find('.fiche-workspace').exists()).toBe(true);
+        const storage = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Quota dépassé'); });
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+        expect(wrapper.find('.fiche-workspace').exists()).toBe(true);
+        expect(wrapper.get('[role="alert"]').text()).toContain('La fiche reste ouverte pour préserver les modifications.');
+        storage.mockRestore();
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+        expect(wrapper.find('.fiche-workspace').exists()).toBe(false);
+        expect(JSON.parse(localStorage.getItem('bifrost:draft:fiche')).draft.title).toBe('Brouillon conservé');
+        expect(contentRequest.mock.calls.some(([, method]) => method === 'PATCH')).toBe(false);
     } finally {
         confirm.mockRestore();
         wrapper.unmount();

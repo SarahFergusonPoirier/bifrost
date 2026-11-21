@@ -55,7 +55,9 @@
             @search="overviewSearch" @catalogue="overviewCatalogue" @category="openCategory"
             @panel="openPanel" @content="openPanelContent" @folder="folder => openTreeItem({ folder })" />
     <section v-else class="content-templates-view">
-        <ProjectToolbar v-if="projectId && !trash && !selected" :project="currentProject" :busy="busy" @search="overviewSearch" />
+        <ProjectToolbar v-if="projectId && !trash" :project="currentProject" :busy="busy || saving"
+            :content-title="selected?.title" :content-type="types.find(type => type.id === selected?.content_type_id)?.name"
+            @search="overviewSearch" @overview="openPanel('overview')" @catalogue="overviewCatalogue()" />
         <header v-if="projectId && !trash && !selected" class="catalogue-heading catalogue-page-heading">
             <div class="catalogue-heading__title">
                 <WorkspaceIcon name="catalogue" />
