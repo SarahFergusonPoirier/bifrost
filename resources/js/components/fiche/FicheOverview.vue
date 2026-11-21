@@ -278,7 +278,10 @@
                         <dd>{{ card.fullName }}</dd>
                     </div>
                     <div v-for="field in fields" :key="field.id">
-                        <dt>{{ field.label }}</dt>
+                        <dt>{{ field.label }}
+                            <button v-if="!editing && !(field.url && card.source === 'external-links')" type="button"
+                                :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)"><WorkspaceIcon name="narration" /></button>
+                        </dt>
                         <dd>
                             <ul v-if="field.references.length" class="fiche-references">
                                 <li v-for="reference in field.references" :key="reference.id">
@@ -318,8 +321,6 @@
                             <FicheText v-else-if="field.richText && !field.empty" :text="field.value"
                                 :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                             <template v-else>{{ field.value }}</template>
-                            <button v-if="!editing && field.richText" type="button"
-                                :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)">Modifier</button>
                             <FicheFieldHistory v-if="contentId && field.historyField && formatHistoricalValue"
                                 :content-id="contentId" :field="field.historyField" :format-value="formatHistoricalValue" />
                         </dd>

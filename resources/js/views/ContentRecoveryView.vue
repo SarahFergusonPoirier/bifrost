@@ -367,9 +367,9 @@
                     </fieldset>
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ templateSectionLabel(section, fields) }}</summary>
-                        <div v-for="field in fields" :key="field.id">
+                        <div v-for="field in fields" :key="field.id" :id="'fiche-field-editor-' + field.field_definition_id">
                             <label>{{ field.label_override || field.field_definition.label }} · État
-                                <select :value="fieldState(field) ?? ''" @change="setFieldState(field, $event.target.value)">
+                                <select data-field-state :value="fieldState(field) ?? ''" @change="setFieldState(field, $event.target.value)">
                                     <option value="">Valeur ou champ vide</option>
                                     <option value="unknown">Inconnu</option>
                                     <option value="not_applicable">Non applicable</option>
@@ -383,14 +383,13 @@
                                         :selected="(fieldValue(field) || []).includes(option)">{{ option }}</option>
                                 </select>
                             </label>
-                            <fieldset v-else-if="field.column === 'value_json'" :id="'fiche-field-editor-' + field.field_definition_id">
+                            <fieldset v-else-if="field.column === 'value_json'">
                                 <legend>{{ field.label_override || field.field_definition.label }}</legend>
                                 <StructuredField :format="field.format" :value="fieldValue(field) || null"
                                     :category-options="field.format === 'capabilities' ? (field.display_options?.choices ?? field.field_definition.options_data?.choices) : undefined"
                                     :content-id="selected.public_id" :targets="allowedTargets(field)" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
                             </fieldset>
                             <FicheTextEditor v-else-if="field.richText" :label="field.label_override || field.field_definition.label"
-                                :id="'fiche-field-editor-' + field.field_definition_id"
                                 :model-value="fieldValue(field)" :targets="referenceTargets" @update:model-value="setField(field, $event)" />
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}

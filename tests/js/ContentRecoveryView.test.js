@@ -155,12 +155,20 @@ it('masque une valeur en lecture compacte sans la retirer de la fiche', async ()
 it('opens a direct fiche link on the requested tab and keeps the link current', async () => {
     const originalUrl = window.location.href;
     window.history.replaceState(null, '', '/projects/1?fiche=fiche&onglet=details');
-    const content = { public_id: 'fiche', project_id: 1, title: 'Élia', blocks: [], field_values: [] };
+    const content = {
+        public_id: 'fiche', project_id: 1, title: 'Élia', blocks: [],
+        field_values: [{ field_definition_id: 7, value_text: 'Montréal' }],
+        template_assignment: { template_version: { version_number: 1, fields: [{
+            id: 1, field_definition_id: 7, section_key: 'identity',
+            field_definition: { label: 'Origine', value_type: 'text' },
+        }] } },
+    };
     contentRequest.mockImplementation(async path => {
         if (path === '/contents/fiche') return { data: content };
         if (path.endsWith('/fiche-layout')) return { data: { version: 0, tabs: [
             { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false, placements: [
                 { id: 'gallery', source: 'gallery', width: 6, height: 2 },
+                { id: 'identity', source: 'section:identity', width: 6, height: 2 },
             ] },
             { id: 'details', title: 'Informations générales', icon: 'catalogue', hidden: false },
         ] } };
@@ -187,6 +195,14 @@ it('opens a direct fiche link on the requested tab and keeps the link current', 
         expect(wrapper.get('#fiche-title-editor').element.value).toBe('Élia');
         expect(wrapper.get('.fiche-editor').element.style.display).toBe('none');
         expect(document.activeElement.textContent).toBe('Modifier');
+        await wrapper.get('button[aria-label="Modifier Origine"]').trigger('click');
+        const field = wrapper.get('#fiche-field-editor-7');
+        expect(document.activeElement).toBe(field.get('input').element);
+        await field.get('input').setValue('Québec');
+        await wrapper.findAll('button').find(button => button.text() === 'Revenir à l’onglet').trigger('click');
+        expect(wrapper.get('#fiche-field-editor-7 input').element.value).toBe('Montréal');
+        expect(localStorage.getItem('bifrost:draft:fiche')).toBeNull();
+        expect(contentRequest.mock.calls.some(([, method]) => method === 'PATCH')).toBe(false);
         await wrapper.findAll('button').find(button => button.text() === 'Gérer les pièces jointes').trigger('click');
         const attachments = wrapper.get('details#fiche-attachments-editor');
         expect(attachments.element.open).toBe(true);

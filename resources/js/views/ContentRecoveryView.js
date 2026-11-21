@@ -261,7 +261,9 @@ export default {
             nextTick(() => {
                 const field = document.getElementById('fiche-field-editor-' + fieldId);
                 if (field) field.closest('details').open = true;
-                field?.querySelector('input, textarea, select')?.focus();
+                const input = field?.querySelector('input, textarea, select:not([data-field-state])')
+                    ?? field?.querySelector('[data-field-state]');
+                input?.focus();
             });
         }
 

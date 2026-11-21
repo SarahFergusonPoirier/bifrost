@@ -54,6 +54,17 @@ it('edits the canonical source from a renamed text placement', async () => {
     wrapper.unmount();
 });
 
+it('opens editing for a simple canonical field without navigating to a reference', async () => {
+    const field = { id: 1, field_definition_id: 12, field_definition: { label: 'Origine', value_type: 'text' } };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', [field]]]), hiddenFields: [], displayValue: () => 'Montréal',
+    } });
+    await wrapper.get('button[aria-label="Modifier Origine"]').trigger('click');
+    expect(wrapper.emitted('edit-field')).toEqual([[12]]);
+    expect(wrapper.emitted('open')).toBeUndefined();
+    wrapper.unmount();
+});
+
 it('saves a duplicate of a new text block after removing the original placement', async () => {
     const persist = vi.fn().mockResolvedValue(true);
     const wrapper = mount(FicheOverview, { props: {
