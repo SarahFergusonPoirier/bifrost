@@ -80,8 +80,8 @@ export default {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
-                source: 'section:' + title,
-                aliases: [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
+                source: fields[0]?.blockId ? 'fields:' + fields[0].blockId : 'section:' + title,
+                aliases: fields[0]?.blockId ? [] : [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
                 fullName: title === identityTitle ? this.fullName : null,
                 title: templateSectionLabel(title, fields),
                 icon: 'catalogue',
@@ -113,7 +113,7 @@ export default {
             }));
             const fields = [...new Map(sections.flatMap(section => section.fields).map(field => [field.definitionId, field])).values()];
             const externalLinks = fields.filter(field => field.url);
-            const texts = this.blocks.filter(block => block.public_id).map(block => ({
+            const texts = this.blocks.filter(block => block.public_id && block.block_type !== 'fields').map(block => ({
                 source: 'text:' + block.public_id,
                 title: block.title || 'Texte',
                 text: block.body ?? '',
@@ -134,7 +134,7 @@ export default {
                     fields },
                 ...sections,
                 ...texts,
-                ...this.copies.map(copy => ({ ...copy.card, source: 'text:' + copy.id })),
+                ...this.copies.map(copy => ({ ...copy.card, source: this.copyTarget(copy) })),
             ];
         },
         localKeywords() {
@@ -245,6 +245,9 @@ export default {
         },
     },
     methods: {
+        copyTarget(copy) {
+            return (copy.field_ids ? 'fields:' : 'text:') + copy.id;
+        },
         isEmptyField(field) {
             if (!this.fieldValue || this.fieldState?.(field)) return false;
             const value = this.fieldValue(field);
@@ -458,6 +461,14 @@ export default {
             const original = this.draft[index];
             const card = this.bySource.get(original.source);
             const id = crypto.randomUUID();
+            if (card.fields) {
+                const staged = this.copies.find(copy => this.copyTarget(copy) === original.source);
+                const fields = this.orderedFields(original, card.fields);
+                if (!fields.length) return;
+                this.copies.push({ id, source: staged?.source ?? original.source, field_ids: fields.map(field => field.definitionId), card: { ...card, fields } });
+                this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'fields:' + id });
+                return;
+            }
             const staged = this.copies.some(copy => original.source === 'text:' + copy.id);
             this.copies.push(staged
                 ? { id, source: 'blank', title: card.title, body: card.text, card }
@@ -472,8 +483,8 @@ export default {
         async save() {
             if (this.savingLayout) return;
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
-            const copies = this.copies.filter(copy => placed.has('text:' + copy.id)).map(({ card, ...copy }) => copy);
-            const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === 'text:' + copy.id))
+            const copies = this.copies.filter(copy => placed.has(this.copyTarget(copy))).map(({ card, ...copy }) => copy);
+            const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === this.copyTarget(copy)))
                 .map(item => placement(item.source));
             this.savingLayout = true;
             try {

@@ -11,11 +11,11 @@ class ContentBlock extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['content_id', 'block_type', 'title', 'body', 'position'];
+    protected $fillable = ['content_id', 'block_type', 'title', 'body', 'position', 'field_schema'];
 
     protected function casts(): array
     {
-        return ['position' => 'integer'];
+        return ['position' => 'integer', 'field_schema' => 'array'];
     }
 
     protected static function booted(): void

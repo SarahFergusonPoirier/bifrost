@@ -76,8 +76,7 @@ class ContentFieldValue extends Model
 
             $multipleChoice = ($definition->options_data['format'] ?? null) === 'multiple_choice';
             if ($definition->value_type === 'choice' || $multipleChoice) {
-                $configuration = $content->templateAssignment()->first()?->templateVersion
-                    ->fields()->where('field_definition_id', $definition->id)->first()?->display_options;
+                $configuration = $value->fieldDisplayOptions($definition, $content);
                 $choices = $configuration['choices'] ?? $definition->options_data['choices'] ?? [];
                 $selected = $multipleChoice ? $value->value_json : [$value->value_text];
 
@@ -104,14 +103,26 @@ class ContentFieldValue extends Model
 
     private function scaleLimit(FieldDefinition $definition, Content $content): int
     {
-        $display = $content->templateAssignment()->first()?->templateVersion
-            ->fields()->where('field_definition_id', $definition->id)->first()?->display_options;
+        $display = $this->fieldDisplayOptions($definition, $content);
         $limit = (int) ($display['scale_levels'] ?? $definition->options_data['levels'] ?? 5);
         $previous = $this->getOriginal('value_json')['level'] ?? null;
         $level = $this->value_json['level'] ?? null;
 
         return $previous !== null && is_numeric($level) && (int) $level === (int) $previous
             ? max($limit, (int) $previous) : $limit;
+    }
+
+    private function fieldDisplayOptions(FieldDefinition $definition, Content $content): array
+    {
+        $field = $content->templateAssignment()->first()?->templateVersion
+            ->fields()->where('field_definition_id', $definition->id)->first();
+        if ($field) {
+            return $field->display_options ?? [];
+        }
+        $blockField = $content->blocks()->where('block_type', 'fields')->get(['field_schema'])
+            ->flatMap(fn ($block): array => $block->field_schema ?? [])->firstWhere('field_definition_id', $definition->id);
+
+        return $blockField['display_options'] ?? [];
     }
 
     private function validateStructuredValue(FieldDefinition $definition, Content $content): void

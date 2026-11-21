@@ -34,8 +34,20 @@ const legacySectionLabels = new Map(Object.entries({
 }));
 
 export function templateSectionLabel(section, fields) {
+    if (fields[0]?.blockTitle) return fields[0].blockTitle;
     if (fields.some(field => field.display_options?.section_label === section)) return section;
     return legacySectionLabels.get(section) ?? section;
+}
+
+export function groupContentFields(content) {
+    const sections = groupTemplateFields(content?.template_assignment?.template_version?.fields ?? []);
+    for (const block of content?.blocks ?? []) {
+        if (block.block_type !== 'fields') continue;
+        const fields = [...groupTemplateFields(block.fields ?? []).values()].flat()
+            .map(field => ({ ...field, blockId: block.public_id, blockTitle: block.title || 'Champs indépendants' }));
+        sections.set('block:' + block.public_id, fields);
+    }
+    return sections;
 }
 
 export function groupTemplateFields(fields) {

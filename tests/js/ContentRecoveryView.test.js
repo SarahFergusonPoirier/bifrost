@@ -51,6 +51,50 @@ it('conserve un brouillon puis transmet sa version lors de l’autosauvegarde', 
     wrapper.unmount();
 });
 
+it('edits independent block values while preserving the template values and block identity', async () => {
+    const originalUrl = window.location.href;
+    window.history.replaceState(null, '', '/projects/1?fiche=fiche');
+    const field = id => ({ id, field_definition_id: id, section_key: 'identity',
+        field_definition: { label: 'Surnom', value_type: 'text' } });
+    const age = id => ({ ...field(id), display_options: { calculation: 'age' }, field_definition: { label: 'Âge', value_type: 'number' } });
+    const birth = id => ({ ...field(id), field_definition: { label: 'Date de naissance', value_type: 'date' } });
+    const content = {
+        public_id: 'fiche', project_id: 1, title: 'Élia', summary: null,
+        template_assignment: { template_version: { fields: [field(7), age(10), birth(9)] } },
+        field_values: [{ field_definition_id: 7, value_text: 'Source' }, { field_definition_id: 8, value_text: 'Copie' },
+            { field_definition_id: 9, value_date: '1990-01-01' }, { field_definition_id: 12, value_date: '2000-01-01' }],
+        blocks: [{ public_id: 'independent', block_type: 'fields', title: 'Identité', body: null, fields: [field(8), age(11), birth(12)] }],
+    };
+    contentRequest.mockImplementation(async (path, method, payload) => {
+        if (method === 'PATCH') return { data: { ...content, field_values: payload.field_values }, version: 'next' };
+        if (path === '/contents/fiche') return { data: content, version: 'initial' };
+        if (path.endsWith('/fiche-layout')) return { data: { version: 1, tabs: [
+            { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false, placements: [
+                { id: 'copy', source: 'fields:independent', width: 6, height: 2 },
+            ] },
+        ] } };
+        if (path.endsWith('/folders') || path.endsWith('/tree') || ['/content-types', '/projects', '/tags'].includes(path)) return { data: [] };
+        return { data: { data: [], current_page: 1, last_page: 1 } };
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    try {
+        await flushPromises();
+        expect(wrapper.findAll('.fiche-block dd')[1].text()).toBe(String(new Date().getFullYear() - 2000));
+        await wrapper.get('button[aria-label="Modifier Surnom"]').trigger('click');
+        await wrapper.get('#fiche-field-editor-8 input').setValue('Copie révisée');
+        await wrapper.get('.fiche-editor form:has(#fiche-title-editor)').trigger('submit');
+        await flushPromises();
+        expect(contentRequest).toHaveBeenCalledWith('/contents/fiche', 'PATCH', expect.objectContaining({
+            blocks: [{ public_id: 'independent', block_type: 'fields', title: 'Identité', body: null }],
+            field_values: [{ field_definition_id: 7, value_text: 'Source' }, { field_definition_id: 8, value_text: 'Copie révisée' },
+                { field_definition_id: 9, value_date: '1990-01-01' }, { field_definition_id: 12, value_date: '2000-01-01' }],
+        }));
+    } finally {
+        wrapper.unmount();
+        window.history.replaceState(null, '', originalUrl);
+    }
+});
+
 it('restaure un projet depuis la corbeille globale', async () => {
     let recovered = false;
     contentRequest.mockImplementation(async (path, method) => {

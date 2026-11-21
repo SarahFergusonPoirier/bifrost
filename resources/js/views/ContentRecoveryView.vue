@@ -337,7 +337,7 @@
                         </template>
                     </dl>
                 </details>
-                <article v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
+                <article v-for="(block, index) in draft.blocks.filter(block => block.block_type !== 'fields')" :key="block.public_id ?? index">
                     <h3 v-if="block.title">{{ block.title }}</h3>
                     <FicheText v-if="block.body" :text="block.body" :limit="0" :resolve-reference="resolveFicheReference" @open="openPanelContent" />
                 </article>
@@ -425,12 +425,12 @@
                             </template>
                         </div>
                     </details>
-                    <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index">
+                    <fieldset v-for="(block, index) in draft.blocks" :key="block.public_id ?? index" v-show="block.block_type !== 'fields'">
                         <legend>Bloc {{ index + 1 }}</legend>
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>
                         <FicheTextEditor :id="block.public_id ? 'fiche-text-editor-' + block.public_id : undefined"
                             v-model="block.body" label="Texte" :targets="referenceTargets" />
-                        <button v-if="!projectId || !block.public_id || block.block_type !== 'text'" type="button"
+                        <button v-if="!projectId || !block.public_id || !['text', 'fields'].includes(block.block_type)" type="button"
                             @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
                         <p v-else>La suppression de ce texte enregistré passe par « Vérifier la suppression d’un bloc de texte » dans la personnalisation des blocs.</p>
                     </fieldset>

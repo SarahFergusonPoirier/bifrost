@@ -7,6 +7,7 @@ use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class FicheTabTemplateController extends Controller
 {
@@ -49,6 +50,9 @@ class FicheTabTemplateController extends Controller
             $placement = collect($placements)->firstWhere('id', $input['placement']);
             abort_if(! $placement, 404);
             $placements = [$placement];
+        }
+        if (collect($placements)->contains(fn (array $placement): bool => str_starts_with($placement['source'], 'fields:'))) {
+            throw ValidationException::withMessages(['placement' => 'La création de modèles à partir de blocs de champs indépendants n’est pas encore disponible.']);
         }
         $globalFields = [];
         if ($input['scope'] === 'global') {

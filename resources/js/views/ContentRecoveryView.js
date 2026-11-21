@@ -1,5 +1,5 @@
 import { formatFieldValue } from '../components/fiche/formatFieldValue';
-import { fieldColumns, groupTemplateFields, templateSectionLabel } from '../components/fiche/templateFields';
+import { fieldColumns, groupContentFields, templateSectionLabel } from '../components/fiche/templateFields';
 import { identityField, identitySectionTitle } from '../components/fiche/identitySection';
 import FicheReferenceCreate from '../components/fiche/FicheReferenceCreate.vue';
 import FicheTextEditor from '../components/fiche/FicheTextEditor.vue';
@@ -328,15 +328,16 @@ export default {
         const path = () => '/contents/' + selected.value.public_id;
         const draftKey = () => 'bifrost:draft:' + selected.value.public_id;
 
-        const templateSections = computed(() => groupTemplateFields(
-            selected.value?.template_assignment?.template_version?.fields ?? [],
-        ));
+        const templateSections = computed(() => groupContentFields(selected.value));
+        function calculationSections(blockId) {
+            return new Map([...templateSections.value].filter(([, fields]) => fields[0]?.blockId === blockId));
+        }
         const fieldValue = field => draft.value.field_values?.find(value =>
             value.field_definition_id === field.field_definition_id
         )?.[field.column] ?? '';
         const suggestedFullName = computed(() => {
             if (!draft.value) return '';
-            const sections = templateSections.value;
+            const sections = calculationSections();
             const identityTitle = identitySectionTitle(sections);
             const names = ['Prénom', 'Nom de famille'].map(label => {
                 const field = identityField(sections, identityTitle, item => item.column === 'value_text'
@@ -386,7 +387,8 @@ export default {
         function effectiveFieldValue(field) {
             const value = fieldValue(field);
             if (value !== '' || fieldState(field) || fieldCalculation(field) !== 'age') return value;
-            const birthField = birthDateField(templateSections.value, identitySectionTitle(templateSections.value));
+            const sections = calculationSections(field.blockId);
+            const birthField = birthDateField(sections, identitySectionTitle(sections));
             return birthField ? ageFromBirthDate(fieldValue(birthField)) ?? '' : '';
         }
 
@@ -473,8 +475,10 @@ export default {
         }
 
         function currentTemplateValues(values) {
-            const fields = selected.value?.template_assignment?.template_version?.fields;
-            if (!fields) return values;
+            const templateFields = selected.value?.template_assignment?.template_version?.fields;
+            const blockFields = selected.value?.blocks?.flatMap(block => block.fields ?? []) ?? [];
+            if (!templateFields && !blockFields.length) return values;
+            const fields = [...(templateFields ?? []), ...blockFields];
             const ids = new Set(fields.filter(field => field.field_definition).map(field => field.field_definition_id));
             return values.filter(value => ids.has(value.field_definition_id));
         }

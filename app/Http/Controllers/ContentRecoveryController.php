@@ -279,15 +279,18 @@ class ContentRecoveryController extends Controller
     {
         if ($content->project_id !== null) {
             $retainedPublicIds = array_column($blocks, 'public_id');
-            if ($content->blocks()->where('block_type', 'text')->whereNotIn('public_id', $retainedPublicIds)->exists()) {
+            if ($content->blocks()->whereIn('block_type', ['text', 'fields'])->whereNotIn('public_id', $retainedPublicIds)->exists()) {
                 throw ValidationException::withMessages([
-                    'blocks' => 'Utilise la vérification de suppression du bloc pour retirer un texte enregistré.',
+                    'blocks' => 'Retire le placement du bloc depuis sa disposition pour conserver ses données.',
                 ]);
             }
         }
         $retained = [];
         foreach ($blocks as $position => $attributes) {
             $publicId = $attributes['public_id'] ?? null;
+            if ($publicId === null && ($attributes['block_type'] ?? 'text') === 'fields') {
+                throw ValidationException::withMessages(['blocks' => 'Crée les blocs de champs depuis la disposition de la fiche.']);
+            }
             $block = $publicId === null
                 ? $content->blocks()->make()
                 : $content->blocks()->where('public_id', $publicId)->first();
@@ -296,8 +299,13 @@ class ContentRecoveryController extends Controller
                 throw ValidationException::withMessages(['blocks' => 'Un bloc est introuvable dans ce contenu.']);
             }
 
+            if ($block->exists && in_array($block->block_type, ['text', 'fields'], true)
+                && ($attributes['block_type'] ?? $block->block_type) !== $block->block_type) {
+                throw ValidationException::withMessages(['blocks' => 'Le type d’un bloc enregistré ne peut pas être remplacé.']);
+            }
+
             $block->fill([
-                'block_type' => $attributes['block_type'] ?? 'text',
+                'block_type' => $attributes['block_type'] ?? $block->block_type ?? 'text',
                 'title' => $attributes['title'] ?? null,
                 'body' => $attributes['body'] ?? null,
                 'position' => $position,
@@ -323,8 +331,12 @@ class ContentRecoveryController extends Controller
 
         $omitted = $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'));
         $assignment = $content->templateAssignment()->first();
-        if ($assignment) {
-            $omitted->whereIn('field_definition_id', $assignment->templateVersion->fields()->whereHas('fieldDefinition')->select('field_definition_id'));
+        $blockFieldIds = $content->blocks()->where('block_type', 'fields')->get(['field_schema'])
+            ->flatMap(fn ($block): array => array_column($block->field_schema ?? [], 'field_definition_id'));
+        if ($assignment || $blockFieldIds->isNotEmpty()) {
+            $active = $assignment?->templateVersion->fields()->whereHas('fieldDefinition')->pluck('field_definition_id') ?? collect();
+            $activeBlockIds = FieldDefinition::whereKey($blockFieldIds->all())->pluck('id');
+            $omitted->whereIn('field_definition_id', $active->merge($activeBlockIds)->unique()->all());
         }
         $omitted->delete();
     }
@@ -376,7 +388,7 @@ class ContentRecoveryController extends Controller
             'work_status_key' => $attributes['work_status_key'],
             'tag_ids' => $content->tags()->orderBy('tags.id')->pluck('tags.id')->all(),
             'blocks' => $content->blocks()->reorder()->orderBy('position')->orderBy('id')->get([
-                'public_id', 'block_type', 'title', 'body', 'position', 'created_at',
+                'public_id', 'block_type', 'title', 'body', 'position', 'created_at', 'field_schema',
             ])->map(fn ($block): array => $block->getAttributes())->all(),
             'field_values' => $content->fieldValues()->orderBy('field_definition_id')->get([
                 'field_definition_id', 'value_text', 'value_number', 'value_boolean', 'value_date',
@@ -395,6 +407,17 @@ class ContentRecoveryController extends Controller
     private function contentResponse(Content $content): JsonResponse
     {
         $content->load('blocks', 'fieldValues', 'tags', 'templateAssignment.templateVersion.fields.fieldDefinition');
+        $blockFields = $content->blocks->flatMap(fn ($block): array => $block->field_schema ?? []);
+        $definitions = FieldDefinition::whereKey($blockFields->pluck('field_definition_id')->unique()->all())->get()->keyBy('id');
+        foreach ($content->blocks as $block) {
+            if ($block->field_schema !== null) {
+                $block->setAttribute('fields', collect($block->field_schema)->map(fn (array $field): array => [
+                    ...$field,
+                    'id' => $block->public_id.':'.$field['field_definition_id'],
+                    'field_definition' => $definitions->get($field['field_definition_id']),
+                ])->all());
+            }
+        }
         $origin = DB::table('project_idea_conversions')->where('content_id', $content->id)
             ->join('project_ideas', 'project_ideas.id', '=', 'project_idea_conversions.idea_id')
             ->first(['project_ideas.id', 'project_ideas.title', 'project_ideas.archived_at']);
@@ -403,7 +426,7 @@ class ContentRecoveryController extends Controller
         if ($content->templateAssignment) {
             $current = $content->templateAssignment->templateVersion->fields
                 ->filter(fn ($field) => $field->fieldDefinition !== null)->pluck('field_definition_id');
-            $archived = $content->fieldValues->pluck('field_definition_id')->diff($current);
+            $archived = $content->fieldValues->pluck('field_definition_id')->diff($current)->diff($definitions->keys());
             $content->setAttribute('archived_field_definitions', $archived->isEmpty() ? [] :
                 FieldDefinition::withTrashed()->whereKey($archived->all())->get(['id', 'label', 'value_type', 'options_data']));
         }

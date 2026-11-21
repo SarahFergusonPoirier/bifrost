@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Content;
 use App\Models\ContentBlock;
+use App\Models\FieldDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class FicheLayoutController extends Controller
@@ -108,9 +110,11 @@ class FicheLayoutController extends Controller
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
-            'copies.*' => ['required', 'array:id,source,title,body'],
+            'copies.*' => ['required', 'array:id,source,title,body,field_ids'],
             'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
-            'copies.*.source' => ['required', 'string', 'regex:/^(summary|blank|text:[a-f0-9-]+)$/'],
+            'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
+            'copies.*.field_ids' => ['sometimes', 'array', 'list', 'min:1', 'max:200'],
+            'copies.*.field_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
             'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank', 'string', 'max:255'],
             'copies.*.body' => ['nullable', 'string'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
@@ -122,7 +126,7 @@ class FicheLayoutController extends Controller
             'tabs.*.placements' => ['sometimes', 'array', 'list', 'max:80'],
             'tabs.*.placements.*' => ['required', 'array:id,source,width,height,hidden,collapsed,sort,view,title,text_limit,icon,hide_empty,field_order,field_columns,media_mode,media_image,media_fit,mastery_view,tag_limit'],
             'tabs.*.placements.*.id' => ['required', 'uuid', 'distinct:strict'],
-            'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|equipment|capabilities|attachments|gallery|external-links|fields|section:.+|text:[a-f0-9-]+)$/u'],
+            'tabs.*.placements.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|tags|relations|timeline|equipment|capabilities|attachments|gallery|external-links|fields(?::[a-f0-9-]+)?|section:.+|text:[a-f0-9-]+)$/u'],
             'tabs.*.placements.*.width' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.height' => ['required', 'integer', 'between:1,12'],
             'tabs.*.placements.*.hidden' => ['required', 'boolean'],
@@ -180,7 +184,7 @@ class FicheLayoutController extends Controller
 
                 return $tab;
             }, $input['tabs']);
-            $this->copyTextBlocks($record, $input['copies'] ?? [], $tabs);
+            $this->copyBlocks($record, $input['copies'] ?? [], $tabs);
 
             $values = ['version' => $version, 'tabs' => json_encode($tabs, JSON_THROW_ON_ERROR), 'updated_at' => now()];
             if ($current['version'] === 0) {
@@ -193,7 +197,7 @@ class FicheLayoutController extends Controller
         });
     }
 
-    private function copyTextBlocks(Content $record, array $copies, array $tabs): void
+    private function copyBlocks(Content $record, array $copies, array &$tabs): void
     {
         if ($copies === []) {
             return;
@@ -203,12 +207,29 @@ class FicheLayoutController extends Controller
         $position = (int) $record->blocks()->max('position');
 
         foreach ($copies as $copy) {
-            if (! $sources->contains('text:'.$copy['id'])) {
+            $fieldCopy = in_array($copy['source'], ['fields', 'external-links'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
+            if (! $sources->contains(($fieldCopy ? 'fields:' : 'text:').$copy['id'])) {
                 throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
             }
 
+            if ($fieldCopy) {
+                $mapping = $this->copyFieldBlock($record, $copy, ++$position);
+                foreach ($tabs as $tabIndex => $tab) {
+                    foreach ($tab['placements'] ?? [] as $placementIndex => $placement) {
+                        if ($placement['source'] === 'fields:'.$copy['id'] && isset($placement['field_order'])) {
+                            if (collect($placement['field_order'])->contains(fn (int $id): bool => ! array_key_exists($id, $mapping))) {
+                                throw ValidationException::withMessages(['copies' => 'Un champ du placement ne fait pas partie de la copie.']);
+                            }
+                            $tabs[$tabIndex]['placements'][$placementIndex]['field_order'] = array_map(fn (int $id): int => $mapping[$id], $placement['field_order']);
+                        }
+                    }
+                }
+
+                continue;
+            }
+
             $original = str_starts_with($copy['source'], 'text:') ? $record->blocks()
-                ->where('public_id', substr($copy['source'], 5))->firstOrFail() : null;
+                ->where('block_type', 'text')->where('public_id', substr($copy['source'], 5))->firstOrFail() : null;
             $block = $record->blocks()->make([
                 'block_type' => $original?->block_type ?? 'text',
                 'title' => $copy['source'] === 'blank' ? $copy['title'] : ($original?->title ?? 'Résumé'),
@@ -218,6 +239,77 @@ class FicheLayoutController extends Controller
             $block->public_id = $copy['id'];
             $block->save();
         }
+    }
+
+    private function copyFieldBlock(Content $record, array $copy, int $position): array
+    {
+        if (str_starts_with($copy['source'], 'fields:')) {
+            $source = $record->blocks()->where('block_type', 'fields')->where('public_id', substr($copy['source'], 7))->firstOrFail();
+            $fields = collect($source->field_schema ?? []);
+            $title = $source->title;
+        } else {
+            $fields = $record->templateAssignment?->templateVersion->fields()->whereHas('fieldDefinition')->get() ?? collect();
+            $fields = $fields->map(fn ($field): array => $field->toArray());
+            if (in_array($copy['source'], ['fields', 'external-links'], true)) {
+                $fields = $fields->concat($record->blocks()->where('block_type', 'fields')->get(['field_schema'])->flatMap(fn ($block): array => $block->field_schema ?? []));
+                if ($copy['source'] === 'external-links') {
+                    $allowed = FieldDefinition::where('options_data->format', 'external_link')->pluck('id');
+                    $fields = $fields->whereIn('field_definition_id', $allowed);
+                }
+            }
+            $title = 'Champs indépendants';
+            if (str_starts_with($copy['source'], 'section:')) {
+                $title = substr($copy['source'], 8);
+                $exact = $fields->filter(fn (array $field): bool => ($field['display_options']['section_label'] ?? $field['section_key']) === $title);
+                $fields = $exact->isNotEmpty() ? $exact : $fields->filter(fn (array $field): bool => in_array($title, $field['display_options']['section_aliases'] ?? [], true));
+                if ($exact->isEmpty() && $fields->pluck('section_key')->unique()->count() > 1) {
+                    throw ValidationException::withMessages(['copies' => 'La section source est ambiguë.']);
+                }
+            }
+        }
+
+        $indexed = $fields->keyBy('field_definition_id');
+        $ids = $copy['field_ids'] ?? $indexed->keys()->all();
+        if ($ids === [] || count($ids) > 200 || collect($ids)->contains(fn (int $id): bool => ! $indexed->has($id))) {
+            throw ValidationException::withMessages(['copies' => 'Un champ ne fait pas partie du bloc source.']);
+        }
+        $definitions = FieldDefinition::whereKey($ids)->get()->keyBy('id');
+        $values = $record->fieldValues()->whereIn('field_definition_id', $ids)->get()->keyBy('field_definition_id');
+        $schema = [];
+        $mapping = [];
+        foreach ($ids as $id) {
+            $field = $indexed->get($id);
+            $definition = $definitions->get($id);
+            if (! $definition) {
+                throw ValidationException::withMessages(['copies' => 'La définition du champ source est indisponible.']);
+            }
+            $clone = FieldDefinition::create([
+                'key' => 'block-'.Str::uuid(), 'label' => $definition->label, 'value_type' => $definition->value_type,
+                'options_data' => $definition->options_data, 'scope_type' => 'project', 'project_id' => $record->project_id,
+            ]);
+            $mapping[$id] = $clone->id;
+            $schema[] = [
+                'field_definition_id' => $clone->id, 'label_override' => $field['label_override'] ?? null,
+                'section_key' => $field['section_key'] ?? 'fields', 'display_options' => $field['display_options'] ?? [],
+                'is_required' => (bool) ($field['is_required'] ?? false), 'default_value' => $field['default_value'] ?? null,
+                'help_text' => $field['help_text'] ?? null,
+            ];
+            if ($value = $values->get($id)) {
+                // Preserve validated source values, including historical values outside newer constraints.
+                $attributes = $value->getAttributes();
+                unset($attributes['id']);
+                DB::table('content_field_values')->insert([
+                    ...$attributes, 'field_definition_id' => $clone->id, 'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        }
+        $block = $record->blocks()->make([
+            'block_type' => 'fields', 'title' => $title, 'position' => $position, 'field_schema' => $schema,
+        ]);
+        $block->public_id = $copy['id'];
+        $block->save();
+
+        return $mapping;
     }
 
     private function content(string $project, string $content, bool $lock = false): Content

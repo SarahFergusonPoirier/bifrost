@@ -88,6 +88,16 @@ seul onglet. La duplication indépendante du résumé et des blocs de texte cré
 une nouvelle source dans la même transaction que sa disposition. Les transferts
 en attente font partie du brouillon de disposition. Ils peuvent être annulés
 individuellement avant l’enregistrement.
+
+Les sources `fields:<identifiant de bloc>` utilisent `content_blocks` comme
+instances. Leur `field_schema` conserve la présentation et les identifiants de
+définitions propres au bloc ; leurs valeurs restent dans `content_field_values`.
+La duplication d’une section crée de nouvelles définitions dans le projet et
+copie les valeurs dans la même transaction que la disposition. L’ordre des
+champs est remappé vers les nouveaux identifiants. Retirer un placement conserve
+ces données et les instantanés de fiche permettent de restaurer le schéma.
+La création de modèles réutilisables à partir de ces blocs reste à compléter ;
+l’API la refuse pour ne pas enregistrer un modèle dépendant d’une seule fiche.
 Une disposition enregistrée sans placements explicites conserve son aperçu
 par défaut. La grille utilise douze colonnes sur grand écran comme choix
 technique réversible et réduit le nombre de colonnes sur écran étroit.

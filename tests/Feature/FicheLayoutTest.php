@@ -16,6 +16,100 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_field_blocks_copy_canonical_values_independently_and_restore_their_schema(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Identité', 'content_type_id' => $type->id,
+            'fields' => [['label' => 'Surnom', 'section' => 'Identité', 'type' => 'text']],
+        ])->assertCreated()->json();
+        $sourceField = $this->getJson('/api/content-templates/'.$template['id'])->json('versions.0.fields.0.field_definition_id');
+        $id = $this->postJson('/api/contents', [
+            'title' => 'Élia', 'project_id' => $project->id, 'content_type_id' => $type->id,
+            'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $url = '/api/contents/'.$id;
+        $this->patchJson($url, ['title' => 'Élia', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $sourceField, 'value_text' => 'Source'],
+        ]])->assertOk();
+        $layoutUrl = "/api/projects/{$project->id}/contents/$id/fiche-layout";
+        $layout = $this->getJson($layoutUrl)->json();
+        $blockId = 'a0bfa53f-0880-4ad8-99ea-ab18921377be';
+        $layout['copies'] = [['id' => $blockId, 'source' => 'section:Identité', 'field_ids' => [$sourceField + 1000]]];
+        $layout['tabs'][0]['placements'] = [[
+            'id' => '8c8a6dca-083f-46d6-aee5-a751b82fa490', 'source' => 'fields:'.$blockId,
+            'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false, 'field_order' => [$sourceField],
+        ]];
+
+        $this->putJson($layoutUrl, $layout)->assertUnprocessable()->assertJsonValidationErrors('copies');
+        $this->assertDatabaseCount('fiche_layout_revisions', 0);
+        $this->assertDatabaseCount('content_blocks', 0);
+        $layout['copies'][0]['field_ids'] = [$sourceField];
+        $layout['tabs'][0]['placements'][0]['field_order'] = [$sourceField + 1000];
+        $this->putJson($layoutUrl, $layout)->assertUnprocessable()->assertJsonValidationErrors('copies');
+        $this->assertDatabaseCount('field_definitions', 1);
+        $layout['tabs'][0]['placements'][0]['field_order'] = [$sourceField];
+        $this->putJson($layoutUrl, $layout)->assertOk();
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('blocks.0.block_type', 'fields');
+        $copiedField = $response->json('blocks.0.fields.0.field_definition_id');
+        $this->assertNotSame($sourceField, $copiedField);
+        $this->getJson($layoutUrl)->assertOk()->assertJsonPath('tabs.0.placements.0.field_order', [$copiedField]);
+        $response->assertJsonPath('blocks.0.fields.0.field_definition.project_id', $project->id);
+        $this->postJson("/api/projects/{$project->id}/contents/$id/fiche-tab-templates", [
+            'name' => 'Copie', 'scope' => 'project', 'tab' => 'overview', 'version' => 1,
+        ])->assertUnprocessable()->assertJsonValidationErrors('placement');
+        $this->assertDatabaseCount('fiche_tab_templates', 0);
+        $snapshot = $this->postJson("$url/snapshots", ['label' => 'Bloc indépendant'])->assertCreated()->json('id');
+
+        $this->patchJson($url, ['title' => 'Élia', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $sourceField, 'value_text' => 'Source'],
+            ['field_definition_id' => $copiedField, 'value_text' => 'Copie modifiée'],
+        ]])->assertOk();
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $sourceField, 'value_text' => 'Source']);
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $copiedField, 'value_text' => 'Copie modifiée']);
+        $this->patchJson($url, ['title' => 'Élia', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $sourceField, 'value_text' => 'Source'],
+        ]])->assertOk();
+        $this->assertDatabaseMissing('content_field_values', ['field_definition_id' => $copiedField]);
+        $this->postJson("$url/revisions/$snapshot/restore")->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('blocks.0.fields.0.field_definition_id', $copiedField);
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $copiedField, 'value_text' => 'Source']);
+    }
+
+    public function test_independent_fields_validate_the_options_saved_with_their_block(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $choice = FieldDefinition::create(['key' => 'choice', 'label' => 'Statut', 'value_type' => 'choice', 'options_data' => ['choices' => ['Ancien']]]);
+        $scale = FieldDefinition::create(['key' => 'scale', 'label' => 'Force', 'value_type' => 'json', 'options_data' => ['format' => 'scale', 'levels' => 3]]);
+        $legacy = FieldDefinition::create(['key' => 'legacy', 'label' => 'Ancien texte', 'value_type' => 'text']);
+        $content->fieldValues()->create(['field_definition_id' => $legacy->id, 'value_text' => 'À conserver']);
+        $content->blocks()->create(['block_type' => 'fields', 'field_schema' => [
+            ['field_definition_id' => $choice->id, 'display_options' => ['choices' => ['Actif']]],
+            ['field_definition_id' => $scale->id, 'display_options' => ['scale_levels' => 7]],
+        ]]);
+        $payload = ['title' => 'Élia', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $choice->id, 'value_text' => 'Actif'],
+            ['field_definition_id' => $scale->id, 'value_json' => ['level' => 6]],
+        ]];
+        $url = '/api/contents/'.$content->public_id;
+
+        $this->patchJson($url, $payload)->assertOk();
+        $payload['field_values'][0]['value_text'] = 'Ancien';
+        $this->patchJson($url, $payload)->assertUnprocessable();
+        $payload['field_values'][0]['value_text'] = 'Actif';
+        $payload['field_values'][1]['value_json']['level'] = 8;
+        $this->patchJson($url, $payload)->assertUnprocessable();
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $choice->id, 'value_text' => 'Actif']);
+        $this->assertSame(['level' => 6], $content->fieldValues()->where('field_definition_id', $scale->id)->firstOrFail()->value_json);
+        $this->patchJson($url, ['title' => 'Élia', 'summary' => null, 'field_values' => []])->assertOk();
+        $this->assertDatabaseMissing('content_field_values', ['field_definition_id' => $choice->id]);
+        $this->assertDatabaseMissing('content_field_values', ['field_definition_id' => $scale->id]);
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $legacy->id, 'value_text' => 'À conserver']);
+    }
+
     public function test_character_defaults_and_custom_tabs_persist_without_changing_content(): void
     {
         $project = Project::create(['name' => 'Projet']);

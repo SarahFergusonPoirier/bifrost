@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
-import { groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
+import { groupContentFields, groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
 
 it('renders an image field through the canonical attachment gallery', () => {
     const field = { id: 1, field_definition_id: 7, section_key: 'identity',
@@ -34,6 +34,42 @@ it('reads an explicit rich text field outside the biography section', async () =
     expect(wrapper.get('.fiche-text').text()).toContain('Une rencontre. '.repeat(100).trim());
     await wrapper.get('button[aria-label="Modifier Observations"]').trigger('click');
     expect(wrapper.emitted('edit-field')).toEqual([[7]]);
+    wrapper.unmount();
+});
+
+it('duplicates selected canonical fields as a new independent block', async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    const field = { id: 1, field_definition_id: 7, field_definition: { label: 'Surnom', value_type: 'text' } };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map([['Identité', [field]]]), hiddenFields: [], displayValue: () => 'Source',
+        placements: [{ id: 'identity', source: 'section:Identité', width: 6, height: 2, field_order: [7] }],
+        canCopy: true, persist,
+    } });
+    await wrapper.get('button').trigger('click');
+    await wrapper.findAll('button').find(button => button.text() === 'Dupliquer indépendamment').trigger('click');
+    expect(wrapper.findAll('.fiche-block')).toHaveLength(2);
+    await wrapper.get('form').trigger('submit');
+    const copy = persist.mock.calls[0][3][0];
+    expect(copy).toEqual({ id: expect.any(String), source: 'section:Identité', field_ids: [7] });
+    expect(persist.mock.calls[0][0][1].source).toBe('fields:' + copy.id);
+    wrapper.unmount();
+});
+
+it('keeps independent blocks separate when their titles match the template section', () => {
+    const definition = id => ({ id: 'field-' + id, field_definition_id: id, section_key: 'identity',
+        display_options: { section_label: 'Identité' }, field_definition: { label: 'Surnom', value_type: 'text' } });
+    const content = {
+        template_assignment: { template_version: { fields: [definition(1)] } },
+        blocks: [{ public_id: 'copy', block_type: 'fields', title: 'Identité', fields: [definition(2)] }],
+    };
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: groupContentFields(content), hiddenFields: [], blocks: content.blocks,
+        displayValue: field => field.field_definition_id === 1 ? 'Source' : 'Copie',
+        placements: [{ id: 'original', source: 'section:Identité', width: 6, height: 2 }, { id: 'copy', source: 'fields:copy', width: 6, height: 2 }],
+    } });
+    expect(wrapper.findAll('.fiche-block')).toHaveLength(2);
+    expect(wrapper.findAll('dd').map(field => field.text())).toEqual(['Source', 'Copie']);
+    expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
     wrapper.unmount();
 });
 
