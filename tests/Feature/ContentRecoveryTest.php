@@ -334,6 +334,31 @@ class ContentRecoveryTest extends TestCase
         $this->assertNull($block->fresh()->deleted_at);
     }
 
+    public function test_project_text_can_be_edited_and_reordered_without_changing_its_identity(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $content = $this->content();
+        $content->update(['scope_type' => 'project', 'project_id' => $project->id]);
+        $first = $content->blocks()->create(['block_type' => 'text', 'title' => 'Enfance', 'body' => 'Un souvenir.', 'position' => 0]);
+        $second = $content->blocks()->create(['block_type' => 'text', 'title' => 'Voyages', 'body' => 'Un départ.', 'position' => 1]);
+
+        $this->patchJson('/api/contents/'.$content->public_id, [
+            'title' => 'Élia',
+            'summary' => 'Résumé révisé',
+            'blocks' => [
+                ['public_id' => $second->public_id, 'block_type' => 'text', 'title' => 'Voyages', 'body' => 'Un retour.'],
+                ['public_id' => $first->public_id, 'block_type' => 'text', 'title' => 'Enfance', 'body' => 'Un souvenir.'],
+            ],
+        ])->assertOk()->assertJsonPath('title', 'Élia');
+
+        $this->assertSame('Résumé révisé', $content->fresh()->summary);
+        $this->assertSame('Un retour.', $second->fresh()->body);
+        $this->assertSame(0, $second->fresh()->position);
+        $this->assertSame(1, $first->fresh()->position);
+        $this->assertSame(2, $content->blocks()->count());
+        $this->assertNull($second->fresh()->deleted_at);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);
