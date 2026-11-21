@@ -110,9 +110,12 @@ class FicheLayoutController extends Controller
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
-            'copies.*' => ['required', 'array:id,source,title,body,field_ids'],
+            'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot'],
             'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
-            'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
+            'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|template-fields|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
+            'copies.*.template_id' => ['required_if:copies.*.source,template-fields', 'integer', 'min:1'],
+            'copies.*.template_revision' => ['required_if:copies.*.source,template-fields', 'integer', 'min:1'],
+            'copies.*.slot' => ['required_if:copies.*.source,template-fields', 'string', 'regex:/^blank-fields:[0-9]+$/'],
             'copies.*.field_ids' => ['sometimes', 'array', 'list', 'min:1', 'max:200'],
             'copies.*.field_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
             'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank', 'string', 'max:255'],
@@ -207,7 +210,7 @@ class FicheLayoutController extends Controller
         $position = (int) $record->blocks()->max('position');
 
         foreach ($copies as $copy) {
-            $fieldCopy = in_array($copy['source'], ['fields', 'external-links'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
+            $fieldCopy = in_array($copy['source'], ['fields', 'external-links', 'template-fields'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
             if (! $sources->contains(($fieldCopy ? 'fields:' : 'text:').$copy['id'])) {
                 throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
             }
@@ -243,7 +246,18 @@ class FicheLayoutController extends Controller
 
     private function copyFieldBlock(Content $record, array $copy, int $position): array
     {
-        if (str_starts_with($copy['source'], 'fields:')) {
+        $blueprint = null;
+        if ($copy['source'] === 'template-fields') {
+            $template = DB::table('fiche_tab_templates')->where('id', $copy['template_id'])
+                ->where(fn ($query) => $query->where('project_id', $record->project_id)->orWhereNull('project_id'))->first();
+            abort_unless($template, 404);
+            $definition = json_decode($template->definition, true, flags: JSON_THROW_ON_ERROR);
+            abort_if(($definition['revision'] ?? 1) !== (int) $copy['template_revision'], 409, 'Le modèle a changé. Recharge la bibliothèque.');
+            $blueprint = $definition['field_blocks'][$copy['slot']] ?? null;
+            abort_unless($blueprint, 422, 'Le bloc demandé ne fait pas partie du modèle.');
+            $fields = collect($blueprint['fields'])->map(fn (array $field): array => [...$field, 'field_definition_id' => $field['slot']]);
+            $title = $blueprint['title'];
+        } elseif (str_starts_with($copy['source'], 'fields:')) {
             $source = $record->blocks()->where('block_type', 'fields')->where('public_id', substr($copy['source'], 7))->firstOrFail();
             $fields = collect($source->field_schema ?? []);
             $title = $source->title;
@@ -273,8 +287,9 @@ class FicheLayoutController extends Controller
         if ($ids === [] || count($ids) > 200 || collect($ids)->contains(fn (int $id): bool => ! $indexed->has($id))) {
             throw ValidationException::withMessages(['copies' => 'Un champ ne fait pas partie du bloc source.']);
         }
-        $definitions = FieldDefinition::whereKey($ids)->get()->keyBy('id');
-        $values = $record->fieldValues()->whereIn('field_definition_id', $ids)->get()->keyBy('field_definition_id');
+        $definitions = $blueprint ? $fields->mapWithKeys(fn (array $field): array => [$field['slot'] => new FieldDefinition($field['field_definition'])])
+            : FieldDefinition::whereKey($ids)->get()->keyBy('id');
+        $values = $blueprint ? collect() : $record->fieldValues()->whereIn('field_definition_id', $ids)->get()->keyBy('field_definition_id');
         $schema = [];
         $mapping = [];
         foreach ($ids as $id) {

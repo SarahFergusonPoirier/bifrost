@@ -15,8 +15,8 @@ export default {
     emits: ['select', 'copied'],
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', pendingTemplateTab: null, removalId: null, removalDestination: null, revisions: null }),
     computed: {
-        hasPendingText() {
-            return this.tabs.some(tab => tab.placements?.some(placement => placement.newText));
+        hasPendingSources() {
+            return this.tabs.some(tab => tab.placements?.some(placement => placement.newText || placement.newFields));
         },
         filteredTemplates() {
             const query = this.templateQuery.trim().toLocaleLowerCase('fr');
@@ -41,13 +41,14 @@ export default {
             if (source) return source.title;
             if (placement.source.startsWith('section:')) return placement.source.slice(8);
             if (placement.source.startsWith('blank:')) return 'Bloc de texte vide';
+            if (placement.source.startsWith('blank-fields:')) return this.selectedTemplate?.definition.field_blocks?.[placement.source]?.title || 'Bloc de champs vierge';
             return {
                 summary: 'Résumé', tags: 'Étiquettes', fields: 'Bloc de champs personnalisé', relations: 'Relations', timeline: 'Chronologie',
                 equipment: 'Équipements', capabilities: 'Capacités', gallery: 'Galerie', attachments: 'Pièces jointes',
             }[placement.source] ?? placement.source;
         },
         unavailableTemplateSource(source) {
-            return !source.startsWith('blank:') && this.resolveSource?.(source) === null;
+            return !source.startsWith('blank:') && !source.startsWith('blank-fields:') && this.resolveSource?.(source) === null;
         },
         navigateTabs(event) {
             const index = this.visibleTabs.findIndex(tab => tab.id === event.target.dataset.tab);
@@ -137,7 +138,7 @@ export default {
         applyTemplate() {
             const definition = this.selectedTemplate?.definition;
             if (!definition || this.tabs.length >= 24) return;
-            const textSlots = new Map();
+            const sourceSlots = new Map();
             const tabId = 'tab-' + crypto.randomUUID();
             this.tabs.push({
                 id: tabId,
@@ -146,9 +147,15 @@ export default {
                 hidden: false,
                 placements: definition.placements.map(placement => {
                     const id = crypto.randomUUID();
+                    if (placement.source.startsWith('blank-fields:')) {
+                        if (!sourceSlots.has(placement.source)) sourceSlots.set(placement.source, crypto.randomUUID());
+                        return { ...placement, id, source: 'fields:' + sourceSlots.get(placement.source), newFields: {
+                            template_id: this.selectedTemplate.id, template_revision: definition.revision ?? 1, slot: placement.source,
+                        } };
+                    }
                     if (!placement.source.startsWith('blank:')) return { ...placement, id };
-                    if (!textSlots.has(placement.source)) textSlots.set(placement.source, crypto.randomUUID());
-                    return { ...placement, id, source: 'text:' + textSlots.get(placement.source), newText: true };
+                    if (!sourceSlots.has(placement.source)) sourceSlots.set(placement.source, crypto.randomUUID());
+                    return { ...placement, id, source: 'text:' + sourceSlots.get(placement.source), newText: true };
                 }),
             });
             this.pendingTemplateTab = tabId;
@@ -215,11 +222,12 @@ export default {
             }), copies);
         },
         async saveTabs() {
-            if (this.hasPendingText && !this.canCopy) return;
+            if (this.hasPendingSources && !this.canCopy) return;
             const copies = new Map();
             const tabs = this.tabs.map(tab => {
                 if (!tab.placements) return tab;
-                const placements = tab.placements.map(({ newText, ...placement }) => {
+                const placements = tab.placements.map(({ newText, newFields, ...placement }) => {
+                    if (newFields) copies.set(placement.source.slice(7), { id: placement.source.slice(7), source: 'template-fields', ...newFields });
                     if (newText) {
                         const id = placement.source.slice(5);
                         const existing = copies.get(id);

@@ -5,6 +5,28 @@ import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
 
+it('creates one empty field source for shared placements from an approved template revision', async () => {
+    const existing = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
+    const placement = { source: 'blank-fields:0', width: 6, height: 2, hidden: false, collapsed: false, field_order: [1] };
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [existing] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview', canCopy: true } });
+    await flushPromises();
+    wrapper.vm.templates = [{ id: 4, definition: { title: 'Identité', icon: 'folder', revision: 3,
+        placements: [placement, { ...placement, width: 8 }], field_blocks: { 'blank-fields:0': { title: 'Identité', fields: [] } },
+    } }];
+    wrapper.vm.templateId = 4;
+    wrapper.vm.applyTemplate();
+    expect(wrapper.vm.hasPendingSources).toBe(true);
+    contentRequest.mockImplementationOnce(async (path, method, input) => ({ data: { version: 2, tabs: input.tabs } }));
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    const request = contentRequest.mock.lastCall[2];
+    expect(request.copies).toEqual([{ id: expect.any(String), source: 'template-fields', template_id: 4, template_revision: 3, slot: 'blank-fields:0' }]);
+    expect(request.tabs[1].placements.map(item => item.source)).toEqual(Array(2).fill('fields:' + request.copies[0].id));
+    expect(request.tabs[1].placements.some(item => item.newFields)).toBe(false);
+    wrapper.unmount();
+});
+
 it('creates a fresh text source for each template slot and preserves sharing within the tab', async () => {
     const existing = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
     const placement = { source: 'blank:0', width: 6, height: 2, hidden: false, collapsed: false };

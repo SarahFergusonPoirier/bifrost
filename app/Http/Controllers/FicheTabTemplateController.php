@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContentBlock;
+use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class FicheTabTemplateController extends Controller
 {
@@ -51,9 +53,9 @@ class FicheTabTemplateController extends Controller
             abort_if(! $placement, 404);
             $placements = [$placement];
         }
-        if (collect($placements)->contains(fn (array $placement): bool => str_starts_with($placement['source'], 'fields:'))) {
-            throw ValidationException::withMessages(['placement' => 'La création de modèles à partir de blocs de champs indépendants n’est pas encore disponible.']);
-        }
+        $blocks = $record->blocks()->where('block_type', 'fields')->get()->keyBy('public_id');
+        $fieldIds = $blocks->flatMap(fn ($block): array => array_column($block->field_schema ?? [], 'field_definition_id'));
+        $definitions = FieldDefinition::whereKey($fieldIds->all())->get()->keyBy('id');
         $globalFields = [];
         if ($input['scope'] === 'global') {
             $ids = collect($placements)->flatMap(fn (array $placement): array => $placement['field_order'] ?? [])->unique()->all();
@@ -61,20 +63,41 @@ class FicheTabTemplateController extends Controller
         }
 
         $textSlots = [];
-        $placements = array_map(function (array $placement) use (&$textSlots, $globalFields, $input): array {
+        $fieldBlocks = [];
+        $fieldSlots = [];
+        $placements = array_map(function (array $placement) use (&$textSlots, &$fieldBlocks, &$fieldSlots, $blocks, $definitions, $globalFields, $input): array {
             $source = $placement['source'];
+            if (str_starts_with($source, 'fields:')) {
+                $block = $blocks->get(substr($source, 7));
+                abort_unless($block, 422, 'Le bloc source est indisponible.');
+                if (! isset($fieldBlocks[$source])) {
+                    $result = $this->fieldBlueprint($block, $definitions, $input['scope'] === 'global');
+                    $fieldBlocks[$source] = $result['blueprint'];
+                    $fieldSlots[$source] = $result['slots'];
+                }
+                $placement['source'] = 'blank-fields:'.array_search($source, array_keys($fieldBlocks), true);
+                if (isset($placement['field_order'])) {
+                    $placement['field_order'] = array_values(array_filter(array_map(fn (int $id): ?int => $fieldSlots[$source][$id] ?? null, $placement['field_order'])));
+                }
+            }
             if (str_starts_with($source, 'text:')) {
                 $textSlots[$source] ??= 'blank:'.count($textSlots);
                 $placement['source'] = $textSlots[$source];
             }
             unset($placement['id'], $placement['media_image']);
-            if ($input['scope'] === 'global' && isset($placement['field_order'])) {
+            if ($input['scope'] === 'global' && ! str_starts_with($source, 'fields:') && isset($placement['field_order'])) {
                 $placement['field_order'] = array_values(array_intersect($placement['field_order'], $globalFields));
             }
 
             return $placement;
         }, $placements);
         $definition = ['title' => $tab['title'], 'icon' => $tab['icon'], 'placements' => $placements];
+        if ($fieldBlocks !== []) {
+            $definition['field_blocks'] = [];
+            foreach (array_values($fieldBlocks) as $index => $blueprint) {
+                $definition['field_blocks']['blank-fields:'.$index] = $blueprint;
+            }
+        }
         if (isset($input['placement'])) {
             $definition['kind'] = 'block';
         }
@@ -112,5 +135,44 @@ class FicheTabTemplateController extends Controller
         ]);
 
         return response()->json(['id' => $id, 'name' => $input['name'], 'scope' => $input['scope'], 'definition' => $definition], 201);
+    }
+
+    /**
+     * @param  Collection<int, FieldDefinition>  $definitions
+     * @return array{blueprint: array{title: string, fields: array}, slots: array<int, int>}
+     */
+    private function fieldBlueprint(ContentBlock $block, Collection $definitions, bool $global): array
+    {
+        $fields = [];
+        $slots = [];
+        foreach ($block->field_schema ?? [] as $field) {
+            $definition = $definitions->get($field['field_definition_id']);
+            abort_unless($definition, 422, 'Un champ du bloc source est indisponible.');
+            $slot = count($fields) + 1;
+            $slots[$definition->id] = $slot;
+            $options = $definition->options_data ?? [];
+            if ($global && ($field['default_value'] ?? null) !== null
+                && ($definition->value_type === 'reference' || in_array($options['format'] ?? null, ['references', 'image'], true))) {
+                abort(422, 'Ce champ utilise une référence ou une image par défaut. Enregistre son modèle dans ce projet.');
+            }
+            if ($global && isset($options['content_type_ids'])) {
+                $globalIds = ContentType::whereKey($options['content_type_ids'])
+                    ->whereIn('scope_type', ['system', 'global'])->pluck('id')->all();
+                abort_unless(count($globalIds) === count(array_unique($options['content_type_ids'])), 422,
+                    'Ce bloc utilise un type de fiche propre au projet. Enregistre son modèle dans ce projet.');
+            }
+            $fields[] = [
+                'slot' => $slot,
+                'field_definition' => ['label' => $definition->label, 'value_type' => $definition->value_type, 'options_data' => $options],
+                'label_override' => $field['label_override'] ?? null,
+                'display_options' => $field['display_options'] ?? [],
+                'section_key' => $field['section_key'] ?? 'fields',
+                'is_required' => (bool) ($field['is_required'] ?? false),
+                'default_value' => $field['default_value'] ?? null,
+                'help_text' => $field['help_text'] ?? null,
+            ];
+        }
+
+        return ['blueprint' => ['title' => $block->title ?? 'Champs', 'fields' => $fields], 'slots' => $slots];
     }
 }

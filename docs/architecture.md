@@ -96,8 +96,14 @@ La duplication d’une section crée de nouvelles définitions dans le projet et
 copie les valeurs dans la même transaction que la disposition. L’ordre des
 champs est remappé vers les nouveaux identifiants. Retirer un placement conserve
 ces données et les instantanés de fiche permettent de restaurer le schéma.
-La création de modèles réutilisables à partir de ces blocs reste à compléter ;
-l’API la refuse pour ne pas enregistrer un modèle dépendant d’une seule fiche.
+Les modèles de blocs et d’onglets enregistrent leurs schémas sous forme de
+`field_blocks`, avec des emplacements locaux aux modèles. Ils excluent les
+valeurs actuelles et les identifiants des définitions de la fiche source.
+L’application transmet l’identifiant et la révision du modèle ; le serveur
+vérifie sa portée et crée de nouvelles définitions dans le projet cible.
+Plusieurs placements d’un même emplacement partagent une seule nouvelle
+instance. Les contraintes de références propres au projet empêchent une
+publication globale qui élargirait silencieusement les types autorisés.
 Une disposition enregistrée sans placements explicites conserve son aperçu
 par défaut. La grille utilise douze colonnes sur grand écran comme choix
 technique réversible et réduit le nombre de colonnes sur écran étroit.

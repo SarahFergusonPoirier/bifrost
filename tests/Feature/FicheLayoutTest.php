@@ -58,8 +58,10 @@ class FicheLayoutTest extends TestCase
         $response->assertJsonPath('blocks.0.fields.0.field_definition.project_id', $project->id);
         $this->postJson("/api/projects/{$project->id}/contents/$id/fiche-tab-templates", [
             'name' => 'Copie', 'scope' => 'project', 'tab' => 'overview', 'version' => 1,
-        ])->assertUnprocessable()->assertJsonValidationErrors('placement');
-        $this->assertDatabaseCount('fiche_tab_templates', 0);
+        ])->assertCreated()->assertJsonPath('definition.placements.0.source', 'blank-fields:0')
+            ->assertJsonPath('definition.placements.0.field_order', [1])
+            ->assertJsonMissingPath('definition.field_blocks.blank-fields:0.fields.0.field_definition_id');
+        $this->assertDatabaseCount('fiche_tab_templates', 1);
         $snapshot = $this->postJson("$url/snapshots", ['label' => 'Bloc indépendant'])->assertCreated()->json('id');
 
         $this->patchJson($url, ['title' => 'Élia', 'summary' => null, 'field_values' => [
@@ -75,6 +77,89 @@ class FicheLayoutTest extends TestCase
         $this->postJson("$url/revisions/$snapshot/restore")->assertOk();
         $this->getJson($url)->assertOk()->assertJsonPath('blocks.0.fields.0.field_definition_id', $copiedField);
         $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $copiedField, 'value_text' => 'Source']);
+    }
+
+    public function test_global_field_block_templates_create_empty_instances_in_another_project(): void
+    {
+        $sourceProject = Project::create(['name' => 'Source']);
+        $targetProject = Project::create(['name' => 'Cible']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $source = $sourceProject->contents()->create(['title' => 'Source', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $target = $targetProject->contents()->create(['title' => 'Cible', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $field = FieldDefinition::create(['key' => 'source', 'label' => 'Surnom', 'value_type' => 'text', 'scope_type' => 'project', 'project_id' => $sourceProject->id]);
+        $block = $source->blocks()->create(['block_type' => 'fields', 'title' => 'Identité', 'field_schema' => [[
+            'field_definition_id' => $field->id, 'display_options' => ['section_label' => 'Identité'],
+        ]]]);
+        $source->fieldValues()->create(['field_definition_id' => $field->id, 'value_text' => 'VALEUR PRIVÉE']);
+        $sourceUrl = "/api/projects/{$sourceProject->id}/contents/{$source->public_id}";
+        $layout = $this->getJson("$sourceUrl/fiche-layout")->json();
+        $placement = ['id' => '0408aac5-8d3a-48a1-81c1-c4903aa97001', 'source' => 'fields:'.$block->public_id,
+            'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false, 'field_order' => [$field->id]];
+        $layout['tabs'][0]['placements'] = [$placement];
+        $this->putJson("$sourceUrl/fiche-layout", $layout)->assertOk();
+        $input = ['name' => 'Identité', 'scope' => 'global', 'tab' => 'overview', 'version' => 1];
+        $template = $this->postJson("$sourceUrl/fiche-tab-templates", $input)->assertCreated()->json();
+        $this->assertStringNotContainsString('VALEUR PRIVÉE', json_encode($template));
+        $this->assertSame('blank-fields:0', $template['definition']['placements'][0]['source']);
+        $input['scope'] = 'project';
+        $localTemplate = $this->postJson("$sourceUrl/fiche-tab-templates", $input)->assertCreated()->json();
+
+        $targetUrl = "/api/projects/{$targetProject->id}/contents/{$target->public_id}/fiche-layout";
+        $targetLayout = $this->getJson($targetUrl)->json();
+        $newBlock = '50d66401-0d64-4bc8-a4f3-af394e2aaf81';
+        $targetLayout['copies'] = [['id' => $newBlock, 'source' => 'template-fields', 'template_id' => $template['id'], 'template_revision' => 2, 'slot' => 'blank-fields:0']];
+        $placement['source'] = 'fields:'.$newBlock;
+        $placement['field_order'] = [1];
+        $targetLayout['tabs'][0]['placements'] = [$placement, [...$placement, 'id' => '0408aac5-8d3a-48a1-81c1-c4903aa97002', 'width' => 8]];
+        $incomplete = $targetLayout;
+        unset($incomplete['copies'][0]['template_id']);
+        $this->putJson($targetUrl, $incomplete)->assertUnprocessable()->assertJsonValidationErrors('copies.0.template_id');
+        $unknownSlot = $targetLayout;
+        $unknownSlot['copies'][0]['slot'] = 'blank-fields:99';
+        $unknownSlot['copies'][0]['template_revision'] = 1;
+        $this->putJson($targetUrl, $unknownSlot)->assertUnprocessable();
+        $this->putJson($targetUrl, $targetLayout)->assertConflict();
+        $targetLayout['copies'][0]['template_revision'] = 1;
+        $targetLayout['copies'][0]['template_id'] = $localTemplate['id'];
+        $this->putJson($targetUrl, $targetLayout)->assertNotFound();
+        $this->assertSame(0, $target->blocks()->count());
+        $targetLayout['copies'][0]['template_id'] = $template['id'];
+        $saved = $this->putJson($targetUrl, $targetLayout)->assertOk()->json();
+        $this->assertSame($saved['tabs'][0]['placements'][0]['field_order'], $saved['tabs'][0]['placements'][1]['field_order']);
+        $response = $this->getJson('/api/contents/'.$target->public_id)->assertOk()->assertJsonCount(1, 'blocks')->assertJsonCount(0, 'field_values');
+        $response->assertJsonPath('blocks.0.fields.0.field_definition.project_id', $targetProject->id)
+            ->assertJsonPath('blocks.0.fields.0.field_definition.label', 'Surnom');
+        $this->assertNotSame($field->id, $response->json('blocks.0.fields.0.field_definition_id'));
+        $this->assertSame('VALEUR PRIVÉE', $source->fieldValues()->firstOrFail()->value_text);
+    }
+
+    public function test_global_field_templates_cannot_broaden_project_reference_constraints(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $localType = ContentType::create(['key' => 'local', 'name' => 'Local', 'scope_type' => 'project', 'project_id' => $project->id]);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $field = FieldDefinition::create(['key' => 'reference', 'label' => 'Allié', 'value_type' => 'reference', 'options_data' => ['content_type_ids' => [$localType->id]]]);
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Liens', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}";
+        $layout = $this->getJson("$url/fiche-layout")->json();
+        $layout['tabs'][0]['placements'] = [[
+            'id' => 'f9bcf7ea-e0ca-43b4-8e83-80dd3b2399e2', 'source' => 'fields:'.$block->public_id,
+            'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false,
+        ]];
+        $this->putJson("$url/fiche-layout", $layout)->assertOk();
+        $input = ['name' => 'Liens', 'scope' => 'global', 'tab' => 'overview', 'version' => 1];
+
+        $this->postJson("$url/fiche-tab-templates", $input)->assertUnprocessable();
+        $this->assertDatabaseCount('fiche_tab_templates', 0);
+        $input['scope'] = 'project';
+        $this->postJson("$url/fiche-tab-templates", $input)->assertCreated()
+            ->assertJsonPath('definition.field_blocks.blank-fields:0.fields.0.field_definition.options_data.content_type_ids', [$localType->id]);
+        $field->update(['options_data' => null]);
+        $block->update(['field_schema' => [['field_definition_id' => $field->id, 'default_value' => ['reference_content_id' => $content->id]]]]);
+        $input['scope'] = 'global';
+        $this->postJson("$url/fiche-tab-templates", $input)->assertUnprocessable();
+        $this->assertDatabaseCount('fiche_tab_templates', 1);
     }
 
     public function test_independent_fields_validate_the_options_saved_with_their_block(): void

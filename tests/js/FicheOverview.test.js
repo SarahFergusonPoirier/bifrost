@@ -635,6 +635,37 @@ it('opens a visible custom tab containing the complete linked block', async () =
     }
 });
 
+it('applies an independent field block template without submitting source values or definitions', async () => {
+    const template = { source: 'blank-fields:0', width: 8, height: 3, hidden: false, collapsed: false, field_order: [1] };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json([
+        { id: 4, name: 'Identité', scope: 'global', definition: { revision: 2, placements: [template], field_blocks: {
+            'blank-fields:0': { title: 'Identité', fields: [{ slot: 1, field_definition: { label: 'Surnom', value_type: 'text' } }] },
+        } } },
+    ]));
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', placements: [],
+        persist, canCopy: true, blockLibraryPath: '/library',
+    } });
+    try {
+        await wrapper.get('button').trigger('click');
+        await wrapper.vm.loadBlockTemplates();
+        wrapper.vm.blockTemplateId = 4;
+        await wrapper.vm.$nextTick();
+        expect(wrapper.get('[aria-label="Aperçu du modèle de bloc"]').text()).toContain('Surnom');
+        wrapper.vm.applyBlockTemplate();
+        await wrapper.vm.$nextTick();
+        expect(wrapper.get('.fiche-block dd').text()).toBe('—');
+        await wrapper.get('form').trigger('submit');
+        const copy = persist.mock.calls[0][3][0];
+        expect(copy).toEqual({ id: expect.any(String), source: 'template-fields', template_id: 4, template_revision: 2, slot: 'blank-fields:0' });
+        expect(persist.mock.calls[0][0][0]).toMatchObject({ source: 'fields:' + copy.id, width: 8, height: 3 });
+    } finally {
+        wrapper.unmount();
+        fetch.mockRestore();
+    }
+});
+
 it('adds a reusable block as a new placement with its saved dimensions', async () => {
     const template = { source: 'summary', width: 8, height: 3, hidden: false, collapsed: false };
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json([

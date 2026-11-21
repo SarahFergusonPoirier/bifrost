@@ -55,9 +55,13 @@
                 <strong>{{ blockLabel(selectedBlockTemplate, selectedLibraryEntry.name) }}</strong>
                 <p>{{ selectedBlockTemplate.width }} colonnes × {{ selectedBlockTemplate.height }} rangées</p>
                 <p v-if="selectedBlockTemplate.source.startsWith('blank:')">Un nouveau texte vide sera créé.</p>
+                <template v-else-if="selectedFieldBlueprint">
+                    <p>Un nouveau bloc sera créé avec ces champs, sans les valeurs de la fiche d’origine.</p>
+                    <ul><li v-for="field in selectedFieldBlueprint.fields" :key="field.slot">{{ field.label_override || field.field_definition.label }}</li></ul>
+                </template>
                 <p v-else-if="!bySource.has(selectedBlockTemplate.source)" role="status">Le bloc source est indisponible dans cette fiche.</p>
             </div>
-            <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
+            <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') || selectedBlockTemplate.source.startsWith('blank-fields:') ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
                 @click="applyBlockTemplate">Ajouter ce modèle</button>
             <fieldset v-if="layoutVersion && placements?.length">
                 <legend>Enregistrer un bloc existant comme modèle</legend>

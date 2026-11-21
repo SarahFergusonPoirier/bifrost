@@ -189,6 +189,9 @@ export default {
         selectedBlockTemplate() {
             return this.selectedLibraryEntry?.definition.placements[0];
         },
+        selectedFieldBlueprint() {
+            return this.selectedLibraryEntry?.definition.field_blocks?.[this.selectedBlockTemplate?.source];
+        },
         selectedCard() {
             return this.matchingCards.find(card => card.source === this.source);
         },
@@ -246,7 +249,7 @@ export default {
     },
     methods: {
         copyTarget(copy) {
-            return (copy.field_ids ? 'fields:' : 'text:') + copy.id;
+            return (copy.field_ids || copy.source === 'template-fields' ? 'fields:' : 'text:') + copy.id;
         },
         isEmptyField(field) {
             if (!this.fieldValue || this.fieldState?.(field)) return false;
@@ -393,7 +396,7 @@ export default {
         formatTemporalDate,
         blockLabel(item, fallback = 'Texte vierge') {
             if (item.title) return item.title;
-            if (item.source.startsWith('blank:')) return fallback;
+            if (item.source.startsWith('blank:') || item.source.startsWith('blank-fields:')) return fallback;
             return this.bySource.get(item.source)?.title ?? 'Bloc indisponible';
         },
         async loadBlockTemplates() {
@@ -433,7 +436,20 @@ export default {
         applyBlockTemplate() {
             const template = this.selectedBlockTemplate;
             if (!template || this.draft.length >= 80) return;
-            if (template.source.startsWith('blank:')) {
+            if (template.source.startsWith('blank-fields:')) {
+                const blueprint = this.selectedFieldBlueprint;
+                if (!this.canCopy || !blueprint) return;
+                const id = crypto.randomUUID();
+                const card = {
+                    title: blueprint.title, icon: template.icon || 'catalogue', fields: blueprint.fields.map(field => ({
+                        id: 'slot-' + field.slot, definitionId: field.slot, label: field.label_override || field.field_definition.label,
+                        value: '—', empty: true, references: [],
+                    })),
+                };
+                this.copies.push({ id, source: 'template-fields', template_id: this.selectedLibraryEntry.id,
+                    template_revision: this.selectedLibraryEntry.definition.revision ?? 1, slot: template.source, card });
+                this.draft.push({ ...template, id: crypto.randomUUID(), source: 'fields:' + id });
+            } else if (template.source.startsWith('blank:')) {
                 if (!this.canCopy) return;
                 this.addTextPlacement(this.blockLabel(template, this.selectedLibraryEntry.name), '', template);
             } else if (this.bySource.has(template.source)) {
@@ -465,7 +481,9 @@ export default {
                 const staged = this.copies.find(copy => this.copyTarget(copy) === original.source);
                 const fields = this.orderedFields(original, card.fields);
                 if (!fields.length) return;
-                this.copies.push({ id, source: staged?.source ?? original.source, field_ids: fields.map(field => field.definitionId), card: { ...card, fields } });
+                this.copies.push({ id, source: staged?.source ?? original.source, field_ids: fields.map(field => field.definitionId),
+                    ...(staged?.source === 'template-fields' ? { template_id: staged.template_id, template_revision: staged.template_revision, slot: staged.slot } : {}),
+                    card: { ...card, fields } });
                 this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'fields:' + id });
                 return;
             }

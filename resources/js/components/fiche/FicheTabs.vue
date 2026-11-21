@@ -71,6 +71,9 @@
                                 <p v-if="placement.hidden">Masqué</p>
                                 <p v-else-if="placement.collapsed">Réduit</p>
                                 <p v-if="unavailableTemplateSource(placement.source)">Source indisponible dans cette fiche</p>
+                                <ul v-if="selectedTemplate.definition.field_blocks?.[placement.source]">
+                                    <li v-for="field in selectedTemplate.definition.field_blocks[placement.source].fields" :key="field.slot">{{ field.label_override || field.field_definition.label }}</li>
+                                </ul>
                             </article>
                         </div>
                     </section>
@@ -85,7 +88,7 @@
                     <button type="button" :disabled="!templateName || !layout.version" @click="saveTemplate">Enregistrer l’onglet actif comme modèle</button>
                     <p>Le modèle reprend la disposition enregistrée des blocs réutilisables.</p>
                 </details>
-                <button type="submit" :disabled="hasPendingText && !canCopy">Enregistrer la disposition</button>
+                <button type="submit" :disabled="hasPendingSources && !canCopy">Enregistrer la disposition</button>
                 <button type="button" @click="reset">Annuler les changements</button>
             </fieldset>
         </form>
