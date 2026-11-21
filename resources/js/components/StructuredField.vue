@@ -82,6 +82,8 @@
                         <option v-for="image in images" :key="image.public_id" :value="image.public_id">{{ image.original_name }}</option>
                     </select>
                 </label>
+                <FicheEntryFields v-if="['capabilities', 'equipment'].includes(format)" :fields="entry.fields"
+                    :targets="targets" editable @change="setEntryFields(index, $event)" />
                 <button type="button" :disabled="index === 0" @click="moveKeyword(index, -1)">Monter</button>
                 <button type="button" :disabled="index === value.length - 1" @click="moveKeyword(index, 1)">Descendre</button>
                 <button v-if="['capabilities', 'equipment'].includes(format)" type="button"

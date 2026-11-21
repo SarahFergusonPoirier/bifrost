@@ -25,6 +25,7 @@
                         <p v-if="relation.role">{{ relation.role }}</p>
                         <p v-if="relation.start || relation.end">{{ [relation.start, relation.end].filter(Boolean).join(' – ') }}</p>
                         <p v-if="relation.note">{{ relation.note }}</p>
+                        <FicheEntryFields :fields="relation.fields" @open="$emit('open', $event)" />
                     </template>
                     </slot>
                     <button v-if="kind === 'relations' && showDetails && connectionsPath && relation.link_id" type="button"

@@ -16,6 +16,17 @@ afterEach(() => {
     delete HTMLDialogElement.prototype.showModal;
 });
 
+it('opens complementary equipment fields in the full view even without a description', async () => {
+    const wrapper = mount(FicheLinkedData, { props: {
+        kind: 'equipment', localEquipment: [{ title: 'Épée', fields: [{ id: 'owner', label: 'Propriétaire', value: '**Élia**' }] }],
+    } });
+    expect(wrapper.find('dl').exists()).toBe(false);
+    await wrapper.findAll('button').find(button => button.text().includes('Voir tout')).trigger('click');
+    expect(wrapper.get('dt').text()).toBe('Propriétaire');
+    expect(wrapper.get('dd strong').text()).toBe('Élia');
+    wrapper.unmount();
+});
+
 it('shows a compact preview, expanding only if there is no complete tab', async () => {
     const relations = Array.from({ length: 5 }, (_, id) => ({ id, title: 'Personnage ' + id, public_id: String(id), label: 'Ami' }));
     contentRequest.mockResolvedValue({ data: { relations } });

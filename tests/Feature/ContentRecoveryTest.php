@@ -359,6 +359,47 @@ class ContentRecoveryTest extends TestCase
         $this->assertNull($second->fresh()->deleted_at);
     }
 
+    public function test_local_entry_additional_fields_are_saved_and_invalid_changes_are_rolled_back(): void
+    {
+        foreach (['capabilities', 'equipment'] as $format) {
+            $content = $this->content();
+            $definition = FieldDefinition::create([
+                'key' => $format, 'label' => 'Entrées', 'value_type' => 'json',
+                'options_data' => ['format' => $format],
+            ]);
+            $entry = ['label' => 'Protection', 'fields' => [[
+                'id' => '00000000-0000-4000-8000-000000000001',
+                'label' => 'Conditions', 'value' => '**À couvert** uniquement.',
+            ]]];
+            $payload = ['title' => 'Original', 'summary' => null, 'field_values' => [[
+                'field_definition_id' => $definition->id, 'value_json' => [$entry],
+            ]]];
+            $url = '/api/contents/'.$content->public_id;
+
+            $this->patchJson($url, $payload)->assertOk();
+            $this->getJson($url)->assertOk()->assertJsonPath('field_values.0.value_json.0', $entry);
+
+            $payload['title'] = 'Titre refusé';
+            $payload['field_values'][0]['value_json'][0]['fields'][0]['label'] = '';
+            $this->patchJson($url, $payload)->assertUnprocessable()
+                ->assertJsonValidationErrors('value_json.0.fields.0.label');
+            $this->assertSame('Original', $content->fresh()->title);
+            $this->assertSame([$entry], $content->fieldValues()->firstOrFail()->value_json);
+
+            foreach ([
+                [['id' => 'invalid', 'label' => 'Limites', 'value' => 'Vent']],
+                [array_replace($entry['fields'][0], ['value' => str_repeat('x', 1001)])],
+                [$entry['fields'][0], $entry['fields'][0]],
+                [array_replace($entry['fields'][0], ['unexpected' => 'refusé'])],
+                array_fill(0, 21, $entry['fields'][0]),
+            ] as $invalidFields) {
+                $payload['field_values'][0]['value_json'][0]['fields'] = $invalidFields;
+                $this->patchJson($url, $payload)->assertUnprocessable();
+                $this->assertSame([$entry], $content->fieldValues()->firstOrFail()->value_json);
+            }
+        }
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

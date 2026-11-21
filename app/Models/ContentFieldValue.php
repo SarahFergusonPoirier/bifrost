@@ -126,7 +126,7 @@ class ContentFieldValue extends Model
             'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label'.(match ($format) {
-                    'equipment' => ',description,image', 'capabilities' => ',description,category,mastery', 'repeatable' => ',id,description,period,date,level,rank', 'bullets' => '', default => ',description'
+                    'equipment' => ',description,image,fields', 'capabilities' => ',description,category,mastery,fields', 'repeatable' => ',id,description,period,date,level,rank', 'bullets' => '', default => ',description'
                 })],
                 'value_json.*.id' => ['required_with:value_json.*.date', 'uuid', 'distinct:ignore_case'],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
@@ -134,6 +134,11 @@ class ContentFieldValue extends Model
                 'value_json.*.image' => ['nullable', 'uuid'],
                 'value_json.*.category' => ['nullable', 'string', 'max:120'],
                 'value_json.*.mastery' => ['nullable', 'integer', 'between:1,5'],
+                'value_json.*.fields' => ['sometimes', 'array', 'list', 'max:20'],
+                'value_json.*.fields.*' => ['required', 'array:id,label,value'],
+                'value_json.*.fields.*.id' => ['required', 'uuid', 'distinct:ignore_case'],
+                'value_json.*.fields.*.label' => ['required', 'string', 'max:120'],
+                'value_json.*.fields.*.value' => ['present', 'nullable', 'string', 'max:1000'],
                 'value_json.*.period' => ['nullable', 'string', 'max:255'],
                 ...($format === 'repeatable' ? $this->temporalRules('value_json.*.date') : []),
                 'value_json.*.level' => ['nullable', 'string', 'max:120'],

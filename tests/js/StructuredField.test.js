@@ -66,6 +66,23 @@ it('duplicates a capability as an independently editable entry', async () => {
     expect(updated.map(entry => entry.label)).toEqual(['Vol', 'Vol prolongé']);
 });
 
+it('edits and duplicates additional capability fields without mutating the original', async () => {
+    const original = { label: 'Vol', fields: [{ id: 'source-field', label: 'Coût', value: 'Fatigue' }] };
+    const wrapper = mount(StructuredField, { props: { format: 'capabilities', value: [original] } });
+    await wrapper.findAll('button').find(button => button.text() === 'Dupliquer indépendamment').trigger('click');
+    const [entries] = wrapper.emitted('change').at(-1);
+    expect(entries[1].fields[0]).toEqual({ ...original.fields[0], id: expect.any(String) });
+    expect(entries[1].fields[0].id).not.toBe('source-field');
+    await wrapper.setProps({ value: entries });
+    const fieldsets = wrapper.findAll('fieldset');
+    await fieldsets[1].get('textarea').setValue('Épuisement');
+    const [updated] = wrapper.emitted('change').at(-1);
+    expect(updated[0].fields[0].value).toBe('Fatigue');
+    expect(updated[1].fields[0].value).toBe('Épuisement');
+    expect(original.fields[0].value).toBe('Fatigue');
+    wrapper.unmount();
+});
+
 it('preserves the legacy period when setting a structured date on a repeatable entry', async () => {
     const wrapper = mount(StructuredField, {
         props: { format: 'repeatable', value: [{ label: 'Voyage', period: 'Avant la guerre' }] },

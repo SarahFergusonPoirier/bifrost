@@ -1,12 +1,14 @@
 import { useId } from 'vue';
 import { formatTemporalDate } from './formatFieldValue';
 import { contentRequest } from '../../services/contentRecovery';
+import FicheEntryFields from './FicheEntryFields.vue';
 
 const importance = { major: 0, secondary: 1, minor: 2, unspecified: 3 };
 const dateOrder = new Intl.Collator('fr', { numeric: true });
 const titles = { relations: 'Relations', timeline: 'Chronologie', equipment: 'Équipements', capabilities: 'Capacités' };
 
 export default {
+    components: { FicheEntryFields },
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all'],
     data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
@@ -41,7 +43,7 @@ export default {
         },
         canOpenFullView() {
             return this.items.length > this.previewSize
-                || this.items.some(item => item.description || item.note || item.status || item.role || item.link_id)
+                || this.items.some(item => item.description || item.note || item.status || item.role || item.link_id || item.fields?.length)
                 || (this.kind !== 'timeline' && !!this.connectionsPath && this.availableTargets.length > 0);
         },
         events() {

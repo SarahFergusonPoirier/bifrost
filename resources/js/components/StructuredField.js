@@ -1,9 +1,10 @@
 import { useId } from 'vue';
 import { contentRequest } from '../services/contentRecovery';
 import FicheTextEditor from './fiche/FicheTextEditor.vue';
+import FicheEntryFields from './fiche/FicheEntryFields.vue';
 
 export default {
-    components: { FicheTextEditor },
+    components: { FicheTextEditor, FicheEntryFields },
     props: {
         format: { type: String, required: true },
         value: { type: [Object, Array], default: null },
@@ -70,8 +71,13 @@ export default {
         duplicateEntry(index) {
             if (this.value.length >= 100) return;
             const entries = [...this.value];
-            entries.splice(index + 1, 0, { ...entries[index], ...(this.format === 'repeatable' ? { id: undefined } : {}) });
+            const copy = JSON.parse(JSON.stringify(entries[index]));
+            if (copy.fields) copy.fields = copy.fields.map(field => ({ ...field, id: crypto.randomUUID() }));
+            entries.splice(index + 1, 0, { ...copy, ...(this.format === 'repeatable' ? { id: undefined } : {}) });
             this.setKeywords(entries);
+        },
+        setEntryFields(index, fields) {
+            this.setKeywords(this.value.map((entry, position) => position === index ? { ...entry, fields } : entry));
         },
         moveKeyword(index, offset) {
             const entries = [...this.value];

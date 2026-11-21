@@ -128,6 +128,14 @@ par ses anciens libellés. En cas de correspondances multiples, la résolution
 exige une correspondance unique. Le nom complet et l’âge dérivé utilisent
 également cette convention pour retrouver la section Identité.
 
+`FicheEntryFields` fournit les champs de texte complémentaires des capacités
+et équipements locaux. Chaque entrée conserve une liste ordonnée de champs
+`{ id, label, value }` dans sa valeur canonique, avec vingt champs au maximum.
+Le texte réutilise le même éditeur et le même rendu enrichi que les biographies.
+Les identifiants sont conservés lors d’un changement d’ordre et renouvelés
+lors d’une duplication indépendante. La validation de `ContentFieldValue`
+contrôle la structure et les limites avant l’enregistrement transactionnel.
+
 `FicheTabs` gère la navigation, l’édition et les modèles réutilisables
 d’onglets. Ces modèles enregistrent une disposition dans la bibliothèque du
 projet ou dans la bibliothèque globale. Le contenu métier demeure dans les

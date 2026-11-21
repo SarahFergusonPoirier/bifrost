@@ -13,6 +13,7 @@ import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
+import FicheEntryFields from './FicheEntryFields.vue';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 
 function clampSize(size) {
@@ -24,7 +25,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
+    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
     props: {
         summary: String,
         fullName: String,
@@ -163,6 +164,7 @@ export default {
                         id: 'local-' + field.field_definition_id + '-' + index,
                         title: entry.label,
                         note: entry.description,
+                        fields: entry.fields,
                         image: entry.image && this.contentId
                             ? '/api/contents/' + encodeURIComponent(this.contentId) + '/attachments/' + encodeURIComponent(entry.image) + '/preview'
                             : null,
