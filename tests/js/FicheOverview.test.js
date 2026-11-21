@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
+import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import { groupContentFields, groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
 
 it('renders an image field through the canonical attachment gallery', () => {
@@ -92,6 +93,24 @@ it('identifies shared fields across different block sources without marking disj
     expect(wrapper.find('.fiche-shared-label').exists()).toBe(false);
     await wrapper.setProps({ destinations: [{ id: 'details', placements: [{ ...base, id: 'shared', source: 'fields', field_order: [1] }] }] });
     expect(wrapper.findAll('.fiche-shared-label')).toHaveLength(1);
+    wrapper.unmount();
+});
+
+it('stages a free block and submits its schema only when saving the layout', async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', placements: [], canCopy: true, persist,
+    } });
+    await wrapper.get('button').trigger('click');
+    const fields = [{ label: 'Souvenirs', type: 'rich_text', section: 'Libre' }];
+    wrapper.findComponent(FicheFieldBlockBuilder).vm.$emit('create', { title: 'Libre', fields });
+    await wrapper.vm.$nextTick();
+    expect(persist).not.toHaveBeenCalled();
+    expect(wrapper.get('.fiche-block h2').text()).toBe('Libre');
+    await wrapper.get('form').trigger('submit');
+    const copy = persist.mock.calls[0][3][0];
+    expect(copy).toEqual({ id: expect.any(String), source: 'blank-fields', title: 'Libre', fields });
+    expect(persist.mock.calls[0][0][0].source).toBe('fields:' + copy.id);
     wrapper.unmount();
 });
 

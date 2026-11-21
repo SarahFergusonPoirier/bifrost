@@ -255,7 +255,7 @@
                         @block-deleted="refreshFiche"
                         :attachments-revision="attachmentsRevision" :content-version="contentVersion" :layout-version="version" :block-library-path="projectId ? '/projects/' + projectId + '/fiche-tab-templates' : undefined"
                         :block-save-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-tab-templates' : undefined"
-                        :content-id="selected.public_id" :summary="draft.summary" :full-name="draft.title" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab"
+                        :content-id="selected.public_id" :summary="draft.summary" :full-name="draft.title" :tags="selected.tags" :blocks="draft.blocks" :active="ficheTab" :reference-types="types"
                         :connections-path="projectId ? '/projects/' + projectId + '/connections' : undefined"
                         :reference-targets="referenceTargets" :equipment-type="universeCategories.find(item => item.key === 'objet-artefact')?.id"
                         :links-path="projectId ? '/projects/' + projectId + '/contents/' + selected.public_id + '/fiche-links' : undefined"
@@ -370,7 +370,7 @@
                     <details v-for="[section, fields] in templateSections" :key="section" open>
                         <summary>{{ templateSectionLabel(section, fields) }}</summary>
                         <div v-for="field in fields" :key="field.id" :id="'fiche-field-editor-' + field.field_definition_id">
-                            <label>{{ field.label_override || field.field_definition.label }} · État
+                            <label>{{ field.label_override || field.field_definition.label }} <span v-if="field.is_required">(obligatoire)</span> · État
                                 <select data-field-state :value="fieldState(field) ?? ''" @change="setFieldState(field, $event.target.value)">
                                     <option value="">Valeur ou champ vide</option>
                                     <option value="unknown">Inconnu</option>

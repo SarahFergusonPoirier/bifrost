@@ -16,6 +16,49 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_a_free_block_creates_supported_field_types_and_validates_required_values(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $foreignType = ContentType::create(['key' => 'foreign', 'name' => 'Autre', 'scope_type' => 'project', 'project_id' => $other->id]);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $layout = $this->getJson($url)->json();
+        $blockId = 'ccf4cc77-3d99-4c26-a311-ec43a5c412ac';
+        $types = ['text', 'rich_text', 'number', 'boolean', 'date', 'choice', 'reference', 'measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link', 'image'];
+        $fields = array_map(fn (string $type): array => ['label' => $type, 'section' => 'Libre', 'type' => $type], $types);
+        $fields[0]['required'] = true;
+        $fields[5]['choices'] = ['Actif', 'Retraité'];
+        $fields[12] += ['levels' => 7, 'level_descriptions' => ['Débutant'], 'scale_display' => 'segments'];
+        $layout['copies'] = [['id' => $blockId, 'source' => 'blank-fields', 'title' => 'Libre', 'fields' => $fields]];
+        $layout['tabs'][0]['placements'] = [[
+            'id' => 'a4b6c745-e8a5-44ff-a362-608a0c97b280', 'source' => 'fields:'.$blockId,
+            'width' => 8, 'height' => 3, 'hidden' => false, 'collapsed' => false,
+        ]];
+        $layout['copies'][0]['fields'][6]['reference_types'] = [$foreignType->id];
+        $this->putJson($url, $layout)->assertUnprocessable();
+        $this->assertDatabaseCount('field_definitions', 0);
+        unset($layout['copies'][0]['fields'][6]['reference_types']);
+        $invalid = $layout;
+        $invalid['copies'][0]['fields'][0]['type'] = 'json';
+        $this->putJson($url, $invalid)->assertUnprocessable();
+        $this->assertDatabaseCount('content_blocks', 0);
+        $this->putJson($url, $layout)->assertOk();
+        $read = $this->getJson('/api/contents/'.$content->public_id)->assertOk()->assertJsonCount(20, 'blocks.0.fields')->assertJsonCount(0, 'field_values');
+        $read->assertJsonPath('blocks.0.fields.1.field_definition.value_type', 'text')
+            ->assertJsonPath('blocks.0.fields.1.field_definition.options_data.format', 'rich_text')
+            ->assertJsonPath('blocks.0.fields.5.display_options.choices', ['Actif', 'Retraité'])
+            ->assertJsonPath('blocks.0.fields.12.field_definition.options_data.levels', 7);
+        $requiredId = $read->json('blocks.0.fields.0.field_definition_id');
+        $update = ['title' => 'Titre refusé', 'summary' => null, 'field_values' => []];
+        $this->patchJson('/api/contents/'.$content->public_id, $update)->assertUnprocessable()->assertJsonValidationErrors('field_values');
+        $this->assertSame('Élia', $content->fresh()->title);
+        $update['field_values'] = [['field_definition_id' => $requiredId, 'value_text' => 'Renseigné']];
+        $this->patchJson('/api/contents/'.$content->public_id, $update)->assertOk();
+        $this->assertDatabaseHas('content_field_values', ['field_definition_id' => $requiredId, 'value_text' => 'Renseigné']);
+    }
+
     public function test_field_blocks_copy_canonical_values_independently_and_restore_their_schema(): void
     {
         $project = Project::create(['name' => 'Projet']);

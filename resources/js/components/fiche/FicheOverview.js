@@ -14,6 +14,7 @@ import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
 import FicheEntryFields from './FicheEntryFields.vue';
+import FicheFieldBlockBuilder from './FicheFieldBlockBuilder.vue';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 
 function clampSize(size) {
@@ -25,7 +26,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
+    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheFieldBlockBuilder, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
     props: {
         summary: String,
         fullName: String,
@@ -40,6 +41,7 @@ export default {
         attachmentsRevision: Number,
         connectionsPath: String,
         referenceTargets: { type: Array, default: () => [] },
+        referenceTypes: { type: Array, default: () => [] },
         equipmentType: Number,
         contentId: String,
         linkedTabs: { type: Array, default: () => [] },
@@ -254,7 +256,7 @@ export default {
     },
     methods: {
         copyTarget(copy) {
-            return (copy.field_ids || copy.source === 'template-fields' ? 'fields:' : 'text:') + copy.id;
+            return (copy.field_ids || ['template-fields', 'blank-fields'].includes(copy.source) ? 'fields:' : 'text:') + copy.id;
         },
         canonicalSources(item) {
             const card = this.bySource.get(item.source);
@@ -488,6 +490,15 @@ export default {
             const item = placement('text:' + id);
             this.draft.push({ ...item, ...settings, id: item.id, source: item.source });
         },
+        addFieldBlock({ title, fields }) {
+            if (!this.canCopy || this.draft.length >= 80) return;
+            const id = crypto.randomUUID();
+            const card = { title, icon: 'catalogue', fields: fields.map((field, index) => ({
+                id: 'slot-' + index, definitionId: index + 1, label: field.label, value: '—', empty: true, references: [],
+            })) };
+            this.copies.push({ id, source: 'blank-fields', title, fields, card });
+            this.draft.push(placement('fields:' + id));
+        },
         duplicate(index) {
             const original = this.draft[index];
             const card = this.bySource.get(original.source);
@@ -498,6 +509,7 @@ export default {
                 if (!fields.length) return;
                 this.copies.push({ id, source: staged?.source ?? original.source, field_ids: fields.map(field => field.definitionId),
                     ...(staged?.source === 'template-fields' ? { template_id: staged.template_id, template_revision: staged.template_revision, slot: staged.slot } : {}),
+                    ...(staged?.source === 'blank-fields' ? { title: staged.title, fields: staged.fields } : {}),
                     card: { ...card, fullName: null, fields } });
                 this.draft.splice(index + 1, 0, { ...original, id: crypto.randomUUID(), source: 'fields:' + id });
                 return;

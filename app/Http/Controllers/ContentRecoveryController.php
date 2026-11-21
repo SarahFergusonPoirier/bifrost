@@ -331,8 +331,15 @@ class ContentRecoveryController extends Controller
 
         $omitted = $content->fieldValues()->whereNotIn('field_definition_id', array_column($fields, 'field_definition_id'));
         $assignment = $content->templateAssignment()->first();
-        $blockFieldIds = $content->blocks()->where('block_type', 'fields')->get(['field_schema'])
-            ->flatMap(fn ($block): array => array_column($block->field_schema ?? [], 'field_definition_id'));
+        $blockFields = $content->blocks()->where('block_type', 'fields')->get(['field_schema'])
+            ->flatMap(fn ($block): array => $block->field_schema ?? []);
+        $blockFieldIds = $blockFields->pluck('field_definition_id');
+        $missingRequired = $blockFields->filter(fn (array $field): bool => (bool) ($field['is_required'] ?? false))
+            ->pluck('field_definition_id')->diff(array_column($fields, 'field_definition_id'));
+        $requiredLabels = FieldDefinition::whereKey($missingRequired->all())->pluck('label');
+        if ($requiredLabels->isNotEmpty()) {
+            throw ValidationException::withMessages(['field_values' => 'Renseigne les champs obligatoires : '.$requiredLabels->implode(', ').'.']);
+        }
         if ($assignment || $blockFieldIds->isNotEmpty()) {
             $active = $assignment?->templateVersion->fields()->whereHas('fieldDefinition')->pluck('field_definition_id') ?? collect();
             $activeBlockIds = FieldDefinition::whereKey($blockFieldIds->all())->pluck('id');

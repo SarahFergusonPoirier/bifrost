@@ -138,6 +138,16 @@ chargement et vérifie le type du fichier avant de servir son aperçu.
 
 ### Champs et modèles
 
+`App\FieldSchema` centralise les règles de validation, les attributs des
+définitions et les options de présentation communs aux modèles et aux blocs
+libres. `FicheFieldBlockBuilder` prépare un schéma dans le navigateur ; il
+réutilise le catalogue de types commun et transmet un bloc `blank-fields`
+uniquement lors de l’enregistrement de la disposition. Le serveur crée ses
+définitions et son schéma dans la même transaction. Les valeurs sont saisies
+ensuite avec les éditeurs habituels. Les champs obligatoires sont contrôlés
+lors de l’enregistrement des valeurs, sans effacer les autres modifications
+en cas de validation refusée.
+
 Les définitions et les versions du modèle décrivent les champs. Les valeurs
 appartiennent à la fiche et sont associées aux identifiants des définitions.
 Dans Vue, `templateFields.js` associe les types à leurs colonnes de valeur et

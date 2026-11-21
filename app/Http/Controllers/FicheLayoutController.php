@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\FieldSchema;
 use App\Models\Content;
 use App\Models\ContentBlock;
 use App\Models\FieldDefinition;
@@ -43,6 +44,8 @@ class FicheLayoutController extends Controller
     public function destroyBlock(Request $request, string $project, string $content, string $block): JsonResponse
     {
         $input = $request->validate([
+            ...FieldSchema::rules('copies.*.fields'),
+            'copies.*.fields' => ['required_if:copies.*.source,blank-fields', 'array', 'list', 'min:1', 'max:200'],
             'version' => ['required', 'integer', 'min:0'],
             'block_version' => ['required', 'string', 'size:64'],
             'confirmed' => ['required', 'accepted'],
@@ -110,15 +113,15 @@ class FicheLayoutController extends Controller
         $input = $request->validate([
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
-            'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot'],
+            'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot,fields'],
             'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
-            'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|template-fields|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
+            'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|blank-fields|template-fields|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
             'copies.*.template_id' => ['required_if:copies.*.source,template-fields', 'integer', 'min:1'],
             'copies.*.template_revision' => ['required_if:copies.*.source,template-fields', 'integer', 'min:1'],
             'copies.*.slot' => ['required_if:copies.*.source,template-fields', 'string', 'regex:/^blank-fields:[0-9]+$/'],
             'copies.*.field_ids' => ['sometimes', 'array', 'list', 'min:1', 'max:200'],
             'copies.*.field_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
-            'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank', 'string', 'max:255'],
+            'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank,blank-fields', 'string', 'max:255'],
             'copies.*.body' => ['nullable', 'string'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
             'tabs.*' => ['required', 'array:id,title,icon,hidden,placements'],
@@ -210,7 +213,7 @@ class FicheLayoutController extends Controller
         $position = (int) $record->blocks()->max('position');
 
         foreach ($copies as $copy) {
-            $fieldCopy = in_array($copy['source'], ['fields', 'external-links', 'template-fields'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
+            $fieldCopy = in_array($copy['source'], ['fields', 'external-links', 'template-fields', 'blank-fields'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
             if (! $sources->contains(($fieldCopy ? 'fields:' : 'text:').$copy['id'])) {
                 throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
             }
@@ -247,7 +250,23 @@ class FicheLayoutController extends Controller
     private function copyFieldBlock(Content $record, array $copy, int $position): array
     {
         $blueprint = null;
-        if ($copy['source'] === 'template-fields') {
+        if ($copy['source'] === 'blank-fields') {
+            $blueprint = ['title' => $copy['title'], 'fields' => []];
+            foreach ($copy['fields'] as $index => $field) {
+                if ($field['type'] === 'json') {
+                    throw ValidationException::withMessages(['fields' => 'Choisis un type de champ pris en charge par les fiches.']);
+                }
+                $definition = new FieldDefinition(FieldSchema::definitionAttributes($field, 'project', $record->project_id));
+                $blueprint['fields'][] = [
+                    'slot' => $index + 1, 'field_definition' => $definition->attributesToArray(),
+                    'label_override' => $field['label'], 'section_key' => Str::slug($field['section']) ?: 'fields',
+                    'display_options' => FieldSchema::displayOptions($field, $definition),
+                    'is_required' => $field['required'] ?? false, 'help_text' => $field['help'] ?? null,
+                ];
+            }
+            $fields = collect($blueprint['fields'])->map(fn (array $field): array => [...$field, 'field_definition_id' => $field['slot']]);
+            $title = $copy['title'];
+        } elseif ($copy['source'] === 'template-fields') {
             $template = DB::table('fiche_tab_templates')->where('id', $copy['template_id'])
                 ->where(fn ($query) => $query->where('project_id', $record->project_id)->orWhereNull('project_id'))->first();
             abort_unless($template, 404);

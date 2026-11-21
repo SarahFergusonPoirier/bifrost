@@ -34,6 +34,7 @@
                 <FicheTextEditor v-model="newBody" label="Texte" :targets="referenceTargets" />
                 <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
             </fieldset>
+            <FicheFieldBlockBuilder v-if="canCopy" :disabled="draft.length >= 80" :reference-types="referenceTypes" @create="addFieldBlock" />
         </details>
         <details v-if="blockLibraryPath" @toggle="$event.target.open && loadBlockTemplates()">
             <summary>Modèles de blocs enregistrés</summary>
