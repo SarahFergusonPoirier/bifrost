@@ -13,7 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->trimStrings(except: [
+            'summary',
+            'blocks.*.body',
+            'copies.*.body',
+            'field_values.*.value_text',
+            'field_values.*.value_json.*.description',
+            'field_values.*.value_json.*.fields.*.value',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -76,7 +76,7 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
-            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link,image'],
+            'fields.*.type' => ['required', 'in:text,rich_text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link,image'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
             'fields.*.allow_reference_creation' => ['sometimes', 'boolean'],
@@ -109,7 +109,7 @@ class ContentTemplateAuthoringController extends Controller
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
             $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link', 'image'], true);
-            $options = $structured ? ['format' => $field['type']] : [];
+            $options = $structured || $field['type'] === 'rich_text' ? ['format' => $field['type']] : [];
             if ($field['type'] === 'scale') {
                 $options['levels'] = (int) ($field['levels'] ?? 5);
             }
@@ -126,7 +126,7 @@ class ContentTemplateAuthoringController extends Controller
             $definition = $original?->fieldDefinition ?? FieldDefinition::create([
                 'key' => 'custom-'.Str::uuid(),
                 'label' => $field['label'],
-                'value_type' => $structured ? 'json' : $field['type'],
+                'value_type' => $structured ? 'json' : ($field['type'] === 'rich_text' ? 'text' : $field['type']),
                 'options_data' => $options ?: null,
                 'scope_type' => $template->scope_type,
                 'project_id' => $template->project_id,

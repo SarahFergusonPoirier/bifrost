@@ -441,6 +441,24 @@ class ContentRecoveryTest extends TestCase
         $this->assertSame(['image' => $imageId], $content->fieldValues()->firstOrFail()->value_json);
     }
 
+    public function test_content_writing_keeps_boundary_whitespace_while_trimming_titles(): void
+    {
+        $content = $this->content();
+        $url = '/api/contents/'.$content->public_id;
+        $summary = "\n  Une pensée.  \n";
+        $body = "  ## Un souvenir\n\nUn départ.\n";
+
+        $this->patchJson($url, [
+            'title' => '  Un titre  ', 'summary' => $summary,
+            'blocks' => [['block_type' => 'text', 'title' => '  Enfance  ', 'body' => $body]],
+        ])->assertOk()->assertJsonPath('title', 'Un titre');
+
+        $this->getJson($url)->assertOk()
+            ->assertJsonPath('summary', $summary)
+            ->assertJsonPath('blocks.0.title', 'Enfance')
+            ->assertJsonPath('blocks.0.body', $body);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

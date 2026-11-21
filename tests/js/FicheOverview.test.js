@@ -21,6 +21,22 @@ it('renders an image field through the canonical attachment gallery', () => {
     wrapper.unmount();
 });
 
+it('reads an explicit rich text field outside the biography section', async () => {
+    const field = { id: 1, field_definition_id: 7, section_key: 'terrain',
+        field_definition: { label: 'Observations', value_type: 'text', options_data: { format: 'rich_text' } } };
+    const text = '**Un souvenir**. ' + 'Une rencontre. '.repeat(100);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: groupTemplateFields([field]), hiddenFields: [], displayValue: () => text,
+        placements: [{ id: 'terrain', source: 'section:terrain', width: 6, height: 2, text_limit: 80 }],
+    } });
+    expect(wrapper.get('dd strong').text()).toBe('Un souvenir');
+    await wrapper.get('button[aria-expanded]').trigger('click');
+    expect(wrapper.get('.fiche-text').text()).toContain('Une rencontre. '.repeat(100).trim());
+    await wrapper.get('button[aria-label="Modifier Observations"]').trigger('click');
+    expect(wrapper.emitted('edit-field')).toEqual([[7]]);
+    wrapper.unmount();
+});
+
 it('reads canonical fields and expands long text in place', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom complet' } };
     const summary = 'Un résumé détaillé. '.repeat(30).trim();

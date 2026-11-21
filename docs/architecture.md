@@ -123,6 +123,12 @@ groupe les champs par section. `formatFieldValue.js` donne une présentation
 commune à la lecture et à l’historique, y compris pour les dates approximatives.
 Les états vide, inconnu et non applicable restent distincts.
 
+Le type `rich_text` utilise la colonne canonique `value_text` et active
+l’éditeur enrichi dans toutes les sections. Les anciennes biographies restent
+compatibles. Les exceptions de normalisation dans `bootstrap/app.php`
+conservent les espaces et retours à la ligne des textes rédigés, des résumés
+et des descriptions enrichies ; les titres et libellés restent nettoyés.
+
 `fieldTypes.js` centralise les types disponibles dans l’éditeur de modèles et
 les formats structurés reconnus par les fiches. Un champ Image stocke
 uniquement l’identifiant public d’une pièce jointe de la fiche. Il réutilise

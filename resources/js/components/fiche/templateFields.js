@@ -48,7 +48,7 @@ export function groupTemplateFields(fields) {
         if (!sections.has(section)) sections.set(section, []);
         const labels = [section, field.label_override, field.field_definition.label, ...(field.display_options?.section_aliases ?? [])];
         const richText = field.field_definition.value_type === 'text'
-            && (field.section_key === 'story' || labels.some(label => label?.toLocaleLowerCase('fr') === 'biographie'));
+            && (format === 'rich_text' || field.section_key === 'story' || labels.some(label => label?.toLocaleLowerCase('fr') === 'biographie'));
         sections.get(section).push({ ...field, column, format, richText });
     }
     return sections;

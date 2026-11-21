@@ -73,6 +73,32 @@ class TemplateUsageTest extends TestCase
             ->assertJsonPath('versions.0.fields.0.field_definition.options_data.format', 'image');
     }
 
+    public function test_rich_text_fields_preserve_long_formatted_values_in_any_section(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'journal', 'name' => 'Journal']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Journal de terrain', 'content_type_id' => $type->id,
+            'fields' => [['label' => 'Observations', 'section' => 'Terrain', 'type' => 'rich_text']],
+        ])->assertCreated()->json();
+        $fieldId = $this->getJson('/api/content-templates/'.$template['id'])->assertOk()
+            ->assertJsonPath('versions.0.fields.0.field_definition.value_type', 'text')
+            ->assertJsonPath('versions.0.fields.0.field_definition.options_data.format', 'rich_text')
+            ->json('versions.0.fields.0.field_definition_id');
+        $contentId = $this->postJson('/api/contents', [
+            'title' => 'Observations', 'project_id' => $project->id, 'content_type_id' => $type->id,
+            'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $text = str_repeat("## Une rencontre\nUn **souvenir**.\n- Un départ\n", 300);
+
+        $this->patchJson('/api/contents/'.$contentId, [
+            'title' => 'Observations', 'summary' => null,
+            'field_values' => [['field_definition_id' => $fieldId, 'value_text' => $text]],
+        ])->assertOk();
+
+        $this->getJson('/api/contents/'.$contentId)->assertOk()->assertJsonPath('field_values.0.value_text', $text);
+    }
+
     public function test_custom_templates_can_be_duplicated_and_versioned_without_mutating_the_source(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

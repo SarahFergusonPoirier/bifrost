@@ -1,5 +1,5 @@
 export const fieldTypes = {
-    text: 'Texte', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
+    text: 'Texte', rich_text: 'Texte enrichi long', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
     reference: 'Référence', json: 'Données structurées', measurement: 'Mesure', coordinates: 'Coordonnées',
     temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple',
     scale: 'Échelle segmentée', keywords: 'Mots-clés libres', equipment: 'Équipements intégrés',
@@ -8,4 +8,4 @@ export const fieldTypes = {
 };
 
 export const structuredFieldTypes = Object.keys(fieldTypes).filter(type =>
-    !['text', 'number', 'boolean', 'date', 'choice', 'reference', 'json'].includes(type));
+    !['text', 'rich_text', 'number', 'boolean', 'date', 'choice', 'reference', 'json'].includes(type));
