@@ -34,6 +34,17 @@
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
         </template>
     </div>
+    <div v-else-if="format === 'image'">
+        <label>Image jointe
+            <select :value="value?.image ?? ''" :disabled="!contentId" @focus="loadImages" @change="update('image', $event.target.value)">
+                <option value="">Aucune image</option>
+                <option v-if="value?.image && !images.some(image => image.public_id === value.image)" :value="value.image">Image enregistrée</option>
+                <option v-for="image in images" :key="image.public_id" :value="image.public_id">{{ image.original_name }}</option>
+            </select>
+        </label>
+        <p>Ajoute les images dans les pièces jointes de la fiche, puis sélectionne celle à afficher.</p>
+        <p v-if="imageError" role="alert">{{ imageError }} <button type="button" @click="loadImages">Réessayer</button></p>
+    </div>
     <div v-else-if="format === 'external_link'">
         <label>Adresse web <input type="url" maxlength="2048" :value="value?.url ?? ''"
             @change="$emit('change', $event.target.value ? { ...value, url: $event.target.value.trim() } : '')" /></label>

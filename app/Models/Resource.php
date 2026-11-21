@@ -5,12 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use League\Flysystem\UnableToRetrieveMetadata;
 
 class Resource extends Model
 {
     use HasFactory;
+
+    public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
     protected $attributes = ['scope_type' => 'global'];
 
@@ -45,5 +49,20 @@ class Resource extends Model
     public function contents(): BelongsToMany
     {
         return $this->belongsToMany(Content::class);
+    }
+
+    public function attachmentImageMime(): ?string
+    {
+        if (! preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $this->location)) {
+            return null;
+        }
+
+        try {
+            $mime = Storage::disk('local')->mimeType($this->location);
+        } catch (UnableToRetrieveMetadata) {
+            return null;
+        }
+
+        return in_array($mime, self::IMAGE_MIME_TYPES, true) ? $mime : null;
     }
 }

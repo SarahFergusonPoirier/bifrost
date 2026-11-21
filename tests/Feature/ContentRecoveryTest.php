@@ -400,6 +400,47 @@ class ContentRecoveryTest extends TestCase
         }
     }
 
+    public function test_image_fields_use_owned_raster_attachments_and_keep_missing_references_editable(): void
+    {
+        Storage::fake('local');
+        $content = $this->content();
+        $other = $this->content();
+        $field = FieldDefinition::create([
+            'key' => 'portrait', 'label' => 'Portrait', 'value_type' => 'json', 'options_data' => ['format' => 'image'],
+        ]);
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aA1sAAAAASUVORK5CYII=');
+        $url = '/api/contents/'.$content->public_id;
+        $imageId = $this->post("$url/attachments", ['file' => UploadedFile::fake()->createWithContent('portrait.png', $png)], ['Accept' => 'application/json'])
+            ->assertCreated()->json('public_id');
+        $foreignId = $this->post("/api/contents/{$other->public_id}/attachments", ['file' => UploadedFile::fake()->createWithContent('autre.png', $png)], ['Accept' => 'application/json'])
+            ->assertCreated()->json('public_id');
+        $documentId = $this->post("$url/attachments", ['file' => UploadedFile::fake()->createWithContent('note.txt', 'Une note.')], ['Accept' => 'application/json'])
+            ->assertCreated()->json('public_id');
+        $payload = ['title' => 'Original', 'summary' => null, 'field_values' => [[
+            'field_definition_id' => $field->id, 'value_json' => ['image' => $imageId],
+        ]]];
+
+        $this->patchJson($url, $payload)->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('field_values.0.value_json.image', $imageId);
+
+        foreach ([$foreignId, $documentId] as $invalidId) {
+            $payload['field_values'][0]['value_json']['image'] = $invalidId;
+            $this->patchJson($url, $payload)->assertUnprocessable()->assertJsonValidationErrors('value_json.image');
+            $this->assertSame(['image' => $imageId], $content->fieldValues()->firstOrFail()->value_json);
+        }
+
+        $image = $content->resources()->where('public_id', $imageId)->firstOrFail();
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => []])->assertOk();
+        Storage::disk('local')->assertExists($image->location);
+        $this->assertTrue($content->resources()->where('public_id', $imageId)->exists());
+        $payload['field_values'][0]['value_json']['image'] = $imageId;
+        $this->patchJson($url, $payload)->assertOk();
+        $this->deleteJson("$url/attachments/$imageId")->assertNoContent();
+        $payload['title'] = 'Titre révisé';
+        $this->patchJson($url, $payload)->assertOk()->assertJsonPath('title', 'Titre révisé');
+        $this->assertSame(['image' => $imageId], $content->fieldValues()->firstOrFail()->value_json);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

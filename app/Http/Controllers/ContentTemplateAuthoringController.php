@@ -76,7 +76,7 @@ class ContentTemplateAuthoringController extends Controller
             'fields.*.id' => ['nullable', 'integer', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.section' => ['required', 'string', 'max:255'],
-            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link'],
+            'fields.*.type' => ['required', 'in:text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link,image'],
             'fields.*.help' => ['nullable', 'string', 'max:10000'],
             'fields.*.required' => ['sometimes', 'boolean'],
             'fields.*.allow_reference_creation' => ['sometimes', 'boolean'],
@@ -108,7 +108,7 @@ class ContentTemplateAuthoringController extends Controller
             if (isset($field['id']) && ! $original?->fieldDefinition) {
                 throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de la version source.']);
             }
-            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link'], true);
+            $structured = in_array($field['type'], ['measurement', 'coordinates', 'temporal', 'references', 'multiple_choice', 'scale', 'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets', 'external_link', 'image'], true);
             $options = $structured ? ['format' => $field['type']] : [];
             if ($field['type'] === 'scale') {
                 $options['levels'] = (int) ($field['levels'] ?? 5);

@@ -118,6 +118,10 @@ class ContentFieldValue extends Model
     {
         $format = $definition->options_data['format'] ?? null;
         $rules = match ($format) {
+            'image' => [
+                'value_json' => ['required', 'array:image'],
+                'value_json.image' => ['required', 'uuid'],
+            ],
             'external_link' => [
                 'value_json' => ['required', 'array:url,label'],
                 'value_json.url' => ['required', 'string', 'max:2048', 'url:http,https'],
@@ -167,6 +171,14 @@ class ContentFieldValue extends Model
         };
 
         Validator::make(['value_json' => $this->value_json], $rules)->validate();
+
+        if ($format === 'image' && ($this->value_json['image'] ?? null) !== ($this->getOriginal('value_json')['image'] ?? null)) {
+            $image = $content->resources()->where('storage_mode', 'imported')
+                ->where('public_id', $this->value_json['image'])->first();
+            if (! $image?->attachmentImageMime()) {
+                throw ValidationException::withMessages(['value_json.image' => 'Choisis une image jointe à cette fiche.']);
+            }
+        }
 
         if ($format === 'equipment') {
             $ids = collect($this->value_json)->pluck('image')->filter()->unique();

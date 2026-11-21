@@ -97,6 +97,7 @@ export default {
                     badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)
                         ? field.display_options?.badge_color : null,
                     url: field.format === 'external_link' ? this.safeExternalUrl(this.fieldValue?.(field)?.url) : null,
+                    image: field.format === 'image' ? this.fieldValue?.(field)?.image : null,
                     levelMode: field.display_options?.repeatable_level_mode,
                     entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,

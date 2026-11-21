@@ -8,6 +8,7 @@ export function formatFieldValue(field, value, state, fieldReferences) {
         return fieldReferences(field, value).map(item => item.title).join(', ') || '—';
     }
     if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+    if (field.format === 'image') return value.image ? 'Image jointe' : '—';
     if (field.format === 'external_link') return value.label || value.url;
     if (['keywords', 'equipment', 'capabilities', 'repeatable', 'bullets'].includes(field.format)) return Array.isArray(value) ? value.map(keyword => keyword?.label ?? String(keyword)).join(', ') : JSON.stringify(value);
     if (field.format === 'scale') {

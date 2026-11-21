@@ -1,7 +1,25 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
+import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
 import { groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
+
+it('renders an image field through the canonical attachment gallery', () => {
+    const field = { id: 1, field_definition_id: 7, section_key: 'identity',
+        field_definition: { label: 'Portrait', value_type: 'json', options_data: { format: 'image' } } };
+    const wrapper = mount(FicheOverview, {
+        props: {
+            contentId: 'fiche', templateSections: groupTemplateFields([field]), hiddenFields: [],
+            displayValue: () => 'Image jointe', fieldValue: () => ({ image: 'portrait' }),
+        },
+        global: { stubs: { ContentAttachments: true } },
+    });
+    expect(wrapper.findComponent(ContentAttachments).props()).toMatchObject({
+        contentId: 'fiche', imageId: 'portrait', gallery: true, single: true, readOnly: true,
+    });
+    expect(wrapper.get('button[aria-label="Modifier Portrait"]').exists()).toBe(true);
+    wrapper.unmount();
+});
 
 it('reads canonical fields and expands long text in place', async () => {
     const field = { id: 1, field_definition_id: 2, field_definition: { label: 'Nom complet' } };

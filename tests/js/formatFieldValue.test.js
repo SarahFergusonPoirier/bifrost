@@ -10,6 +10,12 @@ it('shows a stored native date without its serialization time', () => {
     expect(formatFieldValue(field, '')).toBe('—');
 });
 
+it('gives image references a readable label in compact views and history', () => {
+    expect(formatFieldValue({ format: 'image' }, { image: 'portrait' })).toBe('Image jointe');
+    expect(formatFieldValue({ format: 'image' }, null)).toBe('—');
+    expect(formatFieldValue({ format: 'image' }, { image: 'portrait' }, 'unknown')).toBe('Inconnu');
+});
+
 it('preserves approximate dates and displays periods with a range separator', () => {
     const field = { format: 'temporal' };
     expect(formatFieldValue(field, { start: 'An 498', precision: 'approximate' })).toBe('Vers An 498');

@@ -1,6 +1,24 @@
-import { mount } from '@vue/test-utils';
-import { expect, it } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { expect, it, vi } from 'vitest';
 import StructuredField from '../../resources/js/components/StructuredField.vue';
+import { contentRequest } from '../../resources/js/services/contentRecovery';
+
+vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
+
+it('selects an attached image and clears the field without deleting the file', async () => {
+    contentRequest.mockResolvedValue({ data: [{ public_id: 'portrait', original_name: 'Portrait.png' }] });
+    const wrapper = mount(StructuredField, { props: { format: 'image', contentId: 'fiche', value: null } });
+    await wrapper.get('select').trigger('focus');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/contents/fiche/attachments?images=1');
+    await wrapper.get('select').setValue('portrait');
+    expect(wrapper.emitted('change').at(-1)).toEqual([{ image: 'portrait' }]);
+    await wrapper.setProps({ value: { image: 'portrait' } });
+    await wrapper.get('select').setValue('');
+    expect(wrapper.emitted('change').at(-1)).toEqual(['']);
+    expect(contentRequest.mock.calls.some(([, method]) => method === 'DELETE')).toBe(false);
+    wrapper.unmount();
+});
 
 it('conserve le calendrier fictif lors de la modification du repère', async () => {
     const wrapper = mount(StructuredField, {

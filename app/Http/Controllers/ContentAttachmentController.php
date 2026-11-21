@@ -9,14 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use League\Flysystem\UnableToRetrieveMetadata;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class ContentAttachmentController extends Controller
 {
-    private const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
     private const METADATA_RULES = [
         'alt' => ['nullable', 'string', 'max:255'],
         'caption' => ['nullable', 'string', 'max:1000'],
@@ -31,8 +28,8 @@ class ContentAttachmentController extends Controller
         $imagesOnly = $request->boolean('images');
         $attachments = $attachments->filter(function (Resource $attachment) use ($imagesOnly): bool {
             $metadata = $attachment->metadata ?? [];
-            $mime = array_key_exists('image_mime', $metadata) ? $metadata['image_mime'] : $this->imageMime($attachment);
-            $isImage = in_array($mime, self::IMAGE_TYPES, true);
+            $mime = array_key_exists('image_mime', $metadata) ? $metadata['image_mime'] : $attachment->attachmentImageMime();
+            $isImage = in_array($mime, Resource::IMAGE_MIME_TYPES, true);
             if ($isImage) {
                 $attachment->metadata = ['image_mime' => $mime] + $metadata;
             }
@@ -52,7 +49,7 @@ class ContentAttachmentController extends Controller
         ]);
         $file = $input['file'];
         $mime = $file->getMimeType();
-        $isImage = in_array($mime, self::IMAGE_TYPES, true);
+        $isImage = in_array($mime, Resource::IMAGE_MIME_TYPES, true);
         $metadata = ['size' => $file->getSize(), 'image_mime' => $isImage ? $mime : null];
         if (isset($input['caption'])) {
             $metadata['caption'] = $input['caption'];
@@ -102,7 +99,7 @@ class ContentAttachmentController extends Controller
     public function preview(string $content, string $attachment): StreamedResponse
     {
         $resource = $this->attachment($this->content($content), $attachment);
-        $mime = $this->imageMime($resource);
+        $mime = $resource->attachmentImageMime();
         abort_if($mime === null, 404);
 
         return Storage::disk('local')->response($resource->location, $resource->original_name, [
@@ -127,7 +124,7 @@ class ContentAttachmentController extends Controller
             $resource = $this->attachment($record, $attachment, lock: true);
             $metadata = $resource->metadata ?? [];
             if (array_key_exists('alt', $input)) {
-                $mime = $this->imageMime($resource);
+                $mime = $resource->attachmentImageMime();
                 if ($mime === null) {
                     unset($input['alt']);
                 } else {
@@ -138,21 +135,6 @@ class ContentAttachmentController extends Controller
 
             return response()->json($resource->only(['public_id', 'original_name', 'metadata']));
         }, attempts: 3);
-    }
-
-    private function imageMime(Resource $resource): ?string
-    {
-        if (! preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $resource->location)) {
-            return null;
-        }
-
-        try {
-            $mime = Storage::disk('local')->mimeType($resource->location);
-        } catch (UnableToRetrieveMetadata) {
-            return null;
-        }
-
-        return in_array($mime, self::IMAGE_TYPES, true) ? $mime : null;
     }
 
     private function content(string $publicId): Content

@@ -1,4 +1,5 @@
 import { fieldCalculation } from '../components/fiche/characterAge';
+import { fieldTypes } from '../components/fiche/fieldTypes';
 import { findIdentitySuggestions, identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
@@ -42,12 +43,6 @@ export default {
                 editor.value.content_type_id = '';
             }
         });
-
-        const fieldTypes = {
-            text: 'Texte', number: 'Nombre', boolean: 'Oui ou non', date: 'Date', choice: 'Choix',
-            reference: 'Référence', json: 'Données structurées', measurement: 'Mesure', coordinates: 'Coordonnées',
-            temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple', scale: 'Échelle segmentée', keywords: 'Mots-clés libres', equipment: 'Équipements intégrés', capabilities: 'Capacités intégrées', repeatable: 'Liste structurée', bullets: 'Liste à puces', external_link: 'Lien externe',
-        };
 
         async function editTemplate(template = null, copy = false) {
             if (saving.value) return;

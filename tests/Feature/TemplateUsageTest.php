@@ -60,6 +60,19 @@ class TemplateUsageTest extends TestCase
         $this->getJson("/api/contents/$id")->assertOk()->assertJsonPath('field_values.1.value_json', ['Rouge', 'Bleu']);
     }
 
+    public function test_image_fields_can_be_published_in_a_reusable_template(): void
+    {
+        $type = ContentType::create(['key' => 'portrait', 'name' => 'Portrait']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Galerie', 'content_type_id' => $type->id,
+            'fields' => [['label' => 'Portrait', 'section' => 'Identité', 'type' => 'image']],
+        ])->assertCreated()->json();
+
+        $this->getJson('/api/content-templates/'.$template['id'])->assertOk()
+            ->assertJsonPath('versions.0.fields.0.field_definition.value_type', 'json')
+            ->assertJsonPath('versions.0.fields.0.field_definition.options_data.format', 'image');
+    }
+
     public function test_custom_templates_can_be_duplicated_and_versioned_without_mutating_the_source(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

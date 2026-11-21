@@ -123,6 +123,15 @@ groupe les champs par section. `formatFieldValue.js` donne une présentation
 commune à la lecture et à l’historique, y compris pour les dates approximatives.
 Les états vide, inconnu et non applicable restent distincts.
 
+`fieldTypes.js` centralise les types disponibles dans l’éditeur de modèles et
+les formats structurés reconnus par les fiches. Un champ Image stocke
+uniquement l’identifiant public d’une pièce jointe de la fiche. Il réutilise
+`ContentAttachments` pour la lecture, les légendes et les textes alternatifs.
+La validation vérifie le fichier avec `Resource::attachmentImageMime()` ;
+retirer la valeur du champ conserve la pièce jointe. Une référence déjà
+enregistrée vers une image devenue indisponible reste lisible comme manquante
+et ne bloque pas les autres modifications de la fiche.
+
 Les placements de section existants peuvent retrouver une section renommée
 par ses anciens libellés. En cas de correspondances multiples, la résolution
 exige une correspondance unique. Le nom complet et l’âge dérivé utilisent

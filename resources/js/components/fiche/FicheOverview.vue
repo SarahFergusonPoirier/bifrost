@@ -285,7 +285,9 @@
                                 :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)"><WorkspaceIcon name="narration" /></button>
                         </dt>
                         <dd>
-                            <ul v-if="field.references.length" class="fiche-references">
+                            <ContentAttachments v-if="field.image && contentId" :key="field.image + ':' + attachmentsRevision" :content-id="contentId"
+                                :image-id="field.image" gallery single read-only />
+                            <ul v-else-if="field.references.length" class="fiche-references">
                                 <li v-for="reference in field.references" :key="reference.id">
                                     <button v-if="reference.publicId" type="button" @click="$emit('open', reference.publicId)">{{ reference.title }}</button>
                                     <span v-else>{{ reference.title }}</span>
