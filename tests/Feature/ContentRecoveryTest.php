@@ -322,6 +322,18 @@ class ContentRecoveryTest extends TestCase
             ->assertJsonPath('metadata.image_mime', 'image/png')->assertJsonPath('metadata.alt', 'Ancien portrait');
     }
 
+    public function test_project_text_cannot_be_removed_through_the_general_editor(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $content = $this->content();
+        $content->update(['scope_type' => 'project', 'project_id' => $project->id]);
+        $block = $content->blocks()->create(['block_type' => 'text', 'title' => 'Biographie', 'body' => 'Un souvenir.', 'position' => 0]);
+        $this->patchJson('/api/contents/'.$content->public_id, ['title' => 'Titre modifié', 'summary' => null, 'blocks' => []])
+            ->assertUnprocessable()->assertJsonValidationErrors('blocks');
+        $this->assertSame('Original', $content->fresh()->title);
+        $this->assertNull($block->fresh()->deleted_at);
+    }
+
     private function content(): Content
     {
         $type = ContentType::firstOrCreate(['key' => 'document'], ['name' => 'Document']);

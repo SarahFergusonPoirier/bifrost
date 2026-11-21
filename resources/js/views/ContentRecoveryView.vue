@@ -429,7 +429,9 @@
                         <p><label>Titre du bloc <input v-model="block.title" maxlength="255" /></label></p>
                         <FicheTextEditor :id="block.public_id ? 'fiche-text-editor-' + block.public_id : undefined"
                             v-model="block.body" label="Texte" :targets="referenceTargets" />
-                        <button type="button" @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
+                        <button v-if="!projectId || !block.public_id || block.block_type !== 'text'" type="button"
+                            @click="draft.blocks.splice(index, 1)">Retirer le bloc</button>
+                        <p v-else>La suppression de ce texte enregistré passe par « Vérifier la suppression d’un bloc de texte » dans la personnalisation des blocs.</p>
                     </fieldset>
                     <button type="button" @click="draft.blocks.push({ block_type: 'text', title: null, body: null })">Ajouter un bloc</button>
                     <button type="submit" :disabled="!dirty">Enregistrer</button>

@@ -277,6 +277,14 @@ class ContentRecoveryController extends Controller
 
     private function saveBlocks(Content $content, array $blocks): void
     {
+        if ($content->project_id !== null) {
+            $retainedPublicIds = array_column($blocks, 'public_id');
+            if ($content->blocks()->where('block_type', 'text')->whereNotIn('public_id', $retainedPublicIds)->exists()) {
+                throw ValidationException::withMessages([
+                    'blocks' => 'Utilise la vérification de suppression du bloc pour retirer un texte enregistré.',
+                ]);
+            }
+        }
         $retained = [];
         foreach ($blocks as $position => $attributes) {
             $publicId = $attributes['public_id'] ?? null;
