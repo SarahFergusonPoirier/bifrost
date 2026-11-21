@@ -280,8 +280,8 @@
                         <dd>{{ card.fullName }}</dd>
                     </div>
                     <div v-for="field in fields" :key="field.id">
-                        <dt>{{ field.label }}
-                            <button v-if="!editing && !(field.url && card.source === 'external-links')" type="button"
+                        <dt class="fiche-field-label"><span>{{ field.label }}</span>
+                            <button v-if="!editing && !(field.url && card.source === 'external-links')" type="button" class="fiche-field-edit"
                                 :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)"><WorkspaceIcon name="narration" /></button>
                         </dt>
                         <dd>

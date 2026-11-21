@@ -93,6 +93,28 @@
     border-bottom: 1px solid var(--color-border-light);
 }
 
+.fiche-field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.fiche-field-label .fiche-field-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    min-height: 2rem;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    color: var(--workspace-accent);
+}
+
 .fiche-tags {
     flex-wrap: wrap;
     list-style: none;
