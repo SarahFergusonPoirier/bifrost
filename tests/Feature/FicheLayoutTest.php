@@ -16,6 +16,31 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_an_explicit_capability_binding_protects_the_field_block_from_deletion(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $field = FieldDefinition::create(['key' => 'capabilities', 'label' => 'Capacités', 'value_type' => 'json', 'options_data' => ['format' => 'capabilities']]);
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Talents', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $layout = $this->getJson($url)->json();
+        foreach ($layout['tabs'] as &$tab) {
+            $tab['placements'] = [];
+        }
+        unset($tab);
+        $layout['tabs'][0]['placements'] = [['id' => 'c66e1834-6857-4bd4-a58f-a91e179d1788', 'source' => 'capabilities', 'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false, 'field_order' => [$field->id]]];
+        $this->putJson($url, $layout)->assertOk();
+        $path = "$url/blocks/{$block->public_id}";
+        $impact = $this->getJson("$path/impact")->assertOk()->assertJsonCount(1, 'placements')->json();
+        $this->deleteJson($path, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
+        $this->assertDatabaseHas('content_blocks', ['id' => $block->id]);
+        $this->postJson("/api/projects/{$project->id}/contents/{$content->public_id}/fiche-tab-templates", [
+            'name' => 'Capacités partagées', 'scope' => 'project', 'tab' => 'overview', 'version' => 1,
+        ])->assertUnprocessable();
+        $this->assertDatabaseCount('fiche_tab_templates', 0);
+    }
+
     public function test_field_block_deletion_checks_dependencies_and_retains_canonical_values(): void
     {
         $project = Project::create(['name' => 'Projet']);

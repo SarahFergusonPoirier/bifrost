@@ -13,7 +13,7 @@
         <template v-else-if="kind !== 'timeline'">
             <ul v-if="items.length" class="fiche-relations" :class="{ 'fiche-relations--cards': view === 'cards' }">
                 <li v-for="(relation, index) in items.slice(0, limit)" :key="relation.id ?? index">
-                    <slot name="entry" :entry="relation">
+                    <slot name="entry" :entry="relation" :detailed="view === 'cards' || showDetails">
                     <img v-if="relation.image && (kind === 'relations' || view === 'cards')"
                         :class="kind === 'relations' ? 'fiche-relation-avatar' : 'fiche-equipment-image'"
                         :src="relation.image" alt="" loading="lazy" @error="$event.target.hidden = true" />

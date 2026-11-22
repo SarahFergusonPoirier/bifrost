@@ -85,8 +85,15 @@ class FicheLayoutController extends Controller
                 return true;
             }
 
-            return ($placement['source'] ?? null) === 'fields' && $fieldIds !== []
-                && (! isset($placement['field_order']) || array_intersect($fieldIds, $placement['field_order']) !== []);
+            if ($fieldIds === []) {
+                return false;
+            }
+            if (($placement['source'] ?? null) === 'fields' && ! isset($placement['field_order'])) {
+                return true;
+            }
+
+            return in_array($placement['source'] ?? null, ['fields', 'equipment', 'capabilities'], true)
+                && array_intersect($fieldIds, $placement['field_order'] ?? []) !== [];
         };
         $placements = collect($layout['tabs'])->flatMap(fn (array $tab): array => collect($tab['placements'] ?? [])
             ->filter($usesBlock)

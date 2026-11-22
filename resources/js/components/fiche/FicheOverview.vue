@@ -200,7 +200,16 @@
                         <option value="cover">Remplir la miniature</option>
                     </select>
                 </label>
-                <label v-if="['relations', 'equipment'].includes(placement.source)">Présentation de la liste
+                <details v-if="['capabilities', 'equipment'].includes(placement.source) && localBindingFields(placement.source).length">
+                    <summary>Champs partagés dans ce bloc</summary>
+                    <p>Les champs cochés sont affichés avec leurs valeurs canoniques. Les copies indépendantes restent séparées tant qu’elles ne sont pas choisies ici.</p>
+                    <label v-for="field in localBindingFields(placement.source)" :key="field.field_definition_id">
+                        <input type="checkbox" :checked="selectedLocalFields(placement.source, placement).some(item => item.field_definition_id === field.field_definition_id)"
+                            @change="toggleSharedField(placement, field.field_definition_id, $event.target.checked)" />
+                        {{ field.label_override || field.field_definition.label }}{{ field.blockId ? ' · ' + field.blockTitle : '' }}
+                    </label>
+                </details>
+                <label v-if="['relations', 'equipment', 'capabilities'].includes(placement.source)">Présentation de la liste
                     <select :value="placement.view ?? 'list'" @change="placement.view = $event.target.value">
                         <option value="list">Liste compacte</option>
                         <option value="cards">Cartes</option>
@@ -240,8 +249,8 @@
                 <small v-if="shared" class="fiche-shared-label">Données partagées</small>
                 <button v-if="!editing && ['attachments', 'gallery'].includes(card.source)" type="button"
                     @click="$emit('edit-attachments')">Gérer les pièces jointes</button>
-                <button v-if="!editing && editableEntryFields[card.source]" type="button"
-                    @click="$emit('edit-field', editableEntryFields[card.source])">Modifier les entrées locales</button>
+                <button v-if="!editing && editableEntryField(card.source, placement)" type="button"
+                    @click="$emit('edit-field', editableEntryField(card.source, placement))">Modifier les entrées locales</button>
                 <button v-if="!editing && card.source === 'summary'" type="button"
                     @click="$emit('edit-text', 'summary')">{{ card.text ? 'Modifier le résumé' : 'Rédiger le résumé' }}</button>
                 <button v-if="!editing && card.text && card.source.startsWith('text:')" type="button"
@@ -254,7 +263,7 @@
                     @keydown="resizeWithKeyboard($event, placement)">↘</button>
             </template>
             <template v-if="!placement.collapsed">
-                <FicheLinkedData v-if="card.linked" :key="card.source + contentVersion" :path="linksPath" :kind="card.source" :local-equipment="localEquipment" :connections-path="connectionsPath" :content-id="contentId"
+                <FicheLinkedData v-if="card.linked" :key="card.source + contentVersion" :path="linksPath" :kind="card.source" :local-equipment="equipmentFor(placement)" :connections-path="connectionsPath" :content-id="contentId"
                     :targets="card.source === 'equipment' ? referenceTargets.filter(item => item.content_type_id === equipmentType) : referenceTargets"
                     :sort="placement.sort" :view="placement.view" :full="!!active && active === linkedTabFor(card.source)" :has-tab="!!linkedTabFor(card.source)"
                     @open="$emit('open', $event)" @show-all="$emit('select', linkedTabFor(card.source))" />
@@ -262,9 +271,9 @@
                     :select-image="editing && !savingLayout && placement.media_mode === 'single'"
                     @select-image="placement.media_image = $event" read-only />
                 <FicheLinkedData v-else-if="card.source === 'capabilities'" :key="card.source + contentVersion" :path="linksPath" kind="capabilities"
-                    :local-capabilities="card.entries" :connections-path="connectionsPath" :content-id="contentId" :targets="referenceTargets" view="cards" :full="!!active && active === linkedTabFor(card.source)"
+                    :local-capabilities="capabilitiesFor(placement)" :connections-path="connectionsPath" :content-id="contentId" :targets="referenceTargets" :view="placement.view ?? 'cards'" :full="!!active && active === linkedTabFor(card.source)"
                     :has-tab="!!linkedTabFor(card.source)" @show-all="$emit('select', linkedTabFor(card.source))">
-                    <template #entry="{ entry }">
+                    <template #entry="{ entry, detailed }">
                         <button v-if="entry.public_id" type="button" @click="$emit('open', entry.public_id)">{{ entry.label }}</button>
                         <strong v-else>{{ entry.label }}</strong>
                         <span v-if="entry.category" class="fiche-relation-label">{{ entry.category }}</span>
@@ -273,8 +282,8 @@
                         <span v-else-if="entry.mastery && placement.mastery_view !== 'hidden'" class="fiche-choice-badge">
                             Maîtrise · {{ entry.mastery }} / 5
                         </span>
-                        <FicheText v-if="entry.description" :text="entry.description" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
-                        <FicheEntryFields :fields="entry.fields" :text-limit="placement.text_limit ?? undefined"
+                        <FicheText v-if="detailed && entry.description" :text="entry.description" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
+                        <FicheEntryFields v-if="detailed" :fields="entry.fields" :text-limit="placement.text_limit ?? undefined"
                             :resolve-reference="resolveReference" @open="$emit('open', $event)" />
                     </template>
                 </FicheLinkedData>

@@ -3,6 +3,56 @@ import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
+import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
+
+it.each(['capabilities', 'equipment'])('keeps independent %s fields separate until they are explicitly shared', async kind => {
+    const field = id => ({ id, field_definition_id: id, section_key: 'local',
+        field_definition: { label: id === 1 ? 'Original' : 'Copie', value_type: 'json', options_data: { format: kind } } });
+    const content = { template_assignment: { template_version: { fields: [field(1)] } }, blocks: [
+        { public_id: 'independent', block_type: 'fields', title: 'Bloc indépendant', fields: [field(2)] },
+    ] };
+    const persist = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(FicheOverview, { props: {
+        contentId: 'fiche', linksPath: '/links', templateSections: groupContentFields(content), blocks: content.blocks, hiddenFields: [],
+        displayValue: () => '', fieldValue: field => [{ label: field.field_definition_id === 1 ? 'Source' : 'Indépendant' }],
+        placements: [{ id: 'main', source: kind, width: 6, height: 2, view: 'list' }, { id: 'copy', source: 'fields:independent', width: 6, height: 2 }], persist,
+    }, global: { stubs: { FicheLinkedData: true } } });
+    const linked = () => wrapper.findAllComponents(FicheLinkedData).find(component => component.props('kind') === kind);
+    const local = () => linked().props(kind === 'capabilities' ? 'localCapabilities' : 'localEquipment').map(item => item.label ?? item.title);
+    expect(local()).toEqual(['Source']);
+    expect(linked().props('view')).toBe('list');
+    expect(wrapper.text()).toContain('Indépendant');
+    await wrapper.findAll('button').find(button => button.text() === 'Modifier les entrées locales').trigger('click');
+    expect(wrapper.emitted('edit-field').at(-1)).toEqual([1]);
+    await wrapper.findAll('button').find(button => button.text() === 'Personnaliser les blocs').trigger('click');
+    const bindings = wrapper.findAll('details').find(details => details.find('summary').text() === 'Champs partagés dans ce bloc');
+    await bindings.findAll('label').find(label => label.text().includes('Copie')).get('input').setValue(true);
+    expect(local()).toEqual(['Source', 'Indépendant']);
+    expect(wrapper.vm.displayed.find(item => item.placement.id === 'copy').shared).toBe(true);
+    await wrapper.vm.save();
+    expect(persist.mock.calls[0][0].find(item => item.id === 'main').field_order).toEqual([1, 2]);
+    wrapper.unmount();
+});
+
+it('keeps capability descriptions accessible through the full view when the placement uses a compact list', async () => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value() { this.open = true; } });
+    const field = { id: 1, field_definition_id: 1, format: 'capabilities', field_definition: { label: 'Capacités' } };
+    const wrapper = mount(FicheOverview, { props: {
+        contentId: 'fiche', templateSections: new Map([['Talents', [field]]]), hiddenFields: [], displayValue: () => '',
+        fieldValue: () => [{ label: 'Vol', description: 'Description complète du vol.' }],
+        placements: [{ id: 'ability', source: 'capabilities', width: 6, height: 2, view: 'list' }],
+    } });
+    try {
+        expect(wrapper.find('.fiche-relations--cards').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('Description complète du vol.');
+        await wrapper.findAll('button').find(button => button.text() === 'Voir tout').trigger('click');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Description complète du vol.');
+    } finally {
+        wrapper.unmount();
+        delete HTMLDialogElement.prototype.showModal;
+    }
+});
 
 it('reads the history of a deeply nested member by its canonical field and entry identities', async () => {
     const leaf = { key: 'flag', field_definition: { label: 'Accompli', value_type: 'boolean' }, display_options: { history_view: 'history' } };

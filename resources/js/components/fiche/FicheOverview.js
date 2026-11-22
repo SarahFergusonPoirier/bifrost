@@ -72,18 +72,6 @@ export default {
                 fields: [...this.templateSections.values()].flat().filter(field => field.blockId === block.public_id),
                 pendingFields: update?.fields };
         },
-        editableEntryFields() {
-            const fields = {};
-            for (const section of this.templateSections.values()) {
-                for (const field of section) {
-                    if (['capabilities', 'equipment'].includes(field.format)
-                        && !this.hiddenFields.includes(field.field_definition_id) && !this.fieldState?.(field)) {
-                        fields[field.format] ??= field.field_definition_id;
-                    }
-                }
-            }
-            return fields;
-        },
         textBlockTitles() {
             const query = this.query.trim().toLocaleLowerCase('fr');
             return ['Texte', 'Biographie', 'Personnalité', 'Résumé'].filter(title => title.toLocaleLowerCase('fr').includes(query));
@@ -111,7 +99,7 @@ export default {
                     image: field.format === 'image' ? this.fieldValue?.(field)?.image : null,
                     attachment: field.format === 'attachment' ? this.fieldValue?.(field)?.attachment : null,
                     levelMode: field.display_options?.repeatable_level_mode,
-                    entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
+                    entries: ['repeatable', 'bullets', 'capabilities', 'equipment'].includes(field.format) ? this.fieldValue?.(field) : null,
                     entryFields: field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields ?? [],
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level && this.fieldValue(field).level <= (field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5)
@@ -152,7 +140,7 @@ export default {
         },
         localKeywords() {
             return [...this.templateSections.values()].flatMap(fields => fields
-                .filter(field => field.format === 'keywords' && !this.hiddenFields.includes(field.field_definition_id))
+                .filter(field => field.format === 'keywords' && !field.blockId && !this.hiddenFields.includes(field.field_definition_id))
                 .flatMap(field => {
                     const entries = this.fieldValue?.(field);
                     if (!Array.isArray(entries)) return [];
@@ -164,26 +152,10 @@ export default {
                 }));
         },
         localCapabilities() {
-            return [...this.templateSections.values()].flatMap(fields => fields
-                .filter(field => field.format === 'capabilities' && !this.hiddenFields.includes(field.field_definition_id))
-                .flatMap(field => this.fieldValue?.(field) || []));
+            return this.capabilitiesFor();
         },
         localEquipment() {
-            return [...this.templateSections.values()].flatMap(fields => fields
-                .filter(field => field.format === 'equipment' && !this.hiddenFields.includes(field.field_definition_id))
-                .flatMap(field => {
-                    const entries = this.fieldValue?.(field);
-                    if (!Array.isArray(entries)) return [];
-                    return entries.map((entry, index) => ({
-                        id: 'local-' + field.field_definition_id + '-' + index,
-                        title: entry.label,
-                        note: entry.description,
-                        fields: entry.fields,
-                        image: entry.image && this.contentId
-                            ? '/api/contents/' + encodeURIComponent(this.contentId) + '/attachments/' + encodeURIComponent(entry.image) + '/preview'
-                            : null,
-                    }));
-                }));
+            return this.equipmentFor();
         },
         matchingCards() {
             const query = this.query.trim().toLocaleLowerCase('fr');
@@ -266,6 +238,40 @@ export default {
         },
     },
     methods: {
+        localBindingFields(kind) {
+            return [...new Map([...this.templateSections.values()].flat()
+                .filter(field => field.format === kind && !this.hiddenFields.includes(field.field_definition_id))
+                .map(field => [field.field_definition_id, field])).values()];
+        },
+        selectedLocalFields(kind, placement = {}) {
+            const fields = this.localBindingFields(kind);
+            if (!placement.field_order) return fields.filter(field => !field.blockId);
+            const index = new Map(fields.map(field => [field.field_definition_id, field]));
+            return placement.field_order.map(id => index.get(id)).filter(Boolean);
+        },
+        toggleSharedField(placement, id, checked) {
+            const ids = this.selectedLocalFields(placement.source, placement).map(field => field.field_definition_id);
+            placement.field_order = checked ? [...new Set([...ids, id])] : ids.filter(value => value !== id);
+        },
+        editableEntryField(kind, placement) {
+            return ['capabilities', 'equipment'].includes(kind)
+                ? this.selectedLocalFields(kind, placement).find(field => !this.fieldState?.(field))?.field_definition_id : null;
+        },
+        capabilitiesFor(placement) {
+            return this.selectedLocalFields('capabilities', placement).flatMap(field => {
+                const entries = this.fieldValue?.(field);
+                return Array.isArray(entries) ? entries : [];
+            });
+        },
+        equipmentFor(placement) {
+            return this.selectedLocalFields('equipment', placement).flatMap(field => {
+                const entries = this.fieldValue?.(field);
+                return Array.isArray(entries) ? entries.map((entry, index) => ({
+                    id: 'local-' + field.field_definition_id + '-' + index, title: entry.label, note: entry.description, fields: entry.fields,
+                    image: entry.image && this.contentId ? '/api/contents/' + encodeURIComponent(this.contentId) + '/attachments/' + encodeURIComponent(entry.image) + '/preview' : null,
+                })) : [];
+            });
+        },
         editFieldBlock(id) {
             this.schemaTrigger = document.activeElement;
             this.editingBlockId = id;
@@ -290,7 +296,8 @@ export default {
         canonicalSources(item) {
             const card = this.bySource.get(item.source);
             if (!card) return [];
-            if (!card.fields) return ['source:' + this.resolvedSource(item.source)];
+            if (!card.fields) return ['source:' + this.resolvedSource(item.source),
+                ...(['capabilities', 'equipment'].includes(item.source) ? this.selectedLocalFields(item.source, item).map(field => 'field:' + field.field_definition_id) : [])];
             const pending = this.copies.find(copy => this.copyTarget(copy) === item.source);
             const prefix = pending ? 'pending:' + pending.id + ':' : '';
             const sources = this.orderedFields(item, card.fields).map(field => prefix + 'field:' + field.definitionId);

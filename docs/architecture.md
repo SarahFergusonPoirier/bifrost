@@ -287,3 +287,18 @@ des anciennes valeurs réutilise les composants typés, sans rouvrir leur propre
 historique. Les doublons sont identifiés par la valeur canonique plutôt que
 par le libellé affiché. Une réponse de chargement devenue obsolète après un
 changement de fiche ou de chemin est ignorée.
+
+Les blocs généraux Capacités et Équipements utilisent par défaut les champs
+du modèle de fiche. Les champs des blocs indépendants ne rejoignent pas ces
+listes implicitement. Le réglage « Champs partagés dans ce bloc » sélectionne
+explicitement des définitions canoniques via `placement.field_order`. La lecture,
+le signalement du partage et l’action d’édition utilisent la même sélection.
+L’analyse de suppression protège aussi ces liens actuels et historiques.
+Les mots-clés des blocs indépendants restent également séparés des étiquettes
+générales. Les champs de capacités et d’équipements sont rendus avec leurs
+descriptions et champs complémentaires lorsqu’ils figurent dans un bloc libre.
+Le bloc Capacités accepte le mode liste ou cartes ; une liste compacte ouvre
+les descriptions complètes dans la vue dédiée.
+Une sélection pointant vers un bloc indépendant de la fiche ne peut pas être
+exportée telle quelle comme modèle d’onglet : le serveur demande d’enregistrer
+le bloc de champs source, dont la structure est réutilisable sans ses valeurs.
