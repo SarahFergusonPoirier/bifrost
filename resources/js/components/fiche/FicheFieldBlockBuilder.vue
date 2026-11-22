@@ -12,6 +12,9 @@
             <p v-if="field.existingId">Pour utiliser un autre type, ajoute un nouveau champ. Les valeurs d’un champ retiré restent conservées.</p>
             <label>Aide facultative <textarea v-model="field.help" maxlength="10000" /></label>
             <label><input v-model="field.required" type="checkbox" /> Champ obligatoire</label>
+            <label>Valeurs vides en lecture
+                <select v-model="field.emptyDisplay"><option value="inherit">Hériter du bloc</option><option value="show">Afficher</option><option value="hide">Masquer</option></select>
+            </label>
             <label>Historique
                 <select v-model="field.history_view"><option value="current">Valeur actuelle</option><option value="history">Valeurs datées</option></select>
             </label>

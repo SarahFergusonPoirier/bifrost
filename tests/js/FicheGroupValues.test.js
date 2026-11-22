@@ -9,6 +9,28 @@ const schema = [
     { key: 'boolean', field_definition: { label: 'Active', value_type: 'boolean' }, display_options: {}, default_value: { value_boolean: false } },
 ];
 
+it('inherits empty-field visibility but preserves explicit states, false and zero', async () => {
+    const definitions = [
+        ...schema,
+        { key: 'inherit', field_definition: { label: 'Vide hérité', value_type: 'text' }, display_options: {} },
+        { key: 'show', field_definition: { label: 'Vide affiché', value_type: 'text' }, display_options: { hide_empty: false } },
+        { key: 'unknown', field_definition: { label: 'Inconnu explicite', value_type: 'text' }, display_options: { hide_empty: true } },
+        { key: 'na', field_definition: { label: 'Non applicable explicite', value_type: 'text' }, display_options: { hide_empty: true } },
+    ];
+    const wrapper = mount(FicheGroupValues, { props: { schema: definitions, hideEmpty: true,
+        values: { number: { value_number: 0 }, boolean: { value_boolean: false }, unknown: { value_state: 'unknown' }, na: { value_state: 'not_applicable' } },
+    } });
+    expect(wrapper.text()).not.toContain('Vide hérité');
+    expect(wrapper.text()).toContain('Vide affiché');
+    expect(wrapper.text()).toContain('Inconnu explicite');
+    expect(wrapper.text()).toContain('Non applicable explicite');
+    expect(wrapper.text()).toContain('Coût');
+    expect(wrapper.text()).toContain('Active');
+    await wrapper.setProps({ editable: true });
+    expect(wrapper.text()).toContain('Vide hérité');
+    wrapper.unmount();
+});
+
 it('shows retired values as read-only and keeps them when editing another member', async () => {
     const wrapper = mount(FicheGroupValues, { props: { editable: true,
         schema: [schema[0], { ...schema[1], retired: true }],

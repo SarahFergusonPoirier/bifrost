@@ -315,3 +315,11 @@ locaux y sont refusées, y compris les images des équipements intégrés, les
 défauts des membres de groupes et les valeurs imbriquées d’un défaut de groupe.
 Les équipements sans fichier et les états explicites restent réutilisables.
 Un refus annule la version, ses définitions et son modèle lorsqu’il est nouveau.
+
+`display_options.hide_empty` permet à chaque champ de remplacer la règle de
+lecture du bloc : `true` masque les valeurs vides, `false` les affiche et
+l’absence de propriété hérite du bloc. La configuration reçoit `null` pour
+revenir à cet héritage. Les groupes répétables propagent la règle à leurs
+membres, dont les réglages explicites restent prioritaires. L’édition présente
+toujours les champs actifs. Zéro, faux, « inconnu » et « non applicable » ne
+sont pas des valeurs vides. Les valeurs et les révisions restent conservées.

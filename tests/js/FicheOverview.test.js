@@ -5,6 +5,24 @@ import ContentAttachments from '../../resources/js/components/ContentAttachments
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 
+it('lets field empty-value settings override the block while keeping zero and false visible', () => {
+    const fields = [
+        { id: 1, field_definition_id: 1, section_key: 'test', field_definition: { label: 'Vide hérité', value_type: 'text' } },
+        { id: 2, field_definition_id: 2, section_key: 'test', display_options: { hide_empty: false }, field_definition: { label: 'Vide affiché', value_type: 'text' } },
+        { id: 3, field_definition_id: 3, section_key: 'test', display_options: { hide_empty: true }, field_definition: { label: 'Zéro', value_type: 'number' } },
+        { id: 4, field_definition_id: 4, section_key: 'test', display_options: { hide_empty: true }, field_definition: { label: 'Faux', value_type: 'boolean' } },
+    ];
+    const wrapper = mount(FicheOverview, { props: { templateSections: groupTemplateFields(fields), hiddenFields: [], displayValue: () => '—',
+        fieldValue: field => ({ 3: 0, 4: false })[field.field_definition_id] ?? '',
+        placements: [{ id: 'test', source: 'section:test', width: 6, height: 2, hide_empty: true }],
+    } });
+    expect(wrapper.text()).not.toContain('Vide hérité');
+    expect(wrapper.text()).toContain('Vide affiché');
+    expect(wrapper.text()).toContain('Zéro');
+    expect(wrapper.text()).toContain('Faux');
+    wrapper.unmount();
+});
+
 it('stages the field structure of a bound block template even without a direct field placement', async () => {
     const persist = vi.fn().mockResolvedValue(undefined);
     const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', canCopy: true, templateSections: new Map(), hiddenFields: [],

@@ -93,6 +93,7 @@ export default {
                     value: this.displayValue(field),
                     richText: field.richText && !this.fieldState?.(field),
                     empty: this.isEmptyField(field),
+                    hideEmpty: field.display_options?.hide_empty,
                     references: this.fieldReferences(field),
                     badgeColor: field.field_definition.value_type === 'choice' && this.fieldValue?.(field)
                         ? field.display_options?.badge_color : null,
@@ -234,7 +235,7 @@ export default {
                 .map(item => {
                     const card = this.bySource.get(item.source) ?? { title: 'Bloc indisponible', icon: 'catalogue', unavailable: true };
                     const ordered = this.orderedFields(item, card.fields);
-                    const fields = item.hide_empty ? ordered.filter(field => !field.empty) : ordered;
+                    const fields = ordered.filter(field => !(field.hideEmpty ?? item.hide_empty ?? false) || !field.empty);
                     return { placement: item, card, fields, shared: this.canonicalSources(item).some(source => this.sharedSources.has(source)) };
                 });
         },
@@ -500,7 +501,7 @@ export default {
                 const card = {
                     title: blueprint.title, icon: template.icon || 'catalogue', fields: blueprint.fields.map(field => ({
                         id: 'slot-' + field.slot, definitionId: field.slot, label: field.label_override || field.field_definition.label,
-                        value: '—', empty: true, references: [],
+                        value: '—', empty: true, hideEmpty: field.display_options?.hide_empty, references: [],
                     })),
                 };
                 this.copies.push({ id, source: 'template-fields', template_id: this.selectedLibraryEntry.id,
@@ -519,7 +520,7 @@ export default {
                 for (const copy of newBindings) {
                     const blueprint = this.selectedLibraryEntry.definition.field_blocks[copy.slot];
                     this.copies.push({ ...copy, card: { title: blueprint.title, icon: 'catalogue', fields: blueprint.fields.map(field => ({
-                        id: 'slot-' + field.slot, definitionId: field.slot, label: field.label_override || field.field_definition.label, value: '—', empty: true, references: [],
+                        id: 'slot-' + field.slot, definitionId: field.slot, label: field.label_override || field.field_definition.label, value: '—', empty: true, hideEmpty: field.display_options?.hide_empty, references: [],
                     })) } });
                 }
                 this.draft.push(item);
@@ -546,7 +547,7 @@ export default {
             if (!this.canCopy || this.draft.length >= 80) return;
             const id = crypto.randomUUID();
             const card = { title, icon: 'catalogue', fields: fields.map((field, index) => ({
-                id: 'slot-' + index, definitionId: index + 1, label: field.label, value: '—', empty: true, references: [],
+                id: 'slot-' + index, definitionId: index + 1, label: field.label, value: '—', empty: true, hideEmpty: field.hide_empty ?? undefined, references: [],
             })) };
             this.copies.push({ id, source: 'blank-fields', title, fields, card });
             this.draft.push(placement('fields:' + id));

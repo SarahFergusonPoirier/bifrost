@@ -3,6 +3,20 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('stages explicit show, hide and inherited empty-value rules', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    for (const [setting, expected] of [['show', false], ['hide', true], ['inherit', null]]) {
+        wrapper.vm.title = 'Bloc';
+        wrapper.vm.addField();
+        await wrapper.vm.$nextTick();
+        const label = wrapper.findAll('label').find(label => label.text().startsWith('Valeurs vides en lecture'));
+        await label.get('select').setValue(setting);
+        wrapper.vm.create();
+        expect(wrapper.emitted('create').at(-1)[0].fields[0].hide_empty).toBe(expected);
+    }
+    wrapper.unmount();
+});
+
 it('applies a common block scale only after confirming preservation and keeps level descriptions', async () => {
     const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {
         title: 'Attributs clés', fields: [5, 10].map((levels, index) => ({

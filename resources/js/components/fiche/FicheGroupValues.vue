@@ -18,8 +18,8 @@
                 :content-id="contentId" :targets="targets" :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
         </details>
     </template>
-    <dl v-else-if="schema.length" class="fiche-fields">
-        <div v-for="field in schema" :key="field.key">
+    <dl v-else-if="visibleFields.length" class="fiche-fields">
+        <div v-for="field in visibleFields" :key="field.key">
             <dt>{{ field.field_definition.label }}{{ field.retired ? ' · Donnée conservée' : '' }}</dt>
             <dd>
                 <span v-if="state(field) || value(field) == null">{{ formatted(field) }}</span>
@@ -38,6 +38,7 @@
                     :mode="field.display_options?.scale_display" :descriptions="field.display_options?.level_descriptions" />
                 <a v-else-if="type(field) === 'external_link' && safeUrl(value(field).url)" :href="safeUrl(value(field).url)" target="_blank" rel="noopener noreferrer">{{ formatted(field) }}</a>
                 <FicheEntryList v-else-if="['repeatable', 'equipment', 'capabilities', 'keywords', 'bullets'].includes(type(field))"
+                    :hide-empty="field.display_options?.hide_empty ?? hideEmpty"
                     :parent-field-id="parentFieldId" :history-path="[...historyPath, { member: field.key }]"
                     :entries="value(field)" :schema="field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields" :level-mode="field.display_options?.repeatable_level_mode"
                     :content-id="contentId" :targets="targets" :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
@@ -46,7 +47,7 @@
                     :content-id="contentId" :parent-field-id="parentFieldId" :field="field" :path="[...historyPath, { member: field.key }]"
                     :format-value="(_, value) => formatPayload(field, value)">
                     <template #value="{ entry }">
-                        <FicheGroupValues :schema="[field]" :values="{ [field.key]: entry.payload }" :content-id="contentId"
+                        <FicheGroupValues :schema="[{ ...field, display_options: { ...field.display_options, hide_empty: false } }]" :values="{ [field.key]: entry.payload }" :content-id="contentId"
                             :targets="targets" :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
                     </template>
                 </FicheFieldHistory>

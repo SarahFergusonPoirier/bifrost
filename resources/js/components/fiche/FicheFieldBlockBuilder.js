@@ -28,7 +28,7 @@ export default {
     methods: {
         newField() {
             return { id: crypto.randomUUID(), key: crypto.randomUUID(), entry_fields: [], groupPending: false, groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: [] }, label: 'Champ ' + (this.fields.length + 1), type: 'text',
-                help: '', required: false, history_view: 'current', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '', originalLevels: 5, preserveScale: false,
+                help: '', required: false, history_view: 'current', emptyDisplay: 'inherit', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '', originalLevels: 5, preserveScale: false,
                 scale_display: 'both', badge_color: 'accent', repeatable_level_mode: 'text', reference_types: [], allow_reference_creation: false, calculation: 'none' };
         },
         loadSchema(schema) {
@@ -43,6 +43,7 @@ export default {
                     existingKey: this.groupMode && original ? field.key : null,
                     entry_fields: field.entry_fields ?? [], groupEditor: { title: 'Champs du groupe', fields: children, pendingFields: field.entry_fields ?? [] },
                     help: field.help || '', required: Boolean(field.required), default_enabled: field.default_value != null,
+                    emptyDisplay: field.hide_empty == null ? 'inherit' : field.hide_empty ? 'hide' : 'show',
                     choicesText: (field.choices ?? []).join('\n'), levelDescriptions: (field.level_descriptions ?? []).join('\n'),
                     levels: String(field.levels ?? 5), originalLevels: original?.display_options?.scale_levels ?? original?.field_definition.options_data?.levels ?? 5,
                     preserveScale: field.scale_strategy === 'preserve', reference_types: field.reference_types ?? [],
@@ -74,6 +75,7 @@ export default {
                 ...(this.groupMode ? { key: field.key } : {}),
                 ...(field.type === 'repeatable' ? { entry_fields: field.entry_fields } : {}),
                 required: field.required, history_view: field.history_view,
+                hide_empty: field.emptyDisplay === 'inherit' ? null : field.emptyDisplay === 'hide',
                 ...(field.default_enabled ? { default_value: field.default_value } : this.schema ? { default_value: null } : {}),
                 ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type) ? { choices: field.choicesText.split('\n').map(value => value.trim()).filter(Boolean) } : {}),
                 ...(field.type === 'choice' ? { badge_color: field.badge_color } : {}),

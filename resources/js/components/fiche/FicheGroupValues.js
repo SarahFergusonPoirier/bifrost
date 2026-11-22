@@ -14,10 +14,19 @@ export default {
         editable: Boolean, contentId: String, targets: { type: Array, default: () => [] },
         projectId: String, contentTypes: { type: Array, default: () => [] },
         parentFieldId: Number, historyPath: { type: Array, default: () => [] },
+        hideEmpty: Boolean,
         resolveReference: Function, textLimit: Number,
     },
     emits: ['change', 'open', 'reference-created'],
+    computed: {
+        visibleFields() { return this.schema.filter(field => !(field.display_options?.hide_empty ?? this.hideEmpty) || !this.isEmpty(field)); },
+    },
     methods: {
+        isEmpty(field) {
+            if (this.state(field)) return false;
+            const value = this.value(field);
+            return value == null || value === '' || Array.isArray(value) && !value.length;
+        },
         type(field) { return field.field_definition.options_data?.format || field.field_definition.value_type; },
         value(field) { return this.values[field.key]?.[fieldColumns[field.field_definition.value_type]]; },
         state(field) { return this.values[field.key]?.value_state; },

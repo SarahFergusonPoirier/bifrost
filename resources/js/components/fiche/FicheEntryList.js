@@ -13,6 +13,7 @@ export default {
         levelMode: String, contentId: String, targets: { type: Array, default: () => [] },
         resolveReference: Function, textLimit: Number,
         parentFieldId: Number, historyPath: { type: Array, default: () => [] },
+        hideEmpty: Boolean,
     },
     emits: ['open'],
     methods: { formatTemporalDate },
