@@ -6,7 +6,7 @@
             <h3>Champ {{ index + 1 }}</h3>
             <label>Nom du champ <input v-model="field.label" maxlength="255" @keydown.enter.prevent /></label>
             <label>Type du champ
-                <select v-model="field.type"><option v-for="(label, type) in types" :key="type" :value="type">{{ label }}</option></select>
+                <select v-model="field.type" @change="field.default_value = null"><option v-for="(label, type) in types" :key="type" :value="type">{{ label }}</option></select>
             </label>
             <label>Aide facultative <textarea v-model="field.help" maxlength="10000" /></label>
             <label><input v-model="field.required" type="checkbox" /> Champ obligatoire</label>
@@ -39,6 +39,10 @@
                 <p>Aucune sélection autorise tous les types accessibles dans le projet.</p>
                 <label><input v-model="field.allow_reference_creation" type="checkbox" /> Permettre de créer une fiche depuis ce champ</label>
             </template>
+            <label><input v-model="field.default_enabled" type="checkbox" /> Définir une valeur par défaut</label>
+            <FicheDefaultValueEditor v-if="field.default_enabled" v-model="field.default_value" :type="field.type" :content-id="contentId" :targets="targets"
+                :reference-types="field.reference_types" :choices="field.choicesText.split('\n').map(value => value.trim()).filter(Boolean)"
+                :levels="Number(field.levels) || 5" :level-mode="field.repeatable_level_mode" />
             <button type="button" :disabled="index === 0" :aria-label="'Monter le champ ' + field.label" @click="move(index, -1)">Monter</button>
             <button type="button" :disabled="index === fields.length - 1" :aria-label="'Descendre le champ ' + field.label" @click="move(index, 1)">Descendre</button>
             <button type="button" :aria-label="'Retirer le champ ' + field.label" @click="fields.splice(index, 1)">Retirer le champ</button>

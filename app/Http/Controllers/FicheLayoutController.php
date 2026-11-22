@@ -262,6 +262,7 @@ class FicheLayoutController extends Controller
                     'label_override' => $field['label'], 'section_key' => Str::slug($field['section']) ?: 'fields',
                     'display_options' => FieldSchema::displayOptions($field, $definition),
                     'is_required' => $field['required'] ?? false, 'help_text' => $field['help'] ?? null,
+                    'default_value' => $field['default_value'] ?? null,
                 ];
             }
             $fields = collect($blueprint['fields'])->map(fn (array $field): array => [...$field, 'field_definition_id' => $field['slot']]);
@@ -342,6 +343,9 @@ class FicheLayoutController extends Controller
         ]);
         $block->public_id = $copy['id'];
         $block->save();
+        if ($blueprint) {
+            FieldSchema::applyDefaults($record, $schema);
+        }
 
         return $mapping;
     }

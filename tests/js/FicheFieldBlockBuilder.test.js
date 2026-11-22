@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
+import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
 it('prepares typed fields, keeps their order and excludes temporary identifiers', async () => {
     const wrapper = mount(FicheFieldBlockBuilder);
@@ -25,6 +26,21 @@ it('prepares typed fields, keeps their order and excludes temporary identifiers'
     expect(block.fields[1]).toMatchObject({ type: 'scale', levels: 7, level_descriptions: ['Débutant', 'Confirmé'] });
     expect(block.fields.some(field => 'id' in field)).toBe(false);
     expect(wrapper.vm.fields).toEqual([]);
+    wrapper.unmount();
+});
+
+it('includes a typed default and clears it when the field type changes', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    await wrapper.get('input').setValue('Libre');
+    await wrapper.findAll('button').find(button => button.text() === 'Ajouter un champ').trigger('click');
+    await wrapper.findAll('input[type="checkbox"]')[1].setValue(true);
+    await wrapper.getComponent(FicheDefaultValueEditor).get('input').setValue('Initial');
+    expect(wrapper.vm.valid).toBe(true);
+    await wrapper.get('select').setValue('boolean');
+    expect(wrapper.vm.valid).toBe(false);
+    await wrapper.getComponent(FicheDefaultValueEditor).findAll('select')[1].setValue('false');
+    await wrapper.findAll('button').find(button => button.text() === 'Ajouter le bloc libre à la disposition').trigger('click');
+    expect(wrapper.emitted('create')[0][0].fields[0].default_value).toEqual({ value_boolean: false });
     wrapper.unmount();
 });
 

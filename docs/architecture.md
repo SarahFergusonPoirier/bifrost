@@ -148,6 +148,15 @@ ensuite avec les éditeurs habituels. Les champs obligatoires sont contrôlés
 lors de l’enregistrement des valeurs, sans effacer les autres modifications
 en cas de validation refusée.
 
+`FicheDefaultValueEditor` réutilise les éditeurs de valeurs pour préparer les
+défauts typés des modèles et des blocs libres. `FieldSchema::applyDefaults`
+les valide et les crée uniquement si aucune valeur n’existe. À la mise à jour
+d’un modèle de fiche, seuls les champs nouvellement introduits sont concernés :
+une ancienne valeur modifiée ou effacée n’est pas réinitialisée. La duplication
+indépendante copie l’état courant, tandis qu’une création depuis un modèle
+applique ses défauts configurés. Les états explicites, zéro et faux restent
+distincts des valeurs absentes.
+
 Les définitions et les versions du modèle décrivent les champs. Les valeurs
 appartiennent à la fiche et sont associées aux identifiants des définitions.
 Dans Vue, `templateFields.js` associe les types à leurs colonnes de valeur et

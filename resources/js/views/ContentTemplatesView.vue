@@ -40,7 +40,7 @@
                     <legend>Champ {{ index + 1 }}</legend>
                     <label>Libellé <input v-model="field.label" required maxlength="255" /></label>
                     <label>Section <input v-model="field.section" required maxlength="255" /></label>
-                    <label>Type <select v-model="field.type" :disabled="Boolean(field.id)">
+                    <label>Type <select v-model="field.type" :disabled="Boolean(field.id)" @change="field.defaultValue = null">
                         <option v-if="!fieldTypes[field.type]" :value="field.type">{{ field.type }}</option>
                         <option v-for="(label, key) in fieldTypes" :key="key" :value="key">{{ label }}</option>
                     </select></label>
@@ -109,6 +109,10 @@
                     </label>
                     <label>Aide <textarea v-model="field.help" maxlength="10000" /></label>
                     <label><input v-model="field.required" type="checkbox" /> Obligatoire</label>
+                    <label v-if="field.type !== 'json'"><input v-model="field.defaultEnabled" type="checkbox" /> Définir une valeur par défaut</label>
+                    <FicheDefaultValueEditor v-if="field.defaultEnabled && field.type !== 'json'" v-model="field.defaultValue" :type="field.type" :targets="defaultTargets"
+                        :reference-types="field.referenceTypes ?? []" :choices="(field.choicesText ?? '').split('\n').map(value => value.trim()).filter(Boolean)"
+                        :levels="field.levels ?? 5" :level-mode="field.repeatableLevelMode" />
                     <button type="button" :disabled="index === 0" @click="moveField(index, -1)">Monter</button>
                     <button type="button" :disabled="index === editor.fields.length - 1" @click="moveField(index, 1)">Descendre</button>
                     <button type="button" @click="editor.fields.splice(index, 1)">Retirer le champ</button>

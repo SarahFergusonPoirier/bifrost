@@ -4,6 +4,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import ContentTemplatesView from '../../resources/js/views/ContentTemplatesView.vue';
 import { getContentTemplate, getContentTemplates } from '../../resources/js/services/contentTemplate';
 import { findIdentitySuggestions, identityPreset } from '../../resources/js/views/identityFieldCatalog';
+import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentTemplate', () => ({
     cloneContentTemplate: vi.fn(),
@@ -47,6 +48,24 @@ describe('ContentTemplatesView.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         getContentTemplates.mockResolvedValue(sampleTemplates);
+    });
+
+    it('publishes a typed false default and refuses an enabled default without a value', async () => {
+        const wrapper = mount(ContentTemplatesView);
+        await flushPromises();
+        wrapper.vm.editor = { name: 'Modèle', content_type_id: 1, fields: [{
+            label: 'Actif', section: 'Identité', type: 'boolean', defaultEnabled: true, defaultValue: null,
+        }] };
+        await wrapper.vm.$nextTick();
+        await wrapper.vm.saveTemplate();
+        expect(contentRequest.mock.calls.some(([, method]) => method === 'POST')).toBe(false);
+        expect(wrapper.get('[role="alert"]').text()).toContain('Renseigne une valeur par défaut');
+        wrapper.vm.editor.fields[0].defaultValue = { value_boolean: false };
+        await wrapper.vm.saveTemplate();
+        expect(contentRequest).toHaveBeenCalledWith('/content-templates', 'POST', expect.objectContaining({
+            fields: [expect.objectContaining({ type: 'boolean', default_value: { value_boolean: false } })],
+        }));
+        wrapper.unmount();
     });
 
     it('demande une publication avant de dupliquer un brouillon', async () => {

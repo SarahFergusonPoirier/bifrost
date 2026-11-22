@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\FieldSchema;
 use App\Models\Content;
 use App\Models\FieldDefinition;
 use App\Models\Project;
@@ -103,6 +104,7 @@ class ContentRecoveryController extends Controller
                     'template_id' => $version->template_id,
                     'template_version_id' => $version->id,
                 ]);
+                FieldSchema::applyDefaults($content, $version->fields()->whereHas('fieldDefinition')->get());
             }
 
             return response()->json($content, 201);

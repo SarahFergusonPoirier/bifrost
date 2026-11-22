@@ -1,21 +1,24 @@
 import { fieldTypes } from './fieldTypes';
+import FicheDefaultValueEditor from './FicheDefaultValueEditor.vue';
 
 export default {
-    props: { disabled: Boolean, referenceTypes: { type: Array, default: () => [] } },
+    components: { FicheDefaultValueEditor },
+    props: { disabled: Boolean, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
     emits: ['create'],
     data: () => ({ title: '', fields: [] }),
     computed: {
         types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json')); },
         valid() {
             return this.title.trim() && this.fields.length > 0 && this.fields.every(field => field.label.trim()
-                && this.types[field.type] && (field.type !== 'scale' || Number.isInteger(Number(field.levels)) && Number(field.levels) >= 2 && Number(field.levels) <= 20));
+                && this.types[field.type] && (!field.default_enabled || field.default_value != null)
+                && (field.type !== 'scale' || Number.isInteger(Number(field.levels)) && Number(field.levels) >= 2 && Number(field.levels) <= 20));
         },
     },
     methods: {
         addField() {
             if (this.fields.length >= 200) return;
             this.fields.push({ id: crypto.randomUUID(), label: 'Champ ' + (this.fields.length + 1), type: 'text',
-                help: '', required: false, history_view: 'current', choicesText: '', levels: '5', levelDescriptions: '',
+                help: '', required: false, history_view: 'current', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '',
                 scale_display: 'both', badge_color: 'accent', repeatable_level_mode: 'text', reference_types: [], allow_reference_creation: false, calculation: 'none' });
         },
         move(index, offset) {
@@ -30,6 +33,7 @@ export default {
             const fields = this.fields.map(field => ({
                 label: field.label.trim(), type: field.type, section: title, help: field.help.trim() || null,
                 required: field.required, history_view: field.history_view,
+                ...(field.default_enabled ? { default_value: field.default_value } : {}),
                 ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type) ? { choices: field.choicesText.split('\n').map(value => value.trim()).filter(Boolean) } : {}),
                 ...(field.type === 'choice' ? { badge_color: field.badge_color } : {}),
                 ...(field.type === 'repeatable' ? { repeatable_level_mode: field.repeatable_level_mode } : {}),

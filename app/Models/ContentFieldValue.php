@@ -9,6 +9,11 @@ use Illuminate\Validation\ValidationException;
 
 class ContentFieldValue extends Model
 {
+    public const VALUE_COLUMNS = [
+        'text' => 'value_text', 'number' => 'value_number', 'boolean' => 'value_boolean',
+        'date' => 'value_date', 'choice' => 'value_text', 'reference' => 'reference_content_id', 'json' => 'value_json',
+    ];
+
     protected $fillable = [
         'content_id', 'field_definition_id', 'value_text', 'value_number',
         'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state',
@@ -43,16 +48,7 @@ class ContentFieldValue extends Model
                 throw ValidationException::withMessages(['field_definition_id' => 'Le champ n’est pas accessible dans la portée de ce contenu.']);
             }
 
-            $columns = [
-                'text' => 'value_text',
-                'number' => 'value_number',
-                'boolean' => 'value_boolean',
-                'date' => 'value_date',
-                'choice' => 'value_text',
-                'reference' => 'reference_content_id',
-                'json' => 'value_json',
-            ];
-            $expected = $columns[$definition->value_type] ?? null;
+            $expected = self::VALUE_COLUMNS[$definition->value_type] ?? null;
             $present = array_filter([
                 'value_text' => $value->value_text !== null,
                 'value_number' => $value->value_number !== null,

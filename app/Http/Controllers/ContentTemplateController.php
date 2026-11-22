@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\FieldSchema;
 use App\Models\Content;
 use App\Models\ContentTemplate;
 use App\Models\ContentTemplateAssignment;
@@ -53,6 +54,9 @@ class ContentTemplateController extends Controller
                 'change_details' => $changes,
             ]);
             $assignment->update(['template_version_id' => $target->id, 'assigned_at' => now()]);
+            $previousIds = TemplateVersion::findOrFail($validated['from_version_id'])
+                ->fields()->pluck('field_definition_id');
+            FieldSchema::applyDefaults($record, $target->fields()->whereHas('fieldDefinition')->whereNotIn('field_definition_id', $previousIds)->get());
 
             return response()->json($changes);
         }, attempts: 3);

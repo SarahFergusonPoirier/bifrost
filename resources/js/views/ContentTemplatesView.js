@@ -1,5 +1,6 @@
 import { fieldCalculation } from '../components/fiche/characterAge';
 import { fieldTypes } from '../components/fiche/fieldTypes';
+import FicheDefaultValueEditor from '../components/fiche/FicheDefaultValueEditor.vue';
 import { findIdentitySuggestions, identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
@@ -13,12 +14,14 @@ const scopeLabels = {
 };
 
 export default {
+    components: { FicheDefaultValueEditor },
     setup() {
         const router = useRouter();
         const cloningId = ref(null);
         const cloneError = ref('');
         const templates = ref([]);
         const details = ref({});
+        const defaultTargets = ref([]);
 
         async function loadDetails(id) {
             if (details.value[id]?.versions || details.value[id]?.loading) return;
@@ -32,6 +35,16 @@ export default {
         const editor = ref(null);
         const typeEditor = ref(null);
         const editorError = ref('');
+        watch(() => editor.value?.project_id, async projectId => {
+            defaultTargets.value = [];
+            if (!projectId) return;
+            try {
+                const { data } = await contentRequest('/projects/' + projectId + '/tree');
+                if (String(editor.value?.project_id) === String(projectId)) defaultTargets.value = data;
+            } catch (error) {
+                if (String(editor.value?.project_id) === String(projectId)) editorError.value = error.message;
+            }
+        });
         const saving = ref(false);
         const types = ref([]);
         const projects = ref([]);
@@ -86,6 +99,7 @@ export default {
                         referenceTypes: field.field_definition?.options_data?.content_type_ids ?? [],
                         choicesText: (field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? []).join('\n'),
                         help: field.help_text ?? '', required: Boolean(field.is_required),
+                        defaultEnabled: field.default_value != null, defaultValue: field.default_value ?? null,
                     })),
                 };
             } catch (error) {
@@ -143,8 +157,12 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, ...field }) => ({
+                if (fields.some(field => field.defaultEnabled && field.defaultValue == null)) {
+                    throw new Error('Renseigne une valeur par défaut ou désactive cette option.');
+                }
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, defaultEnabled, defaultValue, ...field }) => ({
                     ...field,
+                    default_value: defaultEnabled ? defaultValue : null,
                     ...(['reference', 'references'].includes(field.type) ? { allow_reference_creation: Boolean(allowReferenceCreation) } : {}),
                     ...(!field.id && ['reference', 'references'].includes(field.type) ? { reference_types: referenceTypes ?? [] } : {}),
                     ...(field.type === 'number' ? { calculation: calculation ?? 'none' } : {}),
@@ -264,7 +282,7 @@ export default {
         onMounted(loadTemplates);
 
         return {
-            templates, details, loadDetails, editor, editorError, saving, availableTypes, projects, typeEditor, startType, saveType, fieldTypes, editTemplate, moveField, saveTemplate,
+            templates, details, loadDetails, editor, editorError, saving, availableTypes, projects, typeEditor, startType, saveType, fieldTypes, editTemplate, moveField, saveTemplate, defaultTargets,
             identityGroups, identityGroup, identityQuery, identitySuggestions, addIdentityField,
             scopeFilter,
             statusFilter,

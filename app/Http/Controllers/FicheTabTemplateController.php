@@ -151,8 +151,9 @@ class FicheTabTemplateController extends Controller
             $slot = count($fields) + 1;
             $slots[$definition->id] = $slot;
             $options = $definition->options_data ?? [];
-            if ($global && ($field['default_value'] ?? null) !== null
-                && ($definition->value_type === 'reference' || in_array($options['format'] ?? null, ['references', 'image'], true))) {
+            $default = $field['default_value'] ?? [];
+            if ($global && (($definition->value_type === 'reference' && ($default['reference_content_id'] ?? null) !== null)
+                || (in_array($options['format'] ?? null, ['references', 'image'], true) && ($default['value_json'] ?? null) !== null))) {
                 abort(422, 'Ce champ utilise une référence ou une image par défaut. Enregistre son modèle dans ce projet.');
             }
             if ($global && isset($options['content_type_ids'])) {

@@ -83,7 +83,8 @@ class ContentTemplateAuthoringController extends Controller
             $definition = $original?->fieldDefinition ?? FieldDefinition::create(FieldSchema::definitionAttributes(
                 $field, $template->scope_type, $template->project_id, $template->universe_id,
             ));
-            $display = FieldSchema::displayOptions($field, $definition, $original?->display_options ?? [], $original?->section_key, $original !== null);
+            $default = array_key_exists('default_value', $field) ? $field['default_value'] : $original?->default_value;
+            $display = FieldSchema::displayOptions($field + ['default_value' => $default], $definition, $original?->display_options ?? [], $original?->section_key, $original !== null);
 
             $version->fields()->create([
                 'field_definition_id' => $definition->id,
@@ -93,7 +94,7 @@ class ContentTemplateAuthoringController extends Controller
                 'position' => $position,
                 'help_text' => $field['help'] ?? null,
                 'is_required' => $field['required'] ?? false,
-                'default_value' => $original?->default_value,
+                'default_value' => $default,
             ]);
         }
 

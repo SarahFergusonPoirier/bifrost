@@ -2,8 +2,11 @@
 
 namespace App;
 
+use App\Models\Content;
+use App\Models\ContentFieldValue;
 use App\Models\ContentType;
 use App\Models\FieldDefinition;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -13,7 +16,8 @@ class FieldSchema
     {
         return [
             $path => ['present', 'array', 'list', 'max:200'],
-            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation'],
+            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation,default_value'],
+            ...self::defaultRules("$path.*.default_value"),
             "$path.*.id" => ['nullable', 'integer', 'distinct'],
             "$path.*.label" => ['required', 'string', 'max:255'],
             "$path.*.section" => ['required', 'string', 'max:255'],
@@ -35,6 +39,35 @@ class FieldSchema
             "$path.*.choices" => ['sometimes', 'array', 'list', 'max:100'],
             "$path.*.choices.*" => ['required', 'string', 'max:255'],
         ];
+    }
+
+    public static function defaultRules(string $path): array
+    {
+        return [
+            $path => ['nullable', 'array:value_text,value_number,value_boolean,value_date,value_json,reference_content_id,value_state'],
+            "$path.value_text" => ['nullable', 'string'],
+            "$path.value_number" => ['nullable', 'numeric', 'between:-99999999999999,99999999999999'],
+            "$path.value_boolean" => ['nullable', 'boolean'],
+            "$path.value_date" => ['nullable', 'date_format:Y-m-d'],
+            "$path.value_json" => ['nullable', 'array'],
+            "$path.reference_content_id" => ['nullable', 'integer'],
+            "$path.value_state" => ['nullable', 'in:unknown,not_applicable'],
+        ];
+    }
+
+    public static function applyDefaults(Content $content, iterable $fields): void
+    {
+        $existing = array_fill_keys($content->fieldValues()->pluck('field_definition_id')->all(), true);
+        foreach ($fields as $field) {
+            $id = $field['field_definition_id'];
+            $default = $field['default_value'] ?? null;
+            if ($default === null || isset($existing[$id])) {
+                continue;
+            }
+            Validator::make(['default_value' => $default], self::defaultRules('default_value'))->validate();
+            $content->fieldValues()->create([...$default, 'field_definition_id' => $id]);
+            $existing[$id] = true;
+        }
     }
 
     public static function definitionAttributes(array $field, string $scope, ?int $projectId, ?int $universeId = null): array
@@ -107,6 +140,38 @@ class FieldSchema
             $display['allow_reference_creation'] = (bool) $field['allow_reference_creation'];
         }
 
+        self::validateDefault($field['default_value'] ?? null, $definition, $display);
+
         return $display;
+    }
+
+    public static function validateDefault(?array $default, FieldDefinition $definition, array $display): void
+    {
+        if ($default === null) {
+            return;
+        }
+        Validator::make(['default_value' => $default], self::defaultRules('default_value'))->validate();
+        $values = array_filter(array_intersect_key($default, array_flip(array_values(ContentFieldValue::VALUE_COLUMNS))), fn ($value): bool => $value !== null);
+        $state = $default['value_state'] ?? null;
+        $expected = ContentFieldValue::VALUE_COLUMNS[$definition->value_type];
+        if (($state !== null && $values !== []) || ($state === null && (count($values) !== 1 || ! array_key_exists($expected, $values)))) {
+            throw ValidationException::withMessages(['default_value' => 'La valeur par défaut doit correspondre au type du champ.']);
+        }
+        if ($state !== null) {
+            return;
+        }
+        $format = $definition->options_data['format'] ?? null;
+        $choices = $display['choices'] ?? $definition->options_data['choices'] ?? [];
+        if ($definition->value_type === 'choice' && $choices !== [] && ! in_array($values['value_text'], $choices, true)) {
+            throw ValidationException::withMessages(['default_value' => 'Le choix par défaut doit faire partie des options du champ.']);
+        }
+        if ($format === 'multiple_choice' && (! array_is_list($values['value_json'])
+            || collect($values['value_json'])->contains(fn ($value): bool => ! is_string($value) || ($choices !== [] && ! in_array($value, $choices, true))))) {
+            throw ValidationException::withMessages(['default_value' => 'Les choix par défaut doivent faire partie des options du champ.']);
+        }
+        if ($format === 'scale') {
+            $levels = $display['scale_levels'] ?? $definition->options_data['levels'] ?? 5;
+            Validator::make($default, ['value_json' => ['required', 'array:level'], 'value_json.level' => ['required', 'integer', 'between:1,'.$levels]])->validate();
+        }
     }
 }

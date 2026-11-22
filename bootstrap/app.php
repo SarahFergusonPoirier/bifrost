@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'field_values.*.value_text',
             'field_values.*.value_json.*.description',
             'field_values.*.value_json.*.fields.*.value',
+            '*.default_value.value_text',
+            '*.default_value.value_json.*.description',
+            '*.default_value.value_json.*.fields.*.value',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
