@@ -11,7 +11,7 @@ export default {
     components: { FicheEntryFields },
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
     emits: ['open', 'show-all', 'changed'],
-    data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
+    data() { return { data: this.path ? null : {}, loadGeneration: 0, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
     setup() {
         return { relationTypeListId: useId() };
     },
@@ -69,6 +69,7 @@ export default {
     mounted() {
         if (this.path) this.load();
     },
+    beforeUnmount() { this.loadGeneration++; },
     methods: {
         async addLink() {
             if (!this.target || !this.availableTargets.some(item => item.public_id === this.target)
@@ -166,11 +167,14 @@ export default {
             this.$refs.showAllButton?.focus();
         },
         async load() {
+            const generation = ++this.loadGeneration;
             this.error = '';
             try {
                 const { data } = await contentRequest(this.path);
+                if (generation !== this.loadGeneration) return;
                 this.data = { relations: data?.relations ?? [], relationTypes: data?.relation_types ?? [], timeline: data?.timeline ?? [], equipment: data?.equipment ?? [], capabilities: data?.capabilities ?? [] };
             } catch (error) {
+                if (generation !== this.loadGeneration) return;
                 this.error = error.message;
             }
         },

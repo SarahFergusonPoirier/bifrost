@@ -17,6 +17,22 @@ afterEach(() => {
     delete HTMLDialogElement.prototype.showModal;
 });
 
+it.each(['response', 'error'])('ignores an older linked-data %s after a newer refresh completes', async outcome => {
+    let resolveOld;
+    let rejectOld;
+    const old = new Promise((resolve, reject) => { resolveOld = resolve; rejectOld = reject; });
+    contentRequest.mockReset().mockReturnValueOnce(old).mockResolvedValueOnce({ data: { relations: [] } });
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', kind: 'relations', full: true } });
+    await wrapper.vm.load();
+    if (outcome === 'response') resolveOld({ data: { relations: [{ id: 7, title: 'Lien retiré' }] } });
+    else rejectOld(new Error('Ancienne requête interrompue'));
+    await flushPromises();
+    expect(wrapper.text()).toContain('Aucune relation');
+    expect(wrapper.text()).not.toContain('Lien retiré');
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+    wrapper.unmount();
+});
+
 it('refreshes other shared placements after a link removal without deleting the referenced fiche', async () => {
     let relations = [{ id: 7, link_id: 7, public_id: 'mentor', title: 'Mentor', type_key: 'mentor', label: 'Mentor' }];
     contentRequest.mockReset().mockImplementation(async (path, method) => {

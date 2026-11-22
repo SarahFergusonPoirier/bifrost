@@ -364,3 +364,34 @@ onglet via leurs références de composants ; l’origine vient déjà de se rec
 Cela synchronise les placements partagés sans modifier leurs paramètres visuels
 ni réécrire leurs valeurs. Une écriture refusée conserve la vue et son erreur,
 sans émettre de changement réussi. Retirer un lien ne supprime pas la fiche cible.
+Les chargements portent un compteur local : une réponse ou une erreur d’une
+ancienne requête ne remplace jamais le résultat d’une requête plus récente.
+Le démontage invalide également les lectures en cours.
+
+## Vérification du cahier des charges des blocs et onglets
+
+Les points ci-dessous indiquent les preuves à consulter lors de la recette ;
+la présence d’un test ne vaut pas validation de tous les détails d’une section.
+
+| Périmètre du cahier | Sources et couverture de référence |
+| --- | --- |
+| 1–2 : séparation données/présentation, grille, dimensions, ordre, visibilité, réduction, restauration | `FicheLayoutController`, `FicheBlockDimensions`, `FicheOverview`, `FicheLayoutTest`, `FicheOverview.test.js` ; contraintes CSS par conteneur dans `fiche.css` |
+| 3 : bibliothèque, recherche, prévisualisation, portée, versions | `FicheTabTemplateController`, `templatePlacements`, `FicheTabs`, `FicheOverview` ; tests de modèles globaux, révisions approuvées et liaisons de schémas |
+| 4 : champs, états explicites, références, dates répétées, historique | `FieldSchema`, `RepeatableFields`, `ContentFieldValue`, `FicheValueEditor`, `StructuredField`, `FicheFieldHistory` ; `RepeatableFieldsTest`, `FieldDefaultsTest`, `AttachmentFieldTest`, tests JS des groupes et de l’historique |
+| 5 : identité et catalogue optionnel | `CharacterIdentitySeeder`, `identityFieldCatalog`, génération du nom dans `ContentRecoveryView` ; `WorldbuildingCatalogTest`, `IdentityFieldGroups.test.js`, `characterAge.test.js`, `ContentRecoveryView.test.js` |
+| 6 : attributs et échelles | `CharacterBlocksSeeder`, `FicheScale`, réglages communs dans `FicheFieldBlockBuilder` ; tests de changements explicites et de conservation des niveaux historiques |
+| 7–9 : capacités, textes enrichis, personnalité | `StructuredField`, `FicheEntryList`, `FicheText`, `FicheTags` ; tests d’édition longue, rendu sûr, expansion locale, pastilles et duplication indépendante des entrées |
+| 10–12 : relations, chronologie, équipements canoniques | `FicheLinkedDataController`, `ProjectConnectionController`, `FicheLinkedData` ; `ProjectConnectionTest`, `ProjectTimelineTest`, `FicheLayoutTest` et tests JS des vues liées |
+| 13–14 : tags, mots-clés et médias | `FicheTags`, `ContentAttachments`, `ContentAttachmentController` ; tests de séparation des mots-clés, limites d’affichage, métadonnées, contrôles des fichiers et références conservées |
+| 15–16 : blocs libres et actions | `FicheFieldBlockBuilder`, `FicheBlockActionMenu`, `FicheBlockDeletion`, `FicheLayoutController` ; tests de copies, champs requis, valeurs retirées, annulation, conflits et dépendances avant suppression |
+| 17 : onglets, partage, déplacements, suppression sûre, liens directs | `FicheTabs`, `FicheOverview`, `ContentRecoveryView` ; `FicheTabs.test.js`, `FicheOverview.test.js`, `FicheLayoutTest` |
+| 18 : architecture et persistance | tables existantes de modèles/valeurs, `content_blocks.field_schema`, layouts et révisions ; pas de table parallèle pour chaque type de bloc |
+| 19 : recette transversale | suites PHPUnit/Vitest et compilation, puis vérification visuelle des fiches, vues complètes, changements d’onglets et contrôles clavier |
+
+Points à ne pas confondre pendant la recette : une copie de champ ou de texte
+possède ses propres valeurs ; une référence vers une fiche continue de lire
+la fiche canonique. Les vues Relations, Chronologie et médias affichent des
+enregistrements liés. Leur ajout sur une autre page ne doit pas cloner les
+relations sémantiques, les événements ou les fichiers sous-jacents. La recette
+finale doit encore vérifier les parcours complets de ces choix et les vues
+étroites, au-delà des scénarios unitaires et des vérifications ponctuelles.
