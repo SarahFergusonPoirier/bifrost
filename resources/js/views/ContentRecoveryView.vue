@@ -396,6 +396,8 @@
                             </fieldset>
                             <FicheTextEditor v-else-if="field.richText" :label="field.label_override || field.field_definition.label"
                                 :model-value="fieldValue(field)" :targets="referenceTargets" @update:model-value="setField(field, $event)" />
+                            <FicheDateEditor v-else-if="field.column === 'value_date'" :label="field.label_override || field.field_definition.label"
+                                :model-value="dateFieldPayload(field)" @update:model-value="setDateField(field, $event)" />
                             <label v-else>
                                 {{ field.label_override || field.field_definition.label }}
                                 <select v-if="field.column === 'reference_content_id'" :value="fieldValue(field)" @change="setField(field, $event.target.value)">

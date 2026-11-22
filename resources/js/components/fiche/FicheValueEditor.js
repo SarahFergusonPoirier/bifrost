@@ -1,11 +1,12 @@
 import StructuredField from '../StructuredField.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
+import FicheDateEditor from './FicheDateEditor.vue';
 import FicheReferenceCreate from './FicheReferenceCreate.vue';
 import { fieldColumns } from './templateFields';
 import { structuredFieldTypes } from './fieldTypes';
 
 export default {
-    components: { StructuredField, FicheTextEditor, FicheReferenceCreate },
+    components: { StructuredField, FicheTextEditor, FicheDateEditor, FicheReferenceCreate },
     props: {
         label: { type: String, default: 'Valeur' },
         projectId: String, allowReferenceCreation: Boolean, contentTypes: { type: Array, default: () => [] },

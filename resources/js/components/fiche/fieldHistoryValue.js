@@ -9,6 +9,6 @@ export function fieldHistoryValue(value, path) {
 }
 
 export function fieldHistorySignature(value) {
-    return JSON.stringify(['value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state']
+    return JSON.stringify(['value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state', 'date_options']
         .map(column => value?.[column] ?? null));
 }

@@ -74,7 +74,7 @@ class RepeatableFields
                 }
                 $nested = new ContentFieldValue($old ?? []);
                 $nested->syncOriginal();
-                $nested->fill(array_fill_keys([...array_values(ContentFieldValue::VALUE_COLUMNS), 'value_state'], null));
+                $nested->fill(array_fill_keys([...array_values(ContentFieldValue::VALUE_COLUMNS), 'value_state', 'date_options'], null));
                 $nested->fill($value);
                 $nested->validateForContent(new FieldDefinition($field['field_definition'] + [
                     'scope_type' => $content->scope_type, 'project_id' => $content->project_id, 'universe_id' => $content->universe_id,
@@ -154,6 +154,10 @@ class RepeatableFields
             }
             foreach ($schema as $field) {
                 $value = $entry['values'][$field['key']]['value_json'] ?? null;
+                $payload = $entry['values'][$field['key']] ?? [];
+                if (($field['field_definition']['value_type'] ?? null) === 'date' && ! empty($payload['value_date']) && ! empty($payload['date_options']['timeline'])) {
+                    $dates[] = ['id' => $id.':'.$field['key'], 'label' => $entry['label'].' · '.$field['field_definition']['label'], 'date' => ['start' => $payload['value_date'], 'precision' => 'exact'] + $payload['date_options']];
+                }
                 $options = $field['field_definition']['options_data'] ?? [];
                 if (($options['format'] ?? null) === 'temporal' && ! empty($value['timeline'])) {
                     $dates[] = ['id' => $id.':'.$field['key'], 'label' => $entry['label'].' · '.$field['field_definition']['label'], 'date' => $value];

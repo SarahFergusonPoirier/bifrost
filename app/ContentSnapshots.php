@@ -16,7 +16,7 @@ class ContentSnapshots
                 'public_id', 'block_type', 'title', 'body', 'position', 'created_at', 'field_schema',
             ])->map(fn ($block): array => $block->getAttributes())->all(),
             'field_values' => $content->fieldValues()->orderBy('field_definition_id')->get([
-                'field_definition_id', 'value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state', 'created_at',
+                'field_definition_id', 'value_text', 'value_number', 'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state', 'date_options', 'created_at',
             ])->map(function ($value): array {
                 $attributes = $value->getAttributes();
                 if ($attributes['value_state'] === null) {

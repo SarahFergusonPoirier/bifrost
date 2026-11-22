@@ -7,6 +7,7 @@ import FicheText from '../components/fiche/FicheText.vue';
 import { ageFromBirthDate, birthDateField, fieldCalculation } from '../components/fiche/characterAge';
 import FicheTabs from '../components/fiche/FicheTabs.vue';
 import FicheOverview from '../components/fiche/FicheOverview.vue';
+import FicheDateEditor from '../components/fiche/FicheDateEditor.vue';
 import ProjectToolbar from '../components/ProjectToolbar.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
@@ -24,7 +25,7 @@ import { contentRequest } from '../services/contentRecovery';
 import { getContentTemplates } from '../services/contentTemplate';
 
 export default {
-    components: { FicheReferenceCreate, FicheTextEditor, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
+    components: { FicheDateEditor, FicheReferenceCreate, FicheTextEditor, FicheText, FicheTabs, FicheOverview, ProjectToolbar, ProjectOverview, WorkspaceIcon, ContentAttachments, AppLayout, ProjectDetailsView, StructuredField, ProjectTimeline, ProjectConnections, ProjectIdeas, ProjectNarrative },
     props: { projectId: { type: String, default: '' } },
     setup(props) {
         const folders = ref([]);
@@ -479,6 +480,15 @@ export default {
             else values.push(entry);
         }
 
+        function dateFieldPayload(field) {
+            return draft.value.field_values?.find(item => item.field_definition_id === field.field_definition_id) ?? null;
+        }
+
+        function setDateField(field, payload) {
+            setField(field, payload?.value_date ?? '');
+            if (payload?.date_options) dateFieldPayload(field).date_options = payload.date_options;
+        }
+
         function currentTemplateValues(values) {
             const templateFields = selected.value?.template_assignment?.template_version?.fields;
             const blockFields = selected.value?.blocks?.flatMap(block => block.fields ?? []) ?? [];
@@ -658,7 +668,7 @@ export default {
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
             ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheButton, returnToFicheTab, editFicheField, editFicheAttachments, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
-            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, registerCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
+            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, dateFieldPayload, setDateField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, registerCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;

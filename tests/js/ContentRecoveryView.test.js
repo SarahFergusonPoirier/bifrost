@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils';
 import ContentRecoveryView from '../../resources/js/views/ContentRecoveryView.vue';
+import FicheDateEditor from '../../resources/js/components/fiche/FicheDateEditor.vue';
 import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('vue-router', () => ({ onBeforeRouteLeave: vi.fn() }));
@@ -10,6 +11,32 @@ afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     localStorage.clear();
+});
+
+it('keeps simple-date timeline metadata while editing its date and clears it with an explicit unknown state', async () => {
+    const field = { id: 1, field_definition_id: 1, section_key: 'identity', field_definition: { label: 'Naissance', value_type: 'date' } };
+    const content = { public_id: 'fiche', title: 'Personnage', folder_id: null, summary: null, blocks: [],
+        field_values: [{ field_definition_id: 1, value_date: '2001-01-01', date_options: { timeline: true, calendar: 'Grégorien' } }],
+        template_assignment: { template_version: { version_number: 1, fields: [field] } },
+    };
+    contentRequest.mockImplementation(async path => {
+        if (path === '/contents/fiche') return { data: content };
+        if (path.endsWith('/tree')) return { data: [content] };
+        if (path.endsWith('/folders') || ['/content-types', '/projects'].includes(path)) return { data: [] };
+        return { data: { data: [], current_page: 1, last_page: 1 } };
+    });
+    const wrapper = mount(ContentRecoveryView, { props: { projectId: '1' }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    await flushPromises();
+    await wrapper.findAll('button').find(button => button.text() === 'Catalogue').trigger('click');
+    await flushPromises();
+    await wrapper.get('nav[aria-label="Dossiers et fiches du catalogue"]').findAll('button').find(button => button.text() === 'Personnage').trigger('click');
+    await flushPromises();
+    const editor = wrapper.getComponent(FicheDateEditor);
+    await editor.get('input[type="date"]').setValue('2002-02-02');
+    expect(wrapper.vm.draft.field_values[0]).toMatchObject({ value_date: '2002-02-02', date_options: { timeline: true, calendar: 'Grégorien' } });
+    await wrapper.get('[data-field-state]').setValue('unknown');
+    expect(wrapper.vm.draft.field_values[0]).toEqual({ field_definition_id: 1, value_state: 'unknown' });
+    wrapper.unmount();
 });
 
 it('conserve un brouillon puis transmet sa version lors de l’autosauvegarde', async () => {

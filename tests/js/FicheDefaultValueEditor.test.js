@@ -3,6 +3,25 @@ import { expect, it } from 'vitest';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 import StructuredField from '../../resources/js/components/StructuredField.vue';
 
+it('links a simple date to the timeline without changing its canonical date', async () => {
+    const initial = { value_date: '2001-01-01' };
+    const wrapper = mount(FicheDefaultValueEditor, { props: { type: 'date', modelValue: initial } });
+    await wrapper.get('input[type="checkbox"]').setValue(true);
+    const linked = wrapper.emitted('update:modelValue').at(-1)[0];
+    expect(linked).toEqual({ value_date: '2001-01-01', date_options: { timeline: true } });
+    await wrapper.setProps({ modelValue: linked });
+    await wrapper.get('input[type="date"]').setValue('2002-02-02');
+    const changed = wrapper.emitted('update:modelValue').at(-1)[0];
+    expect(changed.date_options.timeline).toBe(true);
+    await wrapper.setProps({ modelValue: changed });
+    await wrapper.get('input[type="checkbox"]').setValue(false);
+    expect(wrapper.emitted('update:modelValue').at(-1)[0]).toEqual({ value_date: '2002-02-02', date_options: { timeline: false } });
+    await wrapper.get('input[type="date"]').setValue('');
+    expect(wrapper.emitted('update:modelValue').at(-1)).toEqual([null]);
+    expect(initial).toEqual({ value_date: '2001-01-01' });
+    wrapper.unmount();
+});
+
 it('shows retained choices and permits replacing or removing them', async () => {
     const wrapper = mount(FicheDefaultValueEditor, { props: { type: 'choice', choices: ['Actif'], modelValue: { value_text: 'Ancien' } } });
     const select = wrapper.findAll('select')[1];

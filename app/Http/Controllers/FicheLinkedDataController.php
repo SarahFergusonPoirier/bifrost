@@ -91,8 +91,8 @@ class FicheLinkedDataController extends Controller
         $datedContentIds = $eventContentIds->push($record->id)->unique()->all();
 
         $dates = ContentFieldValue::query()->whereIntegerInRaw('content_id', $datedContentIds)
-            ->whereHas('fieldDefinition', fn (Builder $query) => $query->whereIn('options_data->format', ['temporal', 'repeatable']))
-            ->whereNotNull('value_json')->with(['fieldDefinition:id,label,options_data', 'content:id,public_id,title,project_id'])->orderBy('id')->get()
+            ->whereHas('fieldDefinition', fn (Builder $query) => $query->where('value_type', 'date')->orWhereIn('options_data->format', ['temporal', 'repeatable']))
+            ->where(fn (Builder $query) => $query->whereNotNull('value_json')->orWhereNotNull('value_date'))->with(['fieldDefinition:id,label,options_data', 'content:id,public_id,title,project_id'])->orderBy('id')->get()
             ->flatMap(fn (ContentFieldValue $field): array => array_map(fn (array $entry): array => [
                 'key' => 'field-'.$field->id.($entry['id'] ? ':'.$entry['id'] : ''),
                 'public_id' => $field->content_id === $record->id ? null : $field->content->public_id,

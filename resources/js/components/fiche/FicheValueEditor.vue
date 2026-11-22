@@ -6,6 +6,7 @@
         </label>
         <template v-if="!state">
             <FicheTextEditor v-if="type === 'rich_text'" label="Texte" :model-value="value" :targets="targets" @update:model-value="update" />
+            <FicheDateEditor v-else-if="type === 'date'" :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" />
             <StructuredField v-else-if="structured" :format="type" :value="value || null" :content-id="contentId"
                 :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)"
                 :targets="allowedTargets" :entry-fields="entryFields" :entry-label="entryLabel" :levels="levels" :category-options="choices" :level-mode="levelMode" @change="update" />

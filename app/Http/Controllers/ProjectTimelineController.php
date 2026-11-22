@@ -21,8 +21,8 @@ class ProjectTimelineController extends Controller
 
         $fields = ContentFieldValue::query()
             ->whereHas('content', fn ($query) => $query->where('project_id', $project->id))
-            ->whereHas('fieldDefinition', fn ($query) => $query->whereIn('options_data->format', ['temporal', 'repeatable']))
-            ->whereNotNull('value_json')
+            ->whereHas('fieldDefinition', fn ($query) => $query->where('value_type', 'date')->orWhereIn('options_data->format', ['temporal', 'repeatable']))
+            ->where(fn ($query) => $query->whereNotNull('value_json')->orWhereNotNull('value_date'))
             ->with(['content:id,public_id,project_id,title', 'fieldDefinition:id,label,options_data'])
             ->lazyById();
 

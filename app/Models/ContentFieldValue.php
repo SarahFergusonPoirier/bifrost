@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\FieldSchema;
 use App\RepeatableFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,7 @@ class ContentFieldValue extends Model
 
     protected $fillable = [
         'content_id', 'field_definition_id', 'value_text', 'value_number',
-        'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state',
+        'value_boolean', 'value_date', 'value_json', 'reference_content_id', 'value_state', 'date_options',
     ];
 
     protected function casts(): array
@@ -28,6 +29,7 @@ class ContentFieldValue extends Model
             'value_number' => 'decimal:6',
             'value_boolean' => 'boolean',
             'value_date' => 'date',
+            'date_options' => 'array',
             'value_json' => 'array',
         ];
     }
@@ -67,6 +69,13 @@ class ContentFieldValue extends Model
             'value_json' => $this->value_json !== null,
             'reference_content_id' => $this->reference_content_id !== null,
         ]);
+
+        if ($this->date_options !== null) {
+            if ($definition->value_type !== 'date' || $this->value_date === null || $this->value_state !== null) {
+                throw ValidationException::withMessages(['date_options' => 'Les options de chronologie exigent une date renseignée.']);
+            }
+            Validator::make(['date_options' => $this->date_options], FieldSchema::dateOptionsRules('date_options'))->validate();
+        }
 
         if ($this->value_state !== null) {
             if ($present !== [] || ! in_array($this->value_state, ['unknown', 'not_applicable'], true)) {
@@ -261,6 +270,9 @@ class ContentFieldValue extends Model
 
     public function timelineDates(): array
     {
+        if ($this->value_date !== null && ! empty($this->date_options['timeline'])) {
+            return [['id' => null, 'label' => null, 'date' => ['start' => $this->value_date->format('Y-m-d'), 'precision' => 'exact'] + $this->date_options]];
+        }
         $value = $this->value_json ?? [];
         if (! array_is_list($value)) {
             return empty($value['timeline']) ? [] : [['id' => null, 'label' => null, 'date' => $value]];

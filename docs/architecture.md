@@ -368,6 +368,18 @@ Les chargements portent un compteur local : une réponse ou une erreur d’une
 ancienne requête ne remplace jamais le résultat d’une requête plus récente.
 Le démontage invalide également les lectures en cours.
 
+Les dates simples gardent leur valeur canonique dans `value_date`. La colonne
+nullable `date_options` contient uniquement leur lien de chronologie, son titre,
+sa description et son calendrier. Ces options ne peuvent accompagner ni un
+autre type de valeur ni un état explicite sans date. `FicheDateEditor` est commun
+aux fiches, sous-champs et valeurs par défaut ; effacer la date efface ses options,
+décocher le lien conserve la date. Les chronologies projettent les dates simples
+et structurées avec des clés stables, sans créer de copie d’événement. Les dates
+des groupes emploient le chemin des identifiants de membres et d’entrées.
+Les snapshots et les copies indépendantes conservent ces options. La migration
+ajoute la colonne sans transformer les dates existantes ; un retour arrière
+supprime ses métadonnées, donc une correction en avant est préférable après usage.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;

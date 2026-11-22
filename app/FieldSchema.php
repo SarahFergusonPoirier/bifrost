@@ -47,7 +47,8 @@ class FieldSchema
     public static function defaultRules(string $path): array
     {
         return [
-            $path => ['nullable', 'array:value_text,value_number,value_boolean,value_date,value_json,reference_content_id,value_state'],
+            $path => ['nullable', 'array:value_text,value_number,value_boolean,value_date,value_json,reference_content_id,value_state,date_options'],
+            ...self::dateOptionsRules($path.'.date_options'),
             "$path.value_text" => ['nullable', 'string'],
             "$path.value_number" => ['nullable', 'numeric', 'between:-99999999999999,99999999999999'],
             "$path.value_boolean" => ['nullable', 'boolean'],
@@ -55,6 +56,17 @@ class FieldSchema
             "$path.value_json" => ['nullable', 'array'],
             "$path.reference_content_id" => ['nullable', 'integer'],
             "$path.value_state" => ['nullable', 'in:unknown,not_applicable'],
+        ];
+    }
+
+    public static function dateOptionsRules(string $path): array
+    {
+        return [
+            $path => ['nullable', 'array:timeline,calendar,timeline_title,timeline_description'],
+            "$path.timeline" => ['sometimes', 'boolean'],
+            "$path.calendar" => ['sometimes', 'nullable', 'string', 'max:255'],
+            "$path.timeline_title" => ['sometimes', 'nullable', 'string', 'max:255'],
+            "$path.timeline_description" => ['sometimes', 'nullable', 'string', 'max:10000'],
         ];
     }
 
