@@ -16,7 +16,8 @@ class FieldSchema
     {
         return [
             $path => ['present', 'array', 'list', 'max:200'],
-            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation,default_value'],
+            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation,default_value,entry_fields'],
+            "$path.*.entry_fields" => ['sometimes', 'array', 'list', 'max:20'],
             ...self::defaultRules("$path.*.default_value"),
             "$path.*.id" => ['nullable', 'integer', 'distinct'],
             "$path.*.label" => ['required', 'string', 'max:255'],
@@ -70,10 +71,16 @@ class FieldSchema
         }
     }
 
-    public static function definitionAttributes(array $field, string $scope, ?int $projectId, ?int $universeId = null): array
+    public static function definitionAttributes(array $field, string $scope, ?int $projectId, ?int $universeId = null, int $depth = 0): array
     {
         $structured = ! in_array($field['type'], ['text', 'rich_text', 'number', 'boolean', 'date', 'choice', 'reference', 'json'], true);
         $options = $structured || $field['type'] === 'rich_text' ? ['format' => $field['type']] : [];
+        if (array_key_exists('entry_fields', $field)) {
+            if ($field['type'] !== 'repeatable') {
+                throw ValidationException::withMessages(['entry_fields' => 'Les champs intégrés exigent une liste structurée.']);
+            }
+            $options['entry_fields'] = RepeatableFields::schema($field['entry_fields'], $scope, $projectId, $universeId, $depth + 1);
+        }
         if ($field['type'] === 'scale') {
             $options['levels'] = (int) ($field['levels'] ?? 5);
         }

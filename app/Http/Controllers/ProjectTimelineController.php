@@ -23,7 +23,7 @@ class ProjectTimelineController extends Controller
             ->whereHas('content', fn ($query) => $query->where('project_id', $project->id))
             ->whereHas('fieldDefinition', fn ($query) => $query->whereIn('options_data->format', ['temporal', 'repeatable']))
             ->whereNotNull('value_json')
-            ->with(['content:id,public_id,project_id,title', 'fieldDefinition:id,label'])
+            ->with(['content:id,public_id,project_id,title', 'fieldDefinition:id,label,options_data'])
             ->lazyById();
 
         $perPage = 50;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\RepeatableFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Validator;
@@ -9,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class ContentFieldValue extends Model
 {
+    private ?array $validationDisplay = null;
+
     public const VALUE_COLUMNS = [
         'text' => 'value_text', 'number' => 'value_number', 'boolean' => 'value_boolean',
         'date' => 'value_date', 'choice' => 'value_text', 'reference' => 'reference_content_id', 'json' => 'value_json',
@@ -38,63 +41,69 @@ class ContentFieldValue extends Model
                 return;
             }
 
-            $scopeCompatible = $definition->scope_type === 'global'
-                || ($definition->scope_type === 'project' && $content->scope_type === 'project'
-                    && (string) $definition->project_id === (string) $content->project_id)
-                || ($definition->scope_type === 'universe' && $content->scope_type === 'universe'
-                    && (string) $definition->universe_id === (string) $content->universe_id);
-
-            if (! $scopeCompatible) {
-                throw ValidationException::withMessages(['field_definition_id' => 'Le champ n’est pas accessible dans la portée de ce contenu.']);
-            }
-
-            $expected = self::VALUE_COLUMNS[$definition->value_type] ?? null;
-            $present = array_filter([
-                'value_text' => $value->value_text !== null,
-                'value_number' => $value->value_number !== null,
-                'value_boolean' => $value->value_boolean !== null,
-                'value_date' => $value->value_date !== null,
-                'value_json' => $value->value_json !== null,
-                'reference_content_id' => $value->reference_content_id !== null,
-            ]);
-
-            if ($value->value_state !== null) {
-                if ($present !== [] || ! in_array($value->value_state, ['unknown', 'not_applicable'], true)) {
-                    throw ValidationException::withMessages(['value_state' => 'Un état explicite ne peut pas accompagner une valeur.']);
-                }
-
-                return;
-            }
-
-            if (count($present) !== 1 || ! isset($present[$expected])) {
-                throw ValidationException::withMessages(['value' => 'Une seule valeur compatible avec le type du champ doit être renseignée.']);
-            }
-
-            $multipleChoice = ($definition->options_data['format'] ?? null) === 'multiple_choice';
-            if ($definition->value_type === 'choice' || $multipleChoice) {
-                $configuration = $value->fieldDisplayOptions($definition, $content);
-                $choices = $configuration['choices'] ?? $definition->options_data['choices'] ?? [];
-                $selected = $multipleChoice ? $value->value_json : [$value->value_text];
-
-                if (! array_is_list($selected) || collect($selected)->contains(fn ($item) => ! is_string($item) || ($choices !== [] && ! in_array($item, $choices, true)))) {
-                    throw ValidationException::withMessages(['value' => 'Une option choisie ne figure pas dans la liste du champ.']);
-                }
-            }
-
-            if ($definition->value_type === 'json') {
-                $value->validateStructuredValue($definition, $content);
-            }
-
-            if ($definition->value_type === 'reference') {
-                $target = Content::query()->find($value->reference_content_id);
-                $allowed = $definition->options_data['content_type_ids'] ?? null;
-                if (! $target || ($allowed && ! in_array($target->content_type_id, $allowed))
-                    || ($target->project_id !== null && $content->project_id !== null
-                        && (int) $target->project_id !== (int) $content->project_id)) {
-                    throw ValidationException::withMessages(['reference_content_id' => 'Le contenu cible de la référence n’est pas autorisé.']);
-                }
-            }
+            $value->validateForContent($definition, $content);
         });
+    }
+
+    public function validateForContent(FieldDefinition $definition, Content $content, ?array $display = null): void
+    {
+        $this->validationDisplay = $display;
+        $scopeCompatible = $definition->scope_type === 'global'
+            || ($definition->scope_type === 'project' && $content->scope_type === 'project'
+                && (string) $definition->project_id === (string) $content->project_id)
+            || ($definition->scope_type === 'universe' && $content->scope_type === 'universe'
+                && (string) $definition->universe_id === (string) $content->universe_id);
+
+        if (! $scopeCompatible) {
+            throw ValidationException::withMessages(['field_definition_id' => 'Le champ n’est pas accessible dans la portée de ce contenu.']);
+        }
+
+        $expected = self::VALUE_COLUMNS[$definition->value_type] ?? null;
+        $present = array_filter([
+            'value_text' => $this->value_text !== null,
+            'value_number' => $this->value_number !== null,
+            'value_boolean' => $this->value_boolean !== null,
+            'value_date' => $this->value_date !== null,
+            'value_json' => $this->value_json !== null,
+            'reference_content_id' => $this->reference_content_id !== null,
+        ]);
+
+        if ($this->value_state !== null) {
+            if ($present !== [] || ! in_array($this->value_state, ['unknown', 'not_applicable'], true)) {
+                throw ValidationException::withMessages(['value_state' => 'Un état explicite ne peut pas accompagner une valeur.']);
+            }
+
+            return;
+        }
+
+        if (count($present) !== 1 || ! isset($present[$expected])) {
+            throw ValidationException::withMessages(['value' => 'Une seule valeur compatible avec le type du champ doit être renseignée.']);
+        }
+
+        $multipleChoice = ($definition->options_data['format'] ?? null) === 'multiple_choice';
+        if ($definition->value_type === 'choice' || $multipleChoice) {
+            $configuration = $this->fieldDisplayOptions($definition, $content);
+            $choices = $configuration['choices'] ?? $definition->options_data['choices'] ?? [];
+            $selected = $multipleChoice ? $this->value_json : [$this->value_text];
+
+            if (! array_is_list($selected) || collect($selected)->contains(fn ($item) => ! is_string($item) || ($choices !== [] && ! in_array($item, $choices, true)))) {
+                throw ValidationException::withMessages(['value' => 'Une option choisie ne figure pas dans la liste du champ.']);
+            }
+        }
+
+        if ($definition->value_type === 'json') {
+            $this->validateStructuredValue($definition, $content);
+        }
+
+        if ($definition->value_type === 'reference') {
+            $target = Content::query()->find($this->reference_content_id);
+            $allowed = $definition->options_data['content_type_ids'] ?? null;
+            if (! $target || ($allowed && ! in_array($target->content_type_id, $allowed))
+                || ($target->project_id !== null && $content->project_id !== null
+                    && (int) $target->project_id !== (int) $content->project_id)) {
+                throw ValidationException::withMessages(['reference_content_id' => 'Le contenu cible de la référence n’est pas autorisé.']);
+            }
+        }
     }
 
     private function scaleLimit(FieldDefinition $definition, Content $content): int
@@ -110,6 +119,9 @@ class ContentFieldValue extends Model
 
     private function fieldDisplayOptions(FieldDefinition $definition, Content $content): array
     {
+        if ($this->validationDisplay !== null) {
+            return $this->validationDisplay;
+        }
         $field = $content->templateAssignment()->first()?->templateVersion
             ->fields()->where('field_definition_id', $definition->id)->first();
         if ($field) {
@@ -137,9 +149,9 @@ class ContentFieldValue extends Model
             'keywords', 'equipment', 'capabilities', 'repeatable', 'bullets' => [
                 'value_json' => ['array', 'list', 'min:1', 'max:100'],
                 'value_json.*' => ['required', 'array:label'.(match ($format) {
-                    'equipment' => ',description,image,fields', 'capabilities' => ',description,category,mastery,fields', 'repeatable' => ',id,description,period,date,level,rank', 'bullets' => '', default => ',description'
+                    'equipment' => ',description,image,fields', 'capabilities' => ',description,category,mastery,fields', 'repeatable' => ',id,description,period,date,level,rank,values', 'bullets' => '', default => ',description'
                 })],
-                'value_json.*.id' => ['required_with:value_json.*.date', 'uuid', 'distinct:ignore_case'],
+                'value_json.*.id' => ['required_with:value_json.*.date,value_json.*.values', 'uuid', 'distinct:ignore_case'],
                 'value_json.*.label' => ['required', 'string', 'max:120'],
                 'value_json.*.description' => ['nullable', 'string', 'max:1000'],
                 'value_json.*.image' => ['nullable', 'uuid'],
@@ -154,6 +166,7 @@ class ContentFieldValue extends Model
                 ...($format === 'repeatable' ? $this->temporalRules('value_json.*.date') : []),
                 'value_json.*.level' => ['nullable', 'string', 'max:120'],
                 'value_json.*.rank' => ['nullable', 'integer', 'between:1,5'],
+                'value_json.*.values' => ['sometimes', 'array', 'max:20'],
             ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],
@@ -178,6 +191,9 @@ class ContentFieldValue extends Model
         };
 
         Validator::make(['value_json' => $this->value_json], $rules)->validate();
+        if ($format === 'repeatable') {
+            RepeatableFields::validate($this->value_json, $definition->options_data['entry_fields'] ?? [], $content, $this->getOriginal('value_json') ?? []);
+        }
 
         if ($format === 'image' && ($this->value_json['image'] ?? null) !== ($this->getOriginal('value_json')['image'] ?? null)) {
             $image = $content->resources()->where('storage_mode', 'imported')
@@ -238,14 +254,7 @@ class ContentFieldValue extends Model
             return empty($value['timeline']) ? [] : [['id' => null, 'label' => null, 'date' => $value]];
         }
 
-        $dates = [];
-        foreach ($value as $entry) {
-            if (! empty($entry['id']) && ! empty($entry['date']['timeline'])) {
-                $dates[] = ['id' => $entry['id'], 'label' => $entry['label'], 'date' => $entry['date']];
-            }
-        }
-
-        return $dates;
+        return RepeatableFields::dates($value, $this->fieldDefinition?->options_data['entry_fields'] ?? []);
     }
 
     private function temporalRules(string $path): array

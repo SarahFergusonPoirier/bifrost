@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContentBlock;
-use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
+use App\RepeatableFields;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -152,15 +152,8 @@ class FicheTabTemplateController extends Controller
             $slots[$definition->id] = $slot;
             $options = $definition->options_data ?? [];
             $default = $field['default_value'] ?? [];
-            if ($global && (($definition->value_type === 'reference' && ($default['reference_content_id'] ?? null) !== null)
-                || (in_array($options['format'] ?? null, ['references', 'image'], true) && ($default['value_json'] ?? null) !== null))) {
-                abort(422, 'Ce champ utilise une référence ou une image par défaut. Enregistre son modèle dans ce projet.');
-            }
-            if ($global && isset($options['content_type_ids'])) {
-                $globalIds = ContentType::whereKey($options['content_type_ids'])
-                    ->whereIn('scope_type', ['system', 'global'])->pluck('id')->all();
-                abort_unless(count($globalIds) === count(array_unique($options['content_type_ids'])), 422,
-                    'Ce bloc utilise un type de fiche propre au projet. Enregistre son modèle dans ce projet.');
+            if ($global) {
+                RepeatableFields::assertGlobal(['value_type' => $definition->value_type, 'options_data' => $options], $default);
             }
             $fields[] = [
                 'slot' => $slot,

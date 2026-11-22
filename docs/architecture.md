@@ -217,3 +217,16 @@ y compris lorsqu’un bloc commun affiche les champs concernés. L’empreinte
 de confirmation inclut le schéma pour refuser une décision devenue obsolète.
 Supprimer un bloc de champs orphelin conserve les définitions et les valeurs
 canoniques, qui restent accessibles parmi les champs archivés de la fiche.
+
+`RepeatableFields` prépare le schéma des sous-champs typés des listes
+structurées dans `options_data.entry_fields`. Chaque membre possède une clé
+UUID stable et chaque entrée conserve ses valeurs typées sous `values`.
+Le stockage reste dans la valeur canonique du champ parent. La validation
+réutilise `ContentFieldValue::validateForContent`, avec les mêmes contrôles
+de portée, de références, d’images, de choix et d’états explicites.
+Les schémas acceptent vingt membres par groupe et trois niveaux de listes.
+Les dates imbriquées alimentent la chronologie par une clé stable composée
+des identifiants des entrées et des membres ; décocher conserve la date.
+La bibliothèque globale vérifie récursivement les restrictions et défauts
+pour ne pas transporter des références propres à un projet.
+Cette fondation serveur précède le raccordement de l’éditeur des groupes.
