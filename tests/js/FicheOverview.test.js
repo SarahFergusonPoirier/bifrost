@@ -5,6 +5,22 @@ import ContentAttachments from '../../resources/js/components/ContentAttachments
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 
+it('searches reusable starters and existing field labels through the same library search', async () => {
+    const field = { id: 1, field_definition_id: 1, section_key: 'identity', field_definition: { label: 'Énergie', value_type: 'number' } };
+    const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', canCopy: true, templateSections: groupTemplateFields([field]), hiddenFields: [], displayValue: () => '', persist: () => {} } });
+    wrapper.vm.begin();
+    await wrapper.vm.$nextTick();
+    const search = wrapper.get('input[type="search"]');
+    await search.setValue('charisme');
+    expect(wrapper.findAll('.fiche-preset-actions button').map(button => button.text())).toContain('Attributs clés');
+    expect(wrapper.text()).not.toContain('Aucun bloc ne correspond');
+    await search.setValue('energie');
+    expect(wrapper.vm.matchingCards.some(card => card.fields?.some(field => field.label === 'Énergie'))).toBe(true);
+    await search.setValue('resume');
+    expect(wrapper.vm.textBlockTitles).toContain('Résumé');
+    wrapper.unmount();
+});
+
 it('shows the actual default capability view in settings and keeps an explicit list choice', async () => {
     const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', templateSections: new Map(), hiddenFields: [], displayValue: () => '', persist: () => {},
         placements: [{ id: 'abilities', source: 'capabilities', width: 6, height: 2 }],

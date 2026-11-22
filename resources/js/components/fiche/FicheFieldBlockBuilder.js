@@ -1,15 +1,15 @@
 import { fieldTypes } from './fieldTypes';
 import FicheDefaultValueEditor from './FicheDefaultValueEditor.vue';
 import { fieldSchemaSpec, previewEntryFields } from './fieldSchemaSpecs';
-import blockPresets from '../../../../config/fiche-block-presets.json';
+import { matchingBlockPresets } from './blockPresets';
 
 export default {
     components: { FicheDefaultValueEditor },
-    props: { disabled: Boolean, schema: Object, groupMode: Boolean, depth: { type: Number, default: 0 }, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
+    props: { query: { type: String, default: '' }, disabled: Boolean, schema: Object, groupMode: Boolean, depth: { type: Number, default: 0 }, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
     emits: ['create', 'update', 'pending'],
     data: () => ({ title: '', fields: [], blockScaleLevels: '5', blockScaleDisplay: 'both', preserveBlockScale: false, scalePending: false }),
     computed: {
-        presets() { return blockPresets; },
+        presets() { return matchingBlockPresets(this.query); },
         types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json' && (this.depth < 3 || type !== 'repeatable'))); },
         limit() { return this.groupMode ? 20 : 200; },
         scaleFields() { return this.fields.filter(field => field.type === 'scale'); },

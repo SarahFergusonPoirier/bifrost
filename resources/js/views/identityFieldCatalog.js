@@ -1,3 +1,5 @@
+import { normalizeFicheSearch as searchableLabel } from '../components/fiche/ficheSearch';
+
 export const identityGroups = {
   "Universels": [
     "Prénom",
@@ -173,10 +175,6 @@ export function identityPreset(suggestion) {
     return { label, section: 'Identité', type, help: '', required: false, ...(type === 'scale' ? { levels: 5 } : {}),
         ...(group ? { entry_label: group.label, entry_fields: group.fields.map(([label, type]) => ({ key: crypto.randomUUID(), label, type })) } : {}),
     };
-}
-
-function searchableLabel(label) {
-    return label.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('fr');
 }
 
 export function findIdentitySuggestions(group, query) {

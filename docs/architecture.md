@@ -429,6 +429,13 @@ et sans enregistrement automatique. Un brouillon doit être explicitement effac�
 avant de choisir une autre structure ; les groupes et les schémas déjà enregistrés
 ne peuvent pas être remplacés par cette action.
 
+La recherche de la bibliothèque est commune aux blocs présents, modèles de
+texte et structures de départ. Les structures et blocs à champs sont trouvables
+par les libellés de leurs champs. `ficheSearch` normalise la casse et les accents,
+également pour les suggestions d’identité ; le filtrage ne réinitialise jamais
+le bloc en préparation. Le message d’absence de résultat tient compte des
+structures et des modèles enregistrés déjà chargés.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;

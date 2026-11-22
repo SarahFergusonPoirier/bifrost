@@ -7,6 +7,7 @@
             <div class="fiche-preset-actions">
                 <button v-for="preset in presets" :key="preset.key" type="button" :disabled="!!title || fields.length > 0" @click="usePreset(preset.key)">{{ preset.title }}</button>
             </div>
+            <p v-if="!presets.length" role="status">Aucune structure de départ ne correspond à cette recherche.</p>
             <p v-if="title || fields.length">Efface le bloc en préparation avant de choisir une autre structure.</p>
         </fieldset>
         <p v-if="schema && !groupMode">Les valeurs des champs retirés seront conservées et resteront accessibles dans l’historique et les données conservées.</p>

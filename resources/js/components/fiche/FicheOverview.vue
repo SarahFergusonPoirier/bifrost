@@ -22,7 +22,7 @@
                     <p v-else-if="selectedCard.text">{{ selectedCard.text.slice(0, 140) }}</p>
                 </FicheBlock>
             </section>
-            <p v-if="!matchingCards.length && (!canCopy || !textBlockTitles.length)" role="status">Aucun bloc ne correspond à cette recherche.</p>
+            <p v-if="!matchingCards.length && (!canCopy || !textBlockTitles.length) && !matchingPresetCount && !matchingBlockTemplates.length" role="status">Aucun bloc ne correspond à cette recherche.</p>
             <button type="button" :disabled="!selectedCard || draft.length >= 80" @click="add">Ajouter un placement</button>
             <fieldset v-if="canCopy">
                 <legend>Nouveau bloc de texte</legend>
@@ -34,7 +34,7 @@
                 <FicheTextEditor v-model="newBody" label="Texte" :targets="referenceTargets" />
                 <button type="button" :disabled="!newTitle.trim() || draft.length >= 80" @click="createTextBlock">Ajouter le bloc</button>
             </fieldset>
-            <FicheFieldBlockBuilder v-if="canCopy" :disabled="draft.length >= 80" :reference-types="referenceTypes" :content-id="contentId" :targets="referenceTargets" @create="addFieldBlock" />
+            <FicheFieldBlockBuilder v-if="canCopy" :query="query" :disabled="draft.length >= 80" :reference-types="referenceTypes" :content-id="contentId" :targets="referenceTargets" @create="addFieldBlock" />
         </details>
         <section v-if="schemaEditorBlock" ref="schemaEditor" aria-label="Modifier les champs du bloc">
             <FicheFieldBlockBuilder :schema="schemaEditorBlock" :content-id="contentId" :reference-types="referenceTypes" :targets="referenceTargets" @update="prepareFieldUpdate" />

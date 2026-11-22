@@ -3,6 +3,21 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('filters starter structures by their fields without accents and keeps a prepared draft', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder, { props: { query: ' CHARISME ' } });
+    const choices = () => wrapper.findAll('.fiche-preset-actions button');
+    expect(choices().map(button => button.text())).toEqual(['Attributs clés']);
+    await wrapper.setProps({ query: 'equipement' });
+    expect(choices().map(button => button.text())).toEqual(['Objets et équipement']);
+    await choices()[0].trigger('click');
+    await wrapper.setProps({ query: 'Aucun résultat' });
+    expect(choices()).toHaveLength(0);
+    expect(wrapper.get('[role="status"]').text()).toContain('Aucune structure');
+    expect(wrapper.vm.title).toBe('Objets et équipement');
+    expect(wrapper.vm.fields[0].type).toBe('equipment');
+    wrapper.unmount();
+});
+
 it.each([
     ['Attributs clés', ['scale', 'scale', 'scale', 'scale', 'scale']],
     ['Personnalité', ['keywords', 'keywords', 'keywords', 'keywords', 'keywords']],

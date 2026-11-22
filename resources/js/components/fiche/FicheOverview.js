@@ -1,4 +1,6 @@
 import { formatTemporalDate } from './formatFieldValue';
+import { matchesFicheSearch } from './ficheSearch';
+import { matchingBlockPresets } from './blockPresets';
 import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
 import { blockDimensions, clampBlockSize, normalizeBlockSize } from './blockDimensions';
@@ -72,8 +74,7 @@ export default {
                 pendingFields: update?.fields };
         },
         textBlockTitles() {
-            const query = this.query.trim().toLocaleLowerCase('fr');
-            return ['Texte', 'Biographie', 'Personnalité', 'Résumé'].filter(title => title.toLocaleLowerCase('fr').includes(query));
+            return ['Texte', 'Biographie', 'Personnalité', 'Résumé'].filter(title => matchesFicheSearch(this.query, title));
         },
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
@@ -158,12 +159,11 @@ export default {
             return this.equipmentFor();
         },
         matchingCards() {
-            const query = this.query.trim().toLocaleLowerCase('fr');
-            return this.cards.filter(card => card.title.toLocaleLowerCase('fr').includes(query));
+            return this.cards.filter(card => matchesFicheSearch(this.query, card.title, ...(card.fields ?? []).map(field => field.label)));
         },
+        matchingPresetCount() { return this.canCopy ? matchingBlockPresets(this.query).length : 0; },
         matchingBlockTemplates() {
-            const query = this.query.trim().toLocaleLowerCase('fr');
-            return this.blockTemplates.filter(template => template.name.toLocaleLowerCase('fr').includes(query));
+            return this.blockTemplates.filter(template => matchesFicheSearch(this.query, template.name));
         },
         selectedLibraryEntry() {
             return this.matchingBlockTemplates.find(template => template.id === this.blockTemplateId);
