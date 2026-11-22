@@ -1,5 +1,5 @@
 export function fieldSchemaSpec(field) {
-    const definition = field.field_definition;
+    const definition = field.field_definition ?? {};
     const options = definition.options_data ?? {};
     const display = field.display_options ?? {};
     return {

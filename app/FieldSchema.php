@@ -103,7 +103,7 @@ class FieldSchema
         ];
     }
 
-    public static function displayOptions(array $field, FieldDefinition $definition, array $previous = [], ?string $previousSection = null, bool $existing = false): array
+    public static function displayOptions(array $field, FieldDefinition $definition, array $previous = [], ?string $previousSection = null, bool $existing = false, ?array $scope = null): array
     {
         $display = ['section_label' => $field['section']] + $previous;
         if (array_key_exists('hide_empty', $field)) {
@@ -114,7 +114,8 @@ class FieldSchema
             }
         }
         if ($existing && ($definition->options_data['format'] ?? null) === 'repeatable' && array_key_exists('entry_fields', $field)) {
-            $next = RepeatableFields::schema($field['entry_fields'], $definition->scope_type, $definition->project_id, $definition->universe_id, 1);
+            $next = RepeatableFields::schema($field['entry_fields'], $scope['type'] ?? $definition->scope_type,
+                $scope === null ? $definition->project_id : $scope['project_id'], $scope === null ? $definition->universe_id : $scope['universe_id'], 1);
             $display['entry_fields'] = RepeatableFields::revise($next, $previous['entry_fields'] ?? $definition->options_data['entry_fields'] ?? [], $field['entry_fields']);
         }
         $oldLabel = $previous['section_label'] ?? $previousSection;

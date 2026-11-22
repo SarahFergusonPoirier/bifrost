@@ -332,3 +332,11 @@ et conservée si le placement et sa source restent identiques. L’ouverture de
 l’éditeur prépare un aperçu conforme aux limites sans modifier la disposition
 enregistrée ; seule sa sauvegarde persiste ces dimensions. Les valeurs de la
 fiche ne sont jamais changées par ce réglage de présentation.
+
+L’éditeur des modèles de fiches réutilise aussi `FicheFieldBlockBuilder` pour
+les schémas de groupes. Il conserve leurs clés et les adaptations de présentation,
+exige l’application de la structure avant publication, et expose la règle des
+valeurs vides. Les données de travail de l’éditeur ne sont pas envoyées à l’API.
+La validation des nouveaux membres utilise la portée du modèle publié : une
+variante de projet peut ajouter ses références locales tout en conservant la
+définition canonique globale du champ parent. La version globale reste inchangée.

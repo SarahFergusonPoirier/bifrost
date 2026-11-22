@@ -85,7 +85,8 @@ class ContentTemplateAuthoringController extends Controller
                 $field, $template->scope_type, $template->project_id, $template->universe_id,
             ));
             $default = array_key_exists('default_value', $field) ? $field['default_value'] : $original?->default_value;
-            $display = FieldSchema::displayOptions($field + ['default_value' => $default], $definition, $original?->display_options ?? [], $original?->section_key, $original !== null);
+            $display = FieldSchema::displayOptions($field + ['default_value' => $default], $definition, $original?->display_options ?? [], $original?->section_key, $original !== null,
+                ['type' => $template->scope_type, 'project_id' => $template->project_id, 'universe_id' => $template->universe_id]);
             if ($template->scope_type === 'global') {
                 RepeatableFields::assertGlobal(['value_type' => $definition->value_type, 'options_data' => $definition->options_data], $default, $display);
             }

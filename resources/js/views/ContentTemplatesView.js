@@ -1,6 +1,8 @@
 import { fieldCalculation } from '../components/fiche/characterAge';
 import { fieldTypes } from '../components/fiche/fieldTypes';
 import FicheDefaultValueEditor from '../components/fiche/FicheDefaultValueEditor.vue';
+import FicheFieldBlockBuilder from '../components/fiche/FicheFieldBlockBuilder.vue';
+import { fieldSchemaSpec, previewEntryFields } from '../components/fiche/fieldSchemaSpecs';
 import { findIdentitySuggestions, identityGroups, identityPreset } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
@@ -14,7 +16,7 @@ const scopeLabels = {
 };
 
 export default {
-    components: { FicheDefaultValueEditor },
+    components: { FicheDefaultValueEditor, FicheFieldBlockBuilder },
     setup() {
         const router = useRouter();
         const cloningId = ref(null);
@@ -100,6 +102,10 @@ export default {
                         choicesText: (field.display_options?.choices ?? field.field_definition?.options_data?.choices ?? []).join('\n'),
                         help: field.help_text ?? '', required: Boolean(field.is_required),
                         defaultEnabled: field.default_value != null, defaultValue: field.default_value ?? null,
+                        emptyDisplay: field.display_options?.hide_empty == null ? 'inherit' : field.display_options.hide_empty ? 'hide' : 'show',
+                        entryFields: fieldSchemaSpec(field).entry_fields,
+                        groupEditor: { title: 'Sous-champs', fields: field.display_options?.entry_fields ?? field.field_definition?.options_data?.entry_fields ?? [], pendingFields: fieldSchemaSpec(field).entry_fields },
+                        groupPending: false,
                     })),
                 };
             } catch (error) {
@@ -157,12 +163,15 @@ export default {
             editorError.value = '';
             try {
                 const { id, from_version_id, base_version_id, fields, name, description, project_id, content_type_id } = editor.value;
+                if (fields.some(field => field.groupPending)) throw new Error('Applique ou annule la structure des groupes avant de publier le modèle.');
                 if (fields.some(field => field.defaultEnabled && field.defaultValue == null)) {
                     throw new Error('Renseigne une valeur par défaut ou désactive cette option.');
                 }
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, defaultEnabled, defaultValue, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, defaultEnabled, defaultValue, emptyDisplay, entryFields, groupEditor, groupPending, ...field }) => ({
                     ...field,
                     default_value: defaultEnabled ? defaultValue : null,
+                    hide_empty: emptyDisplay === 'hide' ? true : emptyDisplay === 'show' ? false : null,
+                    ...(field.type === 'repeatable' ? { entry_fields: entryFields ?? [] } : {}),
                     ...(['reference', 'references'].includes(field.type) ? { allow_reference_creation: Boolean(allowReferenceCreation) } : {}),
                     ...(!field.id && ['reference', 'references'].includes(field.type) ? { reference_types: referenceTypes ?? [] } : {}),
                     ...(field.type === 'number' ? { calculation: calculation ?? 'none' } : {}),
@@ -172,7 +181,7 @@ export default {
                     ...(field.type === 'scale' ? {
                         levels: levels ?? 5,
                         ...(preserveScale ? { scale_strategy: 'preserve' } : {}),
-                        level_descriptions: (levelDescriptions ?? '').split('\n').slice(0, levels ?? 5).map(line => line.trim() || null),
+                        level_descriptions: (levelDescriptions ?? '').split('\n').slice(0, 20).map(line => line.trim() || null),
                         scale_display: scaleDisplay ?? 'both',
                     } : {}),
                     ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type)
@@ -276,12 +285,34 @@ export default {
         function addIdentityField(label) {
             const field = identityPreset(label);
             const exists = editor.value.fields.some(item => identityPreset(item.label).label === field.label);
-            if (!exists && editor.value.fields.length < 200) editor.value.fields.push(field);
+            if (!exists && editor.value.fields.length < 200) {
+                ensureGroupEditor(field);
+                editor.value.fields.push(field);
+            }
+        }
+
+        function ensureGroupEditor(field) {
+            field.entryFields ??= [];
+            field.groupEditor ??= { title: 'Sous-champs', fields: [], pendingFields: field.entryFields };
+            field.groupPending ??= false;
+        }
+
+        function setGroupFields(field, fields) {
+            field.entryFields = fields;
+            field.groupEditor = { ...field.groupEditor, pendingFields: fields };
+            field.groupPending = false;
+        }
+
+        function addField() {
+            const field = { label: '', section: 'Informations', type: 'text', help: '', required: false, emptyDisplay: 'inherit' };
+            ensureGroupEditor(field);
+            editor.value.fields.push(field);
         }
 
         onMounted(loadTemplates);
 
         return {
+            ensureGroupEditor, setGroupFields, addField, previewEntryFields,
             templates, details, loadDetails, editor, editorError, saving, availableTypes, projects, typeEditor, startType, saveType, fieldTypes, editTemplate, moveField, saveTemplate, defaultTargets,
             identityGroups, identityGroup, identityQuery, identitySuggestions, addIdentityField,
             scopeFilter,
