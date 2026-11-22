@@ -7,11 +7,95 @@ use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class RepeatableFieldsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_retired_members_do_not_reduce_the_capacity_for_current_group_values(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $members = [];
+        $values = [];
+        for ($index = 0; $index < 20; $index++) {
+            $key = (string) Str::uuid();
+            $members[] = ['key' => $key, 'label' => 'Ancien '.$index, 'type' => 'text'];
+            $values[$key] = ['value_text' => 'Conservé'];
+        }
+        $field = FieldDefinition::create(FieldSchema::definitionAttributes(['label' => 'Groupe', 'section' => 'Groupe', 'type' => 'repeatable', 'entry_fields' => $members], 'project', $project->id));
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Groupe', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $entries = [['id' => (string) Str::uuid(), 'label' => 'Entrée', 'values' => $values]];
+        $content->fieldValues()->create(['field_definition_id' => $field->id, 'value_json' => $entries]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $layout = $this->getJson($url)->json();
+        $newKey = (string) Str::uuid();
+        $layout['block_updates'] = [['id' => $block->public_id, 'title' => 'Groupe', 'fields' => [[
+            'id' => $field->id, 'label' => 'Groupe', 'section' => 'Groupe', 'type' => 'repeatable',
+            'entry_fields' => [['key' => $newKey, 'label' => 'Actuel', 'type' => 'text']],
+        ]]]];
+        $this->putJson($url, $layout)->assertOk();
+        $entries[0]['values'][$newKey] = ['value_text' => 'Nouveau'];
+        $this->patchJson('/api/contents/'.$content->public_id, ['title' => 'Élia', 'summary' => null,
+            'field_values' => [['field_definition_id' => $field->id, 'value_json' => $entries]],
+        ])->assertOk();
+        $this->assertCount(21, $content->fieldValues()->sole()->value_json[0]['values']);
+    }
+
+    public function test_group_schema_edits_retain_retired_values_and_restore_the_previous_structure(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $local = ContentType::create(['key' => 'local', 'name' => 'Local', 'scope_type' => 'project', 'project_id' => $project->id]);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $oldKey = '3363ef89-d63e-47a5-8b79-7fe75aecff66';
+        $scaleKey = 'd8990a7e-ac4c-4a0c-9605-9ec8f3137473';
+        $newKey = 'c7ca604f-0af2-4fc1-bb37-4208dd735d6f';
+        $field = FieldDefinition::create(FieldSchema::definitionAttributes([
+            'label' => 'Parcours', 'section' => 'Parcours', 'type' => 'repeatable', 'entry_fields' => [
+                ['key' => $oldKey, 'label' => 'Ancien nom', 'type' => 'text', 'required' => true],
+                ['key' => $scaleKey, 'label' => 'Niveau', 'type' => 'scale', 'levels' => 5],
+            ],
+        ], 'project', $project->id));
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Parcours', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $entries = [['id' => 'a3389499-94f8-4bee-adb1-a0e968a0cb42', 'label' => 'Formation', 'values' => [
+            $oldKey => ['value_text' => 'Conservé'], $scaleKey => ['value_json' => ['level' => 4]],
+        ]]];
+        $content->fieldValues()->create(['field_definition_id' => $field->id, 'value_json' => $entries]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}";
+        $layout = $this->getJson("$url/fiche-layout")->json();
+        $layout['tabs'][0]['placements'] = [['id' => '62d62476-6c05-4e1b-af03-9e4b1fd6e5e6', 'source' => 'fields:'.$block->public_id, 'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false]];
+        $layout['block_updates'] = [['id' => $block->public_id, 'title' => 'Parcours', 'fields' => [[
+            'id' => $field->id, 'label' => 'Parcours', 'type' => 'repeatable', 'section' => 'Parcours', 'entry_fields' => [
+                ['key' => $scaleKey, 'label' => 'Maîtrise', 'type' => 'scale', 'levels' => 3],
+                ['key' => $newKey, 'label' => 'Allié', 'type' => 'reference', 'reference_types' => [$local->id]],
+            ],
+        ]]]];
+        $this->putJson("$url/fiche-layout", $layout)->assertUnprocessable();
+        $this->assertDatabaseCount('content_revisions', 0);
+        $layout['block_updates'][0]['fields'][0]['entry_fields'][0]['scale_strategy'] = 'preserve';
+        $this->putJson("$url/fiche-layout", $layout)->assertOk();
+        $schema = $block->fresh()->field_schema[0]['display_options']['entry_fields'];
+        $this->assertSame([$scaleKey, $newKey, $oldKey], array_column($schema, 'key'));
+        $this->assertTrue($schema[2]['retired']);
+        $this->assertSame(3, $schema[0]['display_options']['scale_levels']);
+        $this->assertSame(5, $field->fresh()->options_data['entry_fields'][1]['field_definition']['options_data']['levels']);
+        $this->assertSame($entries, $content->fieldValues()->sole()->value_json);
+        $payload = ['title' => 'Élia', 'summary' => null, 'field_values' => [['field_definition_id' => $field->id, 'value_json' => $entries]]];
+        $this->patchJson('/api/contents/'.$content->public_id, $payload)->assertOk();
+        $payload['field_values'][0]['value_json'][0]['values'][$oldKey]['value_text'] = 'Perdu';
+        $this->patchJson('/api/contents/'.$content->public_id, $payload)->assertUnprocessable();
+        $this->assertSame($entries, $content->fieldValues()->sole()->value_json);
+        $this->postJson("$url/fiche-tab-templates", ['name' => 'Groupe', 'scope' => 'global', 'tab' => 'overview', 'version' => 1])->assertUnprocessable();
+        $snapshot = DB::table('content_revisions')->where('content_id', $content->id)->where('label', 'Avant modification des champs')->value('id');
+        $this->postJson('/api/contents/'.$content->public_id.'/revisions/'.$snapshot.'/restore')->assertOk();
+        $this->assertSame([['field_definition_id' => $field->id]], $block->fresh()->field_schema);
+        $this->assertSame($entries, $content->fieldValues()->sole()->value_json);
+    }
 
     public function test_nested_group_dates_keep_stable_timeline_keys_and_references_remain_scoped(): void
     {

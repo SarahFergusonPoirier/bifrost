@@ -105,6 +105,10 @@ class FieldSchema
     public static function displayOptions(array $field, FieldDefinition $definition, array $previous = [], ?string $previousSection = null, bool $existing = false): array
     {
         $display = ['section_label' => $field['section']] + $previous;
+        if ($existing && ($definition->options_data['format'] ?? null) === 'repeatable' && array_key_exists('entry_fields', $field)) {
+            $next = RepeatableFields::schema($field['entry_fields'], $definition->scope_type, $definition->project_id, $definition->universe_id, 1);
+            $display['entry_fields'] = RepeatableFields::revise($next, $previous['entry_fields'] ?? $definition->options_data['entry_fields'] ?? [], $field['entry_fields']);
+        }
         $oldLabel = $previous['section_label'] ?? $previousSection;
         if ($oldLabel && $oldLabel !== $field['section']) {
             $display['section_aliases'] = array_values(array_unique([$oldLabel, ...($display['section_aliases'] ?? [])]));

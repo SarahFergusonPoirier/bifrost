@@ -111,7 +111,7 @@ export default {
                     image: field.format === 'image' ? this.fieldValue?.(field)?.image : null,
                     levelMode: field.display_options?.repeatable_level_mode,
                     entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
-                    entryFields: field.field_definition.options_data?.entry_fields ?? [],
+                    entryFields: field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields ?? [],
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level && this.fieldValue(field).level <= (field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5)
                         ? {

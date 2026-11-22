@@ -7,7 +7,7 @@
             <h3>Champ {{ index + 1 }}</h3>
             <label>Nom du champ <input v-model="field.label" maxlength="255" @keydown.enter.prevent /></label>
             <label>Type du champ
-                <select v-model="field.type" :disabled="Boolean(field.existingId)" @change="field.default_value = null"><option v-for="(label, type) in types" :key="type" :value="type">{{ label }}</option></select>
+                <select v-model="field.type" :disabled="Boolean(field.existingId || field.existingKey)" @change="field.default_value = null"><option v-for="(label, type) in types" :key="type" :value="type">{{ label }}</option></select>
             </label>
             <p v-if="field.existingId">Pour utiliser un autre type, ajoute un nouveau champ. Les valeurs d’un champ retiré restent conservées.</p>
             <label>Aide facultative <textarea v-model="field.help" maxlength="10000" /></label>
@@ -22,7 +22,7 @@
                 <select v-model="field.badge_color"><option value="">Texte</option><option value="accent">Accent</option><option value="blue">Bleu</option><option value="green">Vert</option><option value="amber">Ambre</option><option value="red">Rouge</option></select>
             </label>
             <template v-if="field.type === 'scale'">
-                <label v-if="field.existingId && Number(field.levels) !== field.originalLevels"><input v-model="field.preserveScale" type="checkbox" /> Conserver les valeurs existantes après le changement de niveaux</label>
+                <label v-if="(field.existingId || field.existingKey) && Number(field.levels) !== field.originalLevels"><input v-model="field.preserveScale" type="checkbox" /> Conserver les valeurs existantes après le changement de niveaux</label>
                 <label>Nombre de niveaux, de 2 à 20 <input v-model="field.levels" inputmode="numeric" @keydown.enter.prevent /></label>
                 <label>Affichage de l’échelle
                     <select v-model="field.scale_display"><option value="both">Segments et chiffre</option><option value="segments">Segments</option><option value="number">Chiffre</option></select>
@@ -37,14 +37,14 @@
             </label>
             <details v-if="field.type === 'repeatable'">
                 <summary>Configurer les sous-champs du groupe · {{ field.entry_fields.length }}</summary>
-                <p v-if="field.existingId">La structure enregistrée est conservée. Pour créer une autre structure, ajoute un nouveau champ ; les valeurs précédentes resteront accessibles.</p>
-                <FicheFieldBlockBuilder v-else group-mode :depth="depth + 1" :schema="field.groupEditor"
+                <p>Retirer un sous-champ conserve ses valeurs dans les données conservées du groupe.</p>
+                <FicheFieldBlockBuilder group-mode :depth="depth + 1" :schema="field.groupEditor"
                     :content-id="contentId" :targets="targets" :reference-types="referenceTypes" @pending="field.groupPending = $event" @update="setGroupFields(field, $event.fields)" />
                 <p v-if="field.groupPending" role="status">Applique la structure du groupe avant de préparer ce bloc.</p>
             </details>
             <template v-if="['reference', 'references'].includes(field.type)">
                 <label>Types de fiches autorisés
-                    <select v-model="field.reference_types" :disabled="Boolean(field.existingId)" multiple><option v-for="type in referenceTypes" :key="type.id" :value="type.id">{{ type.name }}</option></select>
+                    <select v-model="field.reference_types" :disabled="Boolean(field.existingId || field.existingKey)" multiple><option v-for="type in referenceTypes" :key="type.id" :value="type.id">{{ type.name }}</option></select>
                 </label>
                 <p>Aucune sélection autorise tous les types accessibles dans le projet.</p>
                 <label><input v-model="field.allow_reference_creation" type="checkbox" /> Permettre de créer une fiche depuis ce champ</label>

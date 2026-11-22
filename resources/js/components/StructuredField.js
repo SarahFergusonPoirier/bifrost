@@ -53,7 +53,7 @@ export default {
             const label = this.keyword.trim();
             const entries = this.value ?? [];
             if (!label || entries.length >= 100) return;
-            const defaults = Object.fromEntries(this.entryFields.filter(field => field.default_value != null)
+            const defaults = Object.fromEntries(this.entryFields.filter(field => !field.retired && field.default_value != null)
                 .map(field => [field.key, JSON.parse(JSON.stringify(field.default_value))]));
             this.setKeywords([...entries, { label, ...(this.format === 'repeatable' && Object.keys(defaults).length ? { values: defaults } : {}) }]);
             this.keyword = '';

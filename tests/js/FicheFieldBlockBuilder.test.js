@@ -3,6 +3,25 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('edits persisted group members while preserving their keys and locking existing types', async () => {
+    const member = { key: 'member', field_definition: { label: 'Ancien nom', value_type: 'text' }, display_options: {} };
+    const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {
+        title: 'Parcours', fields: [{ field_definition_id: 5,
+            field_definition: { label: 'Étapes', value_type: 'json', options_data: { format: 'repeatable', entry_fields: [member] } },
+            display_options: {},
+        }],
+    } } });
+    const child = wrapper.findAllComponents(FicheFieldBlockBuilder).find(component => component.vm !== wrapper.vm);
+    expect(child.vm.fields[0].existingKey).toBe('member');
+    expect(child.get('select').attributes('disabled')).toBeDefined();
+    await child.get('input').setValue('Nouveau nom');
+    child.vm.create();
+    await wrapper.vm.$nextTick();
+    wrapper.vm.create();
+    expect(wrapper.emitted('update')[0][0].fields[0]).toMatchObject({ id: 5, entry_fields: [{ key: 'member', label: 'Nouveau nom', type: 'text' }] });
+    wrapper.unmount();
+});
+
 it('configures typed group members recursively and stages their stable keys', async () => {
     const wrapper = mount(FicheFieldBlockBuilder);
     wrapper.vm.title = 'Parcours';

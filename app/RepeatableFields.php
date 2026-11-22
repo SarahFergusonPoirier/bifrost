@@ -52,6 +52,15 @@ class RepeatableFields
             }
             foreach ($schema as $field) {
                 $value = $values[$field['key']] ?? null;
+                $old = $oldEntries->get($entry['id'] ?? '')['values'][$field['key']] ?? null;
+                if (! empty($field['retired'])) {
+                    if ($old !== null && $value != $old) {
+                        throw ValidationException::withMessages(['value_json' => 'Les valeurs des sous-champs retirés restent conservées.']);
+                    }
+                    if ($value == $old) {
+                        continue;
+                    }
+                }
                 if ($value === null) {
                     if ($field['is_required']) {
                         throw ValidationException::withMessages(['value_json' => 'Le champ intégré « '.$field['field_definition']['label'].' » est obligatoire.']);
@@ -63,8 +72,7 @@ class RepeatableFields
                 if ($field['is_required'] && isset($value['value_text']) && trim($value['value_text']) === '') {
                     throw ValidationException::withMessages(['value_json' => 'Un champ intégré obligatoire ne peut pas être vide.']);
                 }
-                $old = $oldEntries->get($entry['id'] ?? '')['values'][$field['key']] ?? [];
-                $nested = new ContentFieldValue($old);
+                $nested = new ContentFieldValue($old ?? []);
                 $nested->syncOriginal();
                 $nested->fill(array_fill_keys([...array_values(ContentFieldValue::VALUE_COLUMNS), 'value_state'], null));
                 $nested->fill($value);
@@ -75,7 +83,45 @@ class RepeatableFields
         }
     }
 
-    public static function assertGlobal(array $definition, ?array $default = null): void
+    public static function revise(array $next, array $previous, array $specs): array
+    {
+        $known = collect($previous)->keyBy('key');
+        $inputs = collect($specs)->keyBy('key');
+        $result = [];
+        foreach ($next as $field) {
+            $old = $known->get($field['key']);
+            if ($old) {
+                $original = new FieldDefinition($old['field_definition']);
+                $replacement = $field['field_definition'];
+                if ($original->value_type !== $replacement['value_type']
+                    || ($original->options_data['format'] ?? null) !== ($replacement['options_data']['format'] ?? null)
+                    || ($original->options_data['content_type_ids'] ?? []) != ($replacement['options_data']['content_type_ids'] ?? [])) {
+                    throw ValidationException::withMessages(['entry_fields' => 'Ajoute un nouveau sous-champ pour changer son type ou ses références. Les anciennes valeurs restent conservées.']);
+                }
+                $input = $inputs->get($field['key']);
+                $input['section'] ??= 'Groupe';
+                $children = $input['entry_fields'] ?? null;
+                unset($input['entry_fields']);
+                $field['display_options'] = FieldSchema::displayOptions($input, $original, $old['display_options'] ?? [], existing: true);
+                if ($children !== null) {
+                    $field['display_options']['entry_fields'] = self::revise($replacement['options_data']['entry_fields'] ?? [],
+                        $old['display_options']['entry_fields'] ?? $original->options_data['entry_fields'] ?? [], $children);
+                }
+                $field['field_definition'] = [...$old['field_definition'], 'label' => $replacement['label']];
+            }
+            $result[] = $field;
+        }
+        $active = array_column($next, 'key');
+        foreach ($previous as $field) {
+            if (! in_array($field['key'], $active, true)) {
+                $result[] = [...$field, 'retired' => true];
+            }
+        }
+
+        return $result;
+    }
+
+    public static function assertGlobal(array $definition, ?array $default = null, array $display = []): void
     {
         $options = $definition['options_data'] ?? [];
         $types = $options['content_type_ids'] ?? [];
@@ -86,10 +132,10 @@ class RepeatableFields
             || (in_array($options['format'] ?? null, ['references', 'image'], true) && isset($default['value_json']))) {
             abort(422, 'Ce groupe utilise une référence ou une image par défaut propre au projet.');
         }
-        foreach ($options['entry_fields'] ?? [] as $field) {
-            self::assertGlobal($field['field_definition'], $field['default_value']);
+        foreach ($display['entry_fields'] ?? $options['entry_fields'] ?? [] as $field) {
+            self::assertGlobal($field['field_definition'], $field['default_value'], $field['display_options'] ?? []);
             foreach ($default['value_json'] ?? [] as $entry) {
-                self::assertGlobal($field['field_definition'], $entry['values'][$field['key']] ?? null);
+                self::assertGlobal($field['field_definition'], $entry['values'][$field['key']] ?? null, $field['display_options'] ?? []);
             }
         }
     }
@@ -111,7 +157,7 @@ class RepeatableFields
                 if (($options['format'] ?? null) === 'temporal' && ! empty($value['timeline'])) {
                     $dates[] = ['id' => $id.':'.$field['key'], 'label' => $entry['label'].' · '.$field['field_definition']['label'], 'date' => $value];
                 } elseif (($options['format'] ?? null) === 'repeatable' && is_array($value)) {
-                    array_push($dates, ...self::dates($value, $options['entry_fields'] ?? [], $id.':'.$field['key'].':'));
+                    array_push($dates, ...self::dates($value, $field['display_options']['entry_fields'] ?? $options['entry_fields'] ?? [], $id.':'.$field['key'].':'));
                 }
             }
         }

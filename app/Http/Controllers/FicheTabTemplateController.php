@@ -153,7 +153,7 @@ class FicheTabTemplateController extends Controller
             $options = $definition->options_data ?? [];
             $default = $field['default_value'] ?? [];
             if ($global) {
-                RepeatableFields::assertGlobal(['value_type' => $definition->value_type, 'options_data' => $options], $default);
+                RepeatableFields::assertGlobal(['value_type' => $definition->value_type, 'options_data' => $options], $default, $field['display_options'] ?? []);
             }
             $fields[] = [
                 'slot' => $slot,

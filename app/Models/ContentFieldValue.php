@@ -166,7 +166,7 @@ class ContentFieldValue extends Model
                 ...($format === 'repeatable' ? $this->temporalRules('value_json.*.date') : []),
                 'value_json.*.level' => ['nullable', 'string', 'max:120'],
                 'value_json.*.rank' => ['nullable', 'integer', 'between:1,5'],
-                'value_json.*.values' => ['sometimes', 'array', 'max:20'],
+                'value_json.*.values' => ['sometimes', 'array'],
             ],
             'scale' => [
                 'value_json' => ['array:level', 'required'],
@@ -192,7 +192,8 @@ class ContentFieldValue extends Model
 
         Validator::make(['value_json' => $this->value_json], $rules)->validate();
         if ($format === 'repeatable') {
-            RepeatableFields::validate($this->value_json, $definition->options_data['entry_fields'] ?? [], $content, $this->getOriginal('value_json') ?? []);
+            $display = $this->fieldDisplayOptions($definition, $content);
+            RepeatableFields::validate($this->value_json, $display['entry_fields'] ?? $definition->options_data['entry_fields'] ?? [], $content, $this->getOriginal('value_json') ?? []);
         }
 
         if ($format === 'image' && ($this->value_json['image'] ?? null) !== ($this->getOriginal('value_json')['image'] ?? null)) {
@@ -254,7 +255,10 @@ class ContentFieldValue extends Model
             return empty($value['timeline']) ? [] : [['id' => null, 'label' => null, 'date' => $value]];
         }
 
-        return RepeatableFields::dates($value, $this->fieldDefinition?->options_data['entry_fields'] ?? []);
+        $definition = $this->fieldDefinition;
+        $display = $definition ? $this->fieldDisplayOptions($definition, $this->content) : [];
+
+        return RepeatableFields::dates($value, $display['entry_fields'] ?? $definition?->options_data['entry_fields'] ?? []);
     }
 
     private function temporalRules(string $path): array

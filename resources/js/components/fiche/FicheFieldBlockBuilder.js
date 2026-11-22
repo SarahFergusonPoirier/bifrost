@@ -14,7 +14,7 @@ export default {
             return this.title.trim() && (this.groupMode || this.fields.length > 0) && this.fields.every(field => field.label.trim()
                 && this.types[field.type] && !field.groupPending && (!field.default_enabled || field.default_value != null)
                 && (field.type !== 'scale' || Number.isInteger(Number(field.levels)) && Number(field.levels) >= 2 && Number(field.levels) <= 20
-                    && (!field.existingId || Number(field.levels) === field.originalLevels || field.preserveScale)));
+                    && (!(field.existingId || field.existingKey) || Number(field.levels) === field.originalLevels || field.preserveScale)));
         },
     },
     watch: { schema: { immediate: true, handler(schema) { if (schema) this.loadSchema(schema); } } },
@@ -27,11 +27,14 @@ export default {
         loadSchema(schema) {
             this.title = schema.title || 'Champs';
             const originals = new Map(schema.fields.map(field => [field.field_definition_id, field]));
-            const entries = schema.pendingFields ?? schema.fields.map(fieldSchemaSpec);
+            const memberOriginals = new Map(schema.fields.filter(field => field.key).map(field => [field.key, field]));
+            const entries = schema.pendingFields ?? schema.fields.filter(field => !field.retired).map(fieldSchemaSpec);
             this.fields = entries.map(field => {
-                const original = originals.get(field.id);
+                const original = this.groupMode ? memberOriginals.get(field.key) : originals.get(field.id);
+                const children = original?.display_options?.entry_fields ?? original?.field_definition.options_data?.entry_fields ?? [];
                 return { ...this.newField(), ...field, id: crypto.randomUUID(), existingId: field.id,
-                    entry_fields: field.entry_fields ?? [], groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: field.entry_fields ?? [] },
+                    existingKey: this.groupMode && original ? field.key : null,
+                    entry_fields: field.entry_fields ?? [], groupEditor: { title: 'Champs du groupe', fields: children, pendingFields: field.entry_fields ?? [] },
                     help: field.help || '', required: Boolean(field.required), default_enabled: field.default_value != null,
                     choicesText: (field.choices ?? []).join('\n'), levelDescriptions: (field.level_descriptions ?? []).join('\n'),
                     levels: String(field.levels ?? 5), originalLevels: original?.display_options?.scale_levels ?? original?.field_definition.options_data?.levels ?? 5,
@@ -61,7 +64,7 @@ export default {
                 label: field.label.trim(), type: field.type, section: title, help: field.help.trim() || null,
                 ...(field.existingId ? { id: field.existingId } : {}),
                 ...(this.groupMode ? { key: field.key } : {}),
-                ...(field.type === 'repeatable' && !field.existingId && field.entry_fields.length ? { entry_fields: field.entry_fields } : {}),
+                ...(field.type === 'repeatable' ? { entry_fields: field.entry_fields } : {}),
                 required: field.required, history_view: field.history_view,
                 ...(field.default_enabled ? { default_value: field.default_value } : this.schema ? { default_value: null } : {}),
                 ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type) ? { choices: field.choicesText.split('\n').map(value => value.trim()).filter(Boolean) } : {}),
@@ -84,7 +87,7 @@ export default {
         previewEntryFields,
         setGroupFields(field, fields) {
             field.entry_fields = fields;
-            field.groupEditor = { title: 'Champs du groupe', fields: [], pendingFields: fields };
+            field.groupEditor = { ...field.groupEditor, pendingFields: fields };
             field.groupPending = false;
             this.$emit('pending', true);
         },

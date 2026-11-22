@@ -9,6 +9,19 @@ const schema = [
     { key: 'boolean', field_definition: { label: 'Active', value_type: 'boolean' }, display_options: {}, default_value: { value_boolean: false } },
 ];
 
+it('shows retired values as read-only and keeps them when editing another member', async () => {
+    const wrapper = mount(FicheGroupValues, { props: { editable: true,
+        schema: [schema[0], { ...schema[1], retired: true }],
+        values: { number: { value_number: 4 }, boolean: { value_boolean: false } },
+    } });
+    expect(wrapper.findAllComponents(FicheValueEditor)).toHaveLength(1);
+    expect(wrapper.text()).toContain('Données des sous-champs retirés conservées');
+    expect(wrapper.text()).toContain('Active · Donnée conservée');
+    await wrapper.get('input').setValue('8');
+    expect(wrapper.emitted('change').at(-1)[0]).toEqual({ number: { value_number: 8 }, boolean: { value_boolean: false } });
+    wrapper.unmount();
+});
+
 it('edits typed group members without mutating the source values or losing false and zero', async () => {
     const values = { number: { value_number: 0 }, boolean: { value_boolean: false } };
     const wrapper = mount(FicheGroupValues, { props: { schema, values, editable: true } });

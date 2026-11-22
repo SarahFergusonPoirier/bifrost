@@ -12,7 +12,7 @@ export function fieldSchemaSpec(field) {
         badge_color: display.badge_color, history_view: display.history_view,
         repeatable_level_mode: display.repeatable_level_mode, calculation: display.calculation,
         reference_types: options.content_type_ids, allow_reference_creation: display.allow_reference_creation,
-        entry_fields: (options.entry_fields ?? []).map(fieldSchemaSpec),
+        entry_fields: (display.entry_fields ?? options.entry_fields ?? []).filter(field => !field.retired).map(fieldSchemaSpec),
     };
 }
 

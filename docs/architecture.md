@@ -238,5 +238,14 @@ les descripteurs persistés en configuration éditable et prépare les aperçus.
 `FicheGroupValues` gère la saisie et la lecture des membres d’une entrée,
 et `FicheEntryList` centralise le rendu des listes, descriptions et dates.
 Ces composants réutilisent les classes et variables du design existant.
-La structure d’un groupe déjà enregistré reste pour l’instant conservée :
-une autre structure exige un nouveau champ, sans détruire les anciennes valeurs.
+La structure personnalisée d’un groupe enregistré est portée par
+`display_options.entry_fields`, sans modifier la définition source. Les clés
+des membres survivent aux renommages et changements d’ordre. Les membres
+retirés y restent marqués `retired` : leurs valeurs sont lisibles, protégées
+contre une omission lors d’une sauvegarde, et exclues de la saisie courante.
+Une révision complète précède la modification et restaure aussi le schéma.
+Un changement de type ou de restriction de référence exige un nouveau membre ;
+un changement d’échelle demande une stratégie explicite. Les modèles globaux
+contrôlent récursivement ce schéma personnalisé comme la définition source.
+Les défauts des membres actifs s’appliquent aux nouvelles entrées sans
+remplacer les valeurs des entrées existantes.

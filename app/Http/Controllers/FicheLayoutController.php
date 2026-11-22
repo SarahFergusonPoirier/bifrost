@@ -314,10 +314,6 @@ class FicheLayoutController extends Controller
                     throw ValidationException::withMessages(['fields' => 'Les types de référence d’un champ existant sont conservés.']);
                 }
                 $definition ??= FieldDefinition::create($attributes);
-                if ($old && array_key_exists('entry_fields', $field)
-                    && ($definition->options_data['entry_fields'] ?? []) != ($attributes['options_data']['entry_fields'] ?? [])) {
-                    throw ValidationException::withMessages(['entry_fields' => 'Crée un nouveau champ pour changer la structure de ce groupe. Les anciennes valeurs restent conservées.']);
-                }
                 $default = array_key_exists('default_value', $field) ? $field['default_value'] : ($old['default_value'] ?? null);
                 $entry = [
                     'field_definition_id' => $definition->id, 'label_override' => $field['label'],
