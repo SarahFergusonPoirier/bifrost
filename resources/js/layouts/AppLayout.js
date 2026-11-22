@@ -21,6 +21,7 @@ export default {
             minWidth, maxWidth, resizePointer: null,
             theme: ['light', 'dark'].includes(theme) ? theme : 'system',
             colorPreference: null,
+            mobileNavigationOpen: false,
         };
     },
     mounted() {
@@ -32,6 +33,11 @@ export default {
         this.colorPreference?.removeEventListener('change', this.applyTheme);
     },
     methods: {
+        closeMobileNavigation() {
+            if (!this.mobileNavigationOpen) return;
+            this.mobileNavigationOpen = false;
+            this.$refs.navigationToggle?.focus();
+        },
         applyTheme() {
             const theme = this.theme === 'system' ? (this.colorPreference?.matches ? 'dark' : 'light') : this.theme;
             document.documentElement.dataset.theme = theme;

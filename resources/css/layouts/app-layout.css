@@ -123,9 +123,22 @@
     padding: 2.5rem 0 3rem;
 }
 
+.app-navigation-toggle {
+    display: none;
+}
+
 /* Navigation adaptée aux petits écrans */
 
-@media (max-width: 700px) {
+@media (max-width: 1000px) {
+    .app-navigation-toggle {
+        display: block;
+        margin: 1rem;
+    }
+
+    .app-sidebar:not(.app-sidebar--open) {
+        display: none;
+    }
+
     .app-sidebar-resize {
         display: none;
     }
@@ -345,7 +358,7 @@
     border-top: 1px solid var(--workspace-border);
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1000px) {
     .project-workspace .app-sidebar {
         border-top-right-radius: 0;
     }

@@ -7,6 +7,23 @@ afterEach(() => {
     delete document.documentElement.dataset.theme;
 });
 
+it('replie la navigation mobile sans changer la largeur du bureau et restaure le focus avec Échap', async () => {
+    localStorage.setItem('bifrost:sidebar-width', '400');
+    const layout = mount(AppLayout, { attachTo: document.body, props: { workspace: true }, global: { stubs: { RouterLink: RouterLinkStub } } });
+    const toggle = layout.get('.app-navigation-toggle');
+    expect(toggle.text()).toBe('Navigation du projet');
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    await toggle.trigger('click');
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(layout.get('aside').classes()).toContain('app-sidebar--open');
+    await layout.get('aside').trigger('keydown', { key: 'Escape' });
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(toggle.element);
+    expect(layout.vm.sidebarWidth).toBe(400);
+    expect(localStorage.getItem('bifrost:sidebar-width')).toBe('400');
+    layout.unmount();
+});
+
 it('redimensionne la barre au clavier et restaure sa largeur lors du remontage', async () => {
     const options = { global: { stubs: { RouterLink: RouterLinkStub } } };
     const layout = mount(AppLayout, options);

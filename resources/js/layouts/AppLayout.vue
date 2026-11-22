@@ -1,6 +1,9 @@
 <template>
     <div class="app-layout" :style="{ '--sidebar-width': sidebarWidth + 'px' }">
-        <aside id="app-sidebar" class="app-sidebar" aria-label="Navigation principale">
+        <button ref="navigationToggle" type="button" class="app-navigation-toggle" :aria-expanded="mobileNavigationOpen" aria-controls="app-sidebar"
+            @click="mobileNavigationOpen = !mobileNavigationOpen">{{ mobileNavigationOpen ? 'Fermer la navigation' : workspace ? 'Navigation du projet' : 'Navigation' }}</button>
+        <aside id="app-sidebar" class="app-sidebar" :class="{ 'app-sidebar--open': mobileNavigationOpen }" aria-label="Navigation principale"
+            @keydown.esc="closeMobileNavigation">
             <slot name="sidebar">
             <RouterLink
                 :to="{ name: 'home' }"
