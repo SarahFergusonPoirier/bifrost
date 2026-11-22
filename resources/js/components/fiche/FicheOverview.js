@@ -13,6 +13,7 @@ import ContentAttachments from '../ContentAttachments.vue';
 import { icons } from './ficheIcons';
 import FicheLinkedData from './FicheLinkedData.vue';
 import FicheBlock from './FicheBlock.vue';
+import FicheBlockActionMenu from './FicheBlockActionMenu.vue';
 import FicheText from './FicheText.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
 import FicheEntryFields from './FicheEntryFields.vue';
@@ -25,7 +26,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheEntryList, FicheFieldBlockBuilder, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
+    components: { FicheBlockActionMenu, FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheEntryList, FicheFieldBlockBuilder, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
     props: {
         summary: String,
         fullName: String,
@@ -347,6 +348,10 @@ export default {
             const next = order.indexOf(neighbor.definitionId);
             [order[index], order[next]] = [order[next], order[index]];
             placement.field_order = order;
+        },
+        configurePlacement(id) {
+            this.begin();
+            this.$nextTick(() => this.$refs.placementControls?.find(element => element.dataset.placement === id)?.querySelector('input')?.focus());
         },
         begin() {
             this.draftVersion = this.layoutVersion;

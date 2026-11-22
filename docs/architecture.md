@@ -350,3 +350,10 @@ est configurable par `display_options.entry_label` et suit les versions du modè
 Lorsqu’un groupe définit ses propres membres, l’éditeur présente ces membres
 et le nom de l’entrée. Les anciens champs génériques restent éditables tant
 qu’ils contiennent une valeur ; aucune conversion automatique ne les efface.
+
+`FicheBlockActionMenu` regroupe les actions de lecture dans une divulgation
+native accessible : fermeture par Échap avec retour au déclencheur, clic
+extérieur ou choix d’une action. Les paramètres ouvrent le brouillon de layout
+et placent le focus sur les dimensions du placement choisi ; aucune écriture
+n’a lieu avant l’enregistrement explicite. Le redimensionnement reste accessible
+directement dans l’aperçu d’édition et le signal de partage reste visible.

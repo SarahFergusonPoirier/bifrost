@@ -137,7 +137,7 @@
         </ul>
         <p>Masquer conserve le bloc dans cet onglet. Retirer enlève son placement et conserve ses données.</p>
         <ol>
-            <li v-for="(placement, index) in draft" :key="placement.id"
+            <li v-for="(placement, index) in draft" :key="placement.id" ref="placementControls" :data-placement="placement.id"
                 draggable="true" @dragstart="startDrag($event, index)" @dragover.prevent @drop.prevent="drop(index)" @dragend="dragged = null">
                 <strong>{{ bySource.get(placement.source)?.title ?? 'Bloc indisponible' }}</strong>
                 <label>Largeur en colonnes <input v-model.number="placement.width" required type="number" :min="blockDimensions(placement.source).minWidth" :max="blockDimensions(placement.source).maxWidth" /></label>
@@ -251,6 +251,8 @@
             :icon="placement.icon || card.icon" :style="{ '--fiche-width': placement.width, '--fiche-height': placement.collapsed ? 1 : placement.height }">
             <template #actions>
                 <small v-if="shared" class="fiche-shared-label">Données partagées</small>
+                <FicheBlockActionMenu v-if="!editing && (persist || ['attachments', 'gallery', 'summary'].includes(card.source) || editableEntryField(card.source, placement) || (card.text && card.source.startsWith('text:')))" :title="placement.title || card.title">
+                <button v-if="persist" type="button" @click="configurePlacement(placement.id)">Paramètres du bloc</button>
                 <button v-if="!editing && ['attachments', 'gallery'].includes(card.source)" type="button"
                     @click="$emit('edit-attachments')">Gérer les pièces jointes</button>
                 <button v-if="!editing && editableEntryField(card.source, placement)" type="button"
@@ -260,6 +262,7 @@
                 <button v-if="!editing && card.text && card.source.startsWith('text:')" type="button"
                     :aria-label="'Modifier le texte de ' + (placement.title || card.title)"
                     @click="$emit('edit-text', card.source.slice(5))">Modifier le texte</button>
+                </FicheBlockActionMenu>
                 <button v-if="editing && !placement.collapsed" type="button" class="fiche-resize" :disabled="savingLayout"
                     :aria-label="'Redimensionner ' + (placement.title || card.title) + ' avec les flèches. Largeur ' + placement.width + ' colonnes, hauteur ' + placement.height + ' rangées'"
                     @pointerdown="startResize($event, placement)" @pointermove="resize"
