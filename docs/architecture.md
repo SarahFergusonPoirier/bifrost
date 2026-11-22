@@ -210,3 +210,10 @@ conserve sa valeur archivée ; renommer ou réordonner conserve son identifiant.
 Les valeurs par défaut ne sont appliquées qu’aux nouveaux champs. Changer
 le type d’un champ existant nécessite d’ajouter un nouveau champ ; modifier
 une échelle demande une confirmation explicite de conservation des valeurs.
+
+L’analyse de suppression des blocs couvre les textes et les blocs de champs.
+Un placement masqué ou une disposition historique bloque la suppression,
+y compris lorsqu’un bloc commun affiche les champs concernés. L’empreinte
+de confirmation inclut le schéma pour refuser une décision devenue obsolète.
+Supprimer un bloc de champs orphelin conserve les définitions et les valeurs
+canoniques, qui restent accessibles parmi les champs archivés de la fiche.

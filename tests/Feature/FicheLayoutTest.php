@@ -16,6 +16,53 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_field_block_deletion_checks_dependencies_and_retains_canonical_values(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $other = Project::create(['name' => 'Autre']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $field = FieldDefinition::create(['key' => 'nom', 'label' => 'Nom', 'value_type' => 'text']);
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Identité', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $content->fieldValues()->create(['field_definition_id' => $field->id, 'value_text' => 'Nom conservé']);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $path = "$url/blocks/{$block->public_id}";
+        $this->getJson("/api/projects/{$other->id}/contents/{$content->public_id}/fiche-layout/blocks/{$block->public_id}/impact")->assertNotFound();
+        $impact = $this->getJson("$path/impact")->assertOk()->assertJsonPath('implicit_overview', true)->json();
+        $this->deleteJson($path, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
+        $layout = $this->getJson($url)->json();
+        foreach ($layout['tabs'] as &$tab) {
+            $tab['placements'] = [];
+        }
+        unset($tab);
+        $this->putJson($url, $layout)->assertOk();
+        $impact = $this->getJson("$path/impact")->assertOk()->assertJsonPath('block_type', 'fields')->assertJsonPath('retained_fields', 1)->json();
+        $block->update(['field_schema' => [['field_definition_id' => $field->id, 'label_override' => 'Nouveau nom']]]);
+        $this->deleteJson($path, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
+        $impact = $this->getJson("$path/impact")->assertOk()->json();
+        $this->deleteJson($path, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertNoContent();
+        $this->assertDatabaseMissing('content_blocks', ['id' => $block->id]);
+        $this->assertDatabaseHas('content_field_values', ['content_id' => $content->id, 'field_definition_id' => $field->id, 'value_text' => 'Nom conservé']);
+        $this->assertDatabaseHas('field_definitions', ['id' => $field->id, 'deleted_at' => null]);
+        $this->getJson("/api/contents/{$content->public_id}")->assertOk()->assertJsonPath('archived_field_definitions.0.id', $field->id);
+        $shared = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Partagé', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $sharedPath = "$url/blocks/{$shared->public_id}";
+        $layout = $this->getJson($url)->json();
+        $layout['tabs'][0]['placements'] = [[
+            'id' => 'ccd0f0ef-9f4b-4d73-b35e-de9b0a980f5a', 'source' => 'fields',
+            'width' => 6, 'height' => 2, 'hidden' => true, 'collapsed' => false, 'field_order' => [$field->id],
+        ]];
+        $this->putJson($url, $layout)->assertOk();
+        $impact = $this->getJson("$sharedPath/impact")->assertOk()->assertJsonCount(1, 'placements')->assertJsonPath('placements.0.hidden', true)->json();
+        $this->deleteJson($sharedPath, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
+        $layout = $this->getJson($url)->json();
+        $layout['tabs'][0]['placements'] = [];
+        $this->putJson($url, $layout)->assertOk();
+        $impact = $this->getJson("$sharedPath/impact")->assertOk()->assertJsonCount(0, 'placements')->assertJsonPath('historical_versions', [2])->json();
+        $this->deleteJson($sharedPath, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
+        $this->assertDatabaseHas('content_blocks', ['id' => $shared->id, 'deleted_at' => null]);
+    }
+
     public function test_editing_a_field_block_preserves_values_and_snapshots_the_previous_schema(): void
     {
         $project = Project::create(['name' => 'Projet']);

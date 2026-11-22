@@ -1,11 +1,11 @@
 <template>
     <details>
-        <summary>Vérifier la suppression d’un bloc de texte</summary>
+        <summary>Vérifier la suppression d’un bloc</summary>
         <label>Bloc
             <select v-model="deletionId" :disabled="deletionBusy" @change="deletionImpact = null; deletionError = ''">
                 <option :value="null">Choisir un bloc</option>
-                <option v-for="block in blocks.filter(item => item.block_type === 'text')" :key="block.public_id" :value="block.public_id">
-                    {{ block.title || 'Texte sans titre' }}
+                <option v-for="block in blocks.filter(item => ['text', 'fields'].includes(item.block_type))" :key="block.public_id" :value="block.public_id">
+                    {{ block.title || 'Bloc sans titre' }} · {{ block.block_type === 'fields' ? 'Champs' : 'Texte' }}
                 </option>
             </select>
         </label>
@@ -18,10 +18,11 @@
             </ul>
             <p v-if="deletionImpact.historical_versions.length">Dispositions historiques liées · {{ deletionImpact.historical_versions.join(', ') }}</p>
             <p v-if="deletionImpact.recoverable_revisions?.length">
-                Le texte figure dans {{ deletionImpact.recoverable_revisions.length }} version(s) de la fiche.
+                Le bloc figure dans {{ deletionImpact.recoverable_revisions.length }} version(s) de la fiche.
             </p>
             <template v-if="!deletionImpact.implicit_overview && !deletionImpact.placements.length && !deletionImpact.historical_versions.length">
                 <p>Ce bloc n’est utilisé dans aucune disposition. Confirme sa suppression définitive.</p>
+                <p v-if="deletionImpact.block_type === 'fields'">Seul le bloc sera supprimé. Les définitions et les valeurs de ses {{ deletionImpact.retained_fields }} champ(s) resteront conservées dans la fiche, y compris les données partagées.</p>
                 <button type="button" @click="deleteOrphanBlock">Supprimer définitivement ce bloc</button>
             </template>
             <button type="button" @click="deletionImpact = null">Annuler</button>

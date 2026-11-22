@@ -1,6 +1,6 @@
 <template>
     <button v-if="persist && !editing" ref="editButton" type="button" @click="begin">Personnaliser les blocs</button>
-    <FicheBlockDeletion v-if="blockDeletionPath && canCopy && !editing && blocks.some(block => block.block_type === 'text')"
+    <FicheBlockDeletion v-if="blockDeletionPath && canCopy && !editing && blocks.some(block => ['text', 'fields'].includes(block.block_type))"
         :path="blockDeletionPath" :blocks="blocks" @deleted="$emit('block-deleted')" />
 
     <p v-if="savingLayout" role="status">Enregistrement des blocs…</p>

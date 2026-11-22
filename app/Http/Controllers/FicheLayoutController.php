@@ -38,9 +38,9 @@ class FicheLayoutController extends Controller
     public function blockImpact(string $project, string $content, string $block): JsonResponse
     {
         $record = $this->content($project, $content);
-        $text = $record->blocks()->where('public_id', $block)->where('block_type', 'text')->firstOrFail();
+        $candidate = $record->blocks()->where('public_id', $block)->whereIn('block_type', ['text', 'fields'])->firstOrFail();
 
-        return response()->json($this->textBlockImpact($record, $text));
+        return response()->json($this->blockDeletionImpact($record, $candidate));
     }
 
     public function destroyBlock(Request $request, string $project, string $content, string $block): JsonResponse
@@ -53,8 +53,8 @@ class FicheLayoutController extends Controller
 
         return DB::transaction(function () use ($project, $content, $block, $input): JsonResponse {
             $record = $this->content($project, $content, lock: true);
-            $text = $record->blocks()->where('public_id', $block)->where('block_type', 'text')->firstOrFail();
-            $impact = $this->textBlockImpact($record, $text);
+            $candidate = $record->blocks()->where('public_id', $block)->whereIn('block_type', ['text', 'fields'])->firstOrFail();
+            $impact = $this->blockDeletionImpact($record, $candidate);
             abort_if($impact['version'] !== (int) $input['version'], 409, 'La disposition a changé.');
             abort_if(
                 $impact['implicit_overview'] || $impact['placements'] || $impact['historical_versions'],
@@ -62,19 +62,34 @@ class FicheLayoutController extends Controller
                 'Ce bloc est encore utilisé dans une disposition actuelle ou historique.',
             );
 
-            abort_unless(hash_equals($impact['block_version'], $input['block_version']), 409, 'Le texte a changé depuis la vérification.');
-            $text->forceDelete();
+            abort_unless(hash_equals($impact['block_version'], $input['block_version']), 409, 'Le bloc a changé depuis la vérification.');
+            $candidate->forceDelete();
 
             return response()->json(null, 204);
         }, attempts: 3);
     }
 
-    private function textBlockImpact(Content $record, ContentBlock $text): array
+    private function blockDeletionImpact(Content $record, ContentBlock $candidate): array
     {
         $layout = $this->layout($record);
-        $source = 'text:'.$text->public_id;
+        $source = $candidate->block_type.':'.$candidate->public_id;
+        $fieldIds = array_column($candidate->field_schema ?? [], 'field_definition_id');
+        $usesBlock = static function (array $placement) use ($candidate, $source, $fieldIds): bool {
+            if (($placement['source'] ?? null) === $source) {
+                return true;
+            }
+            if ($candidate->block_type !== 'fields') {
+                return false;
+            }
+            if (($placement['source'] ?? null) === 'section:block:'.$candidate->public_id) {
+                return true;
+            }
+
+            return ($placement['source'] ?? null) === 'fields' && $fieldIds !== []
+                && (! isset($placement['field_order']) || array_intersect($fieldIds, $placement['field_order']) !== []);
+        };
         $placements = collect($layout['tabs'])->flatMap(fn (array $tab): array => collect($tab['placements'] ?? [])
-            ->where('source', $source)
+            ->filter($usesBlock)
             ->map(fn (array $placement): array => [
                 'tab' => $tab['id'],
                 'title' => $tab['title'],
@@ -83,17 +98,17 @@ class FicheLayoutController extends Controller
             ])->values()->all())->all();
 
         $historicalVersions = DB::table('fiche_layout_revisions')->where('content_id', $record->id)
-            ->orderBy('version')->cursor()->filter(function (object $revision) use ($source): bool {
+            ->orderBy('version')->cursor()->filter(function (object $revision) use ($usesBlock): bool {
                 $tabs = json_decode($revision->tabs, true, flags: JSON_THROW_ON_ERROR);
 
-                return collect($tabs)->contains(fn (array $tab): bool => collect($tab['placements'] ?? [])->contains('source', $source));
+                return collect($tabs)->contains(fn (array $tab): bool => collect($tab['placements'] ?? [])->contains($usesBlock));
             })->map(fn (object $revision): int => (int) $revision->version)->values()->all();
 
         $recoverableRevisions = DB::table('content_revisions')->where('content_id', $record->id)
-            ->orderBy('id')->cursor()->filter(function (object $revision) use ($text): bool {
+            ->orderBy('id')->cursor()->filter(function (object $revision) use ($candidate): bool {
                 $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
 
-                return collect($snapshot['blocks'] ?? [])->contains('public_id', $text->public_id);
+                return collect($snapshot['blocks'] ?? [])->contains('public_id', $candidate->public_id);
             })->map(fn (object $revision): int => (int) $revision->id)->values()->all();
 
         return [
@@ -101,7 +116,9 @@ class FicheLayoutController extends Controller
             'placements' => $placements,
             'historical_versions' => $historicalVersions,
             'recoverable_revisions' => $recoverableRevisions,
-            'block_version' => hash('sha256', json_encode([$text->title, $text->body], JSON_THROW_ON_ERROR)),
+            'block_type' => $candidate->block_type,
+            'retained_fields' => $candidate->block_type === 'fields' ? count($candidate->field_schema ?? []) : 0,
+            'block_version' => hash('sha256', json_encode([$candidate->block_type, $candidate->title, $candidate->body, $candidate->field_schema], JSON_THROW_ON_ERROR)),
             'implicit_overview' => collect($layout['tabs'])->contains(
                 fn (array $tab): bool => $tab['id'] === 'overview' && ! isset($tab['placements']),
             ),
