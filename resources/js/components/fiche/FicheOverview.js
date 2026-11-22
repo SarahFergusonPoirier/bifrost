@@ -1,6 +1,7 @@
 import { formatTemporalDate } from './formatFieldValue';
 import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
+import { instantiateTemplatePlacements, templateBindingFields } from './templatePlacements';
 import { identitySectionTitle } from './identitySection';
 import { templateSectionLabel } from './templateFields';
 import { defaultPlacementsFor, mergePlacements } from './fichePlacementDefaults';
@@ -177,6 +178,7 @@ export default {
         selectedFieldBlueprint() {
             return this.selectedLibraryEntry?.definition.field_blocks?.[this.selectedBlockTemplate?.source];
         },
+        selectedBindingFields() { return templateBindingFields(this.selectedBlockTemplate, this.selectedLibraryEntry?.definition); },
         selectedCard() {
             return this.matchingCards.find(card => card.source === this.source);
         },
@@ -508,7 +510,19 @@ export default {
                 if (!this.canCopy) return;
                 this.addTextPlacement(this.blockLabel(template, this.selectedLibraryEntry.name), '', template);
             } else if (this.bySource.has(template.source)) {
-                this.draft.push({ ...template, id: crypto.randomUUID() });
+                const [{ newBindings = [], ...item }] = instantiateTemplatePlacements([template], this.selectedLibraryEntry.id, this.selectedLibraryEntry.definition.revision ?? 1);
+                if (newBindings.length && !this.canCopy) return;
+                if (newBindings.some(copy => !this.selectedLibraryEntry.definition.field_blocks?.[copy.slot])) {
+                    this.libraryError = 'Une structure de champs du modèle est indisponible.';
+                    return;
+                }
+                for (const copy of newBindings) {
+                    const blueprint = this.selectedLibraryEntry.definition.field_blocks[copy.slot];
+                    this.copies.push({ ...copy, card: { title: blueprint.title, icon: 'catalogue', fields: blueprint.fields.map(field => ({
+                        id: 'slot-' + field.slot, definitionId: field.slot, label: field.label_override || field.field_definition.label, value: '—', empty: true, references: [],
+                    })) } });
+                }
+                this.draft.push(item);
             }
         },
         chooseTextBlockTitle(title) {
@@ -568,7 +582,9 @@ export default {
         async save() {
             if (this.savingLayout || this.editingBlockId || ((this.copies.length || this.blockUpdates.length) && !this.canCopy)) return;
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
-            const copies = this.copies.filter(copy => placed.has(this.copyTarget(copy))).map(({ card, ...copy }) => copy);
+            const placementIds = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.id));
+            const copies = this.copies.filter(copy => placed.has(this.copyTarget(copy)) || copy.bind_to?.some(binding => placementIds.has(binding.placement)))
+                .map(({ card, ...copy }) => ({ ...copy, ...(copy.bind_to ? { bind_to: copy.bind_to.filter(binding => placementIds.has(binding.placement)) } : {}) }));
             const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === this.copyTarget(copy)))
                 .map(item => placement(item.source));
             this.savingLayout = true;

@@ -72,8 +72,12 @@
                     <ul><li v-for="field in selectedFieldBlueprint.fields" :key="field.slot">{{ field.label_override || field.field_definition.label }}</li></ul>
                 </template>
                 <p v-else-if="!bySource.has(selectedBlockTemplate.source)" role="status">Le bloc source est indisponible dans cette fiche.</p>
+                <template v-if="selectedBindingFields.length">
+                    <p>Ces champs seront créés dans la fiche cible et liés au bloc, sans leurs valeurs d’origine.</p>
+                    <ul><li v-for="field in selectedBindingFields" :key="field.bindingSlot + ':' + field.slot">{{ field.label_override || field.field_definition.label }}</li></ul>
+                </template>
             </div>
-            <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') || selectedBlockTemplate.source.startsWith('blank-fields:') ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
+            <button type="button" :disabled="!selectedBlockTemplate || draft.length >= 80 || (selectedBlockTemplate.source.startsWith('blank:') || selectedBlockTemplate.source.startsWith('blank-fields:') || selectedBlockTemplate.field_bindings?.length ? !canCopy : !bySource.has(selectedBlockTemplate.source))"
                 @click="applyBlockTemplate">Ajouter ce modèle</button>
             <fieldset v-if="layoutVersion && placements?.length">
                 <legend>Enregistrer un bloc existant comme modèle</legend>

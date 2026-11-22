@@ -69,6 +69,10 @@
                                 <strong>{{ placementLabel(placement) }}</strong>
                                 <p>{{ placement.width }} × {{ placement.height }}</p>
                                 <p v-if="placement.hidden">Masqué</p>
+                                  <template v-if="templateBindingFields(placement, selectedTemplate.definition).length">
+                                      <p>Nouveaux champs liés, sans les valeurs d’origine.</p>
+                                      <ul><li v-for="field in templateBindingFields(placement, selectedTemplate.definition)" :key="field.bindingSlot + ':' + field.slot">{{ field.label_override || field.field_definition.label }}</li></ul>
+                                  </template>
                                 <p v-else-if="placement.collapsed">Réduit</p>
                                 <p v-if="unavailableTemplateSource(placement.source)">Source indisponible dans cette fiche</p>
                                 <ul v-if="selectedTemplate.definition.field_blocks?.[placement.source]">

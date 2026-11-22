@@ -299,6 +299,12 @@ générales. Les champs de capacités et d’équipements sont rendus avec leurs
 descriptions et champs complémentaires lorsqu’ils figurent dans un bloc libre.
 Le bloc Capacités accepte le mode liste ou cartes ; une liste compacte ouvre
 les descriptions complètes dans la vue dédiée.
-Une sélection pointant vers un bloc indépendant de la fiche ne peut pas être
-exportée telle quelle comme modèle d’onglet : le serveur demande d’enregistrer
-le bloc de champs source, dont la structure est réutilisable sans ses valeurs.
+Les modèles de bloc et d’onglet conservent les schémas nécessaires aux sélections
+de champs indépendants sous `field_blocks`. Leurs `field_bindings` désignent des
+emplacements dans ces schémas, sans identifiants de valeurs de la fiche source.
+`templatePlacements` prépare des copies structurelles et des `bind_to` temporaires.
+Le serveur crée les définitions propres à la fiche cible puis remappe la sélection,
+dans la même transaction que le layout. Un schéma partagé par plusieurs placements
+n’est créé qu’une fois ; seules les valeurs par défaut configurées sont appliquées.
+Les positions des champs, les types liés, la version du modèle et les placements
+cibles sont vérifiés avant l’enregistrement. L’aperçu liste les nouveaux champs.

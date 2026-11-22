@@ -5,6 +5,26 @@ import ContentAttachments from '../../resources/js/components/ContentAttachments
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 
+it('stages the field structure of a bound block template even without a direct field placement', async () => {
+    const persist = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', canCopy: true, templateSections: new Map(), hiddenFields: [],
+        displayValue: () => '', placements: [], persist,
+    } });
+    wrapper.vm.begin();
+    wrapper.vm.blockTemplates = [{ id: 7, name: 'Talents', definition: { revision: 3, placements: [{ source: 'capabilities', field_order: [],
+        width: 6, height: 2, hidden: false, collapsed: false, field_bindings: [{ slot: 'blank-fields:0', fields: [{ slot: 1, position: 0 }] }],
+    }], field_blocks: { 'blank-fields:0': { title: 'Talents', fields: [{ slot: 1, field_definition: { label: 'Capacité' } }] } } } }];
+    wrapper.vm.blockTemplateId = 7;
+    wrapper.vm.applyBlockTemplate();
+    const id = wrapper.vm.draft[0].id;
+    await wrapper.vm.save();
+    expect(persist.mock.calls[0][3]).toEqual([{ id: expect.any(String), source: 'template-fields', template_id: 7, template_revision: 3, slot: 'blank-fields:0',
+        bind_to: [{ placement: id, fields: [{ slot: 1, position: 0 }] }],
+    }]);
+    expect(persist.mock.calls[0][0][0]).not.toHaveProperty('field_bindings');
+    wrapper.unmount();
+});
+
 it.each(['capabilities', 'equipment'])('keeps independent %s fields separate until they are explicitly shared', async kind => {
     const field = id => ({ id, field_definition_id: id, section_key: 'local',
         field_definition: { label: id === 1 ? 'Original' : 'Copie', value_type: 'json', options_data: { format: kind } } });

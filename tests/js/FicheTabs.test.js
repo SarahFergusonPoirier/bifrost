@@ -5,6 +5,34 @@ import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
 
+it('creates one shared field structure for a template binding and its direct placement', async () => {
+    contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [{ id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false }] } });
+    const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview', canCopy: true } });
+    await flushPromises();
+    wrapper.vm.templates = [{ id: 7, definition: { title: 'Talents', icon: 'folder', revision: 2, field_blocks: { 'blank-fields:0': { title: 'Talents', fields: [] } }, placements: [
+        { source: 'capabilities', field_order: [], width: 6, height: 2, hidden: false, collapsed: false,
+            field_bindings: [{ slot: 'blank-fields:0', fields: [{ slot: 1, position: 0 }] }] },
+        { source: 'blank-fields:0', width: 6, height: 2, hidden: false, collapsed: false },
+    ] } }];
+    wrapper.vm.templateId = 7;
+    wrapper.vm.applyTemplate();
+    expect(wrapper.vm.hasPendingSources).toBe(true);
+    contentRequest.mockImplementationOnce(async (_, __, input) => ({ data: { version: 2, tabs: input.tabs } }));
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    const request = contentRequest.mock.lastCall[2];
+    expect(request.copies).toHaveLength(1);
+    const [bound, direct] = request.tabs[1].placements;
+    expect(direct.source).toBe('fields:' + request.copies[0].id);
+    expect(request.copies[0]).toMatchObject({ source: 'template-fields', template_id: 7, template_revision: 2, slot: 'blank-fields:0',
+        bind_to: [{ placement: bound.id, fields: [{ slot: 1, position: 0 }] }],
+    });
+    expect(bound).not.toHaveProperty('newBindings');
+    expect(bound).not.toHaveProperty('field_bindings');
+    expect(wrapper.emitted('copied')).toHaveLength(1);
+    wrapper.unmount();
+});
+
 it('creates one empty field source for shared placements from an approved template revision', async () => {
     const existing = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
     const placement = { source: 'blank-fields:0', width: 6, height: 2, hidden: false, collapsed: false, field_order: [1] };

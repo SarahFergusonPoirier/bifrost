@@ -138,7 +138,14 @@ class FicheLayoutController extends Controller
             'copies.*.fields' => ['required_if:copies.*.source,blank-fields', 'prohibited_unless:copies.*.source,blank-fields', 'array', 'list', 'min:1', 'max:200'],
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
-            'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot,fields'],
+            'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot,fields,bind_to'],
+            'copies.*.bind_to' => ['sometimes', 'prohibited_unless:copies.*.source,template-fields', 'array', 'list', 'max:80'],
+            'copies.*.bind_to.*' => ['required', 'array:placement,fields'],
+            'copies.*.bind_to.*.placement' => ['required', 'uuid'],
+            'copies.*.bind_to.*.fields' => ['required', 'array', 'list', 'min:1', 'max:200'],
+            'copies.*.bind_to.*.fields.*' => ['required', 'array:slot,position'],
+            'copies.*.bind_to.*.fields.*.slot' => ['required', 'integer', 'min:1'],
+            'copies.*.bind_to.*.fields.*.position' => ['required', 'integer', 'between:0,199'],
             'copies.*.id' => ['required', 'uuid', 'distinct:ignore_case', 'unique:content_blocks,public_id'],
             'copies.*.source' => ['required', 'string', 'max:255', 'regex:/^(summary|blank|blank-fields|template-fields|text:[a-f0-9-]+|fields(?::[a-f0-9-]+)?|external-links|section:.+)$/u'],
             'copies.*.template_id' => ['required_if:copies.*.source,template-fields', 'integer', 'min:1'],
@@ -254,15 +261,32 @@ class FicheLayoutController extends Controller
 
         $sources = collect($tabs)->flatMap(fn (array $tab): array => $tab['placements'] ?? [])->pluck('source');
         $position = (int) $record->blocks()->max('position');
+        $bindings = [];
 
         foreach ($copies as $copy) {
             $fieldCopy = in_array($copy['source'], ['fields', 'external-links', 'template-fields', 'blank-fields'], true) || str_starts_with($copy['source'], 'fields:') || str_starts_with($copy['source'], 'section:');
-            if (! $sources->contains(($fieldCopy ? 'fields:' : 'text:').$copy['id'])) {
+            if (! $sources->contains(($fieldCopy ? 'fields:' : 'text:').$copy['id']) && empty($copy['bind_to'])) {
                 throw ValidationException::withMessages(['copies' => 'La copie doit avoir un placement.']);
             }
 
             if ($fieldCopy) {
                 $mapping = $this->copyFieldBlock($record, $copy, ++$position);
+                $bindingDefinitions = empty($copy['bind_to']) ? collect() : FieldDefinition::whereKey(array_values($mapping))->get(['id', 'options_data'])->keyBy('id');
+                foreach ($copy['bind_to'] ?? [] as $binding) {
+                    $target = collect($tabs)->flatMap(fn (array $tab): array => $tab['placements'] ?? [])->firstWhere('id', $binding['placement']);
+                    if (! $target || ! in_array($target['source'], ['capabilities', 'equipment'], true)) {
+                        throw ValidationException::withMessages(['copies' => 'Le placement lié est indisponible.']);
+                    }
+                    foreach ($binding['fields'] as $field) {
+                        $id = $mapping[$field['slot']] ?? null;
+                        if (! $id || ($bindingDefinitions->get($id)?->options_data['format'] ?? null) !== $target['source']
+                            || isset($bindings[$binding['placement']][$field['position']])
+                            || in_array($id, $bindings[$binding['placement']] ?? [], true)) {
+                            throw ValidationException::withMessages(['copies' => 'La liaison d’un champ du modèle est invalide.']);
+                        }
+                        $bindings[$binding['placement']][$field['position']] = $id;
+                    }
+                }
                 foreach ($tabs as $tabIndex => $tab) {
                     foreach ($tab['placements'] ?? [] as $placementIndex => $placement) {
                         if ($placement['source'] === 'fields:'.$copy['id'] && isset($placement['field_order'])) {
@@ -288,6 +312,24 @@ class FicheLayoutController extends Controller
             $block->public_id = $copy['id'];
             $block->save();
         }
+        foreach ($tabs as &$tab) {
+            foreach ($tab['placements'] ?? [] as $index => $placement) {
+                $insertions = $bindings[$placement['id']] ?? [];
+                if ($insertions === []) {
+                    continue;
+                }
+                ksort($insertions);
+                $order = $placement['field_order'] ?? [];
+                if (max(array_keys($insertions)) >= count($order) + count($insertions)) {
+                    throw ValidationException::withMessages(['copies' => 'L’ordre des champs du modèle est invalide.']);
+                }
+                foreach ($insertions as $offset => $id) {
+                    array_splice($order, $offset, 0, [$id]);
+                }
+                $tab['placements'][$index]['field_order'] = array_values(array_unique($order));
+            }
+        }
+        unset($tab);
     }
 
     private function updateFieldBlocks(Content $record, array $updates): void

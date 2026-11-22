@@ -16,13 +16,14 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_an_explicit_capability_binding_protects_the_field_block_from_deletion(): void
+    public function test_explicit_capability_bindings_protect_the_source_and_reuse_only_its_schema(): void
     {
         $project = Project::create(['name' => 'Projet']);
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
         $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
         $field = FieldDefinition::create(['key' => 'capabilities', 'label' => 'Capacités', 'value_type' => 'json', 'options_data' => ['format' => 'capabilities']]);
         $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Talents', 'field_schema' => [['field_definition_id' => $field->id]]]);
+        $content->fieldValues()->create(['field_definition_id' => $field->id, 'value_json' => [['label' => 'Capacité privée']]]);
         $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
         $layout = $this->getJson($url)->json();
         foreach ($layout['tabs'] as &$tab) {
@@ -35,10 +36,45 @@ class FicheLayoutTest extends TestCase
         $impact = $this->getJson("$path/impact")->assertOk()->assertJsonCount(1, 'placements')->json();
         $this->deleteJson($path, ['version' => $impact['version'], 'block_version' => $impact['block_version'], 'confirmed' => true])->assertConflict();
         $this->assertDatabaseHas('content_blocks', ['id' => $block->id]);
-        $this->postJson("/api/projects/{$project->id}/contents/{$content->public_id}/fiche-tab-templates", [
+        $template = $this->postJson("/api/projects/{$project->id}/contents/{$content->public_id}/fiche-tab-templates", [
             'name' => 'Capacités partagées', 'scope' => 'project', 'tab' => 'overview', 'version' => 1,
-        ])->assertUnprocessable();
-        $this->assertDatabaseCount('fiche_tab_templates', 0);
+        ])->assertCreated()->assertJsonPath('definition.placements.0.field_bindings.0.fields.0.slot', 1)
+            ->assertJsonMissingPath('definition.field_blocks.blank-fields:0.fields.0.value_json')->json();
+        $target = $project->contents()->create(['title' => 'Kael', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $targetUrl = "/api/projects/{$project->id}/contents/{$target->public_id}/fiche-layout";
+        $targetLayout = $this->getJson($targetUrl)->json();
+        foreach ($targetLayout['tabs'] as &$tab) {
+            $tab['placements'] = [];
+        }
+        unset($tab);
+        $newBlock = '3385b56d-4017-4f18-a126-01716d6b552b';
+        $placement = '5ff05457-c199-4b75-b05e-26067f4c07c5';
+        $targetLayout['tabs'][0]['placements'] = [
+            ['id' => $placement, 'source' => 'capabilities', 'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false, 'field_order' => []],
+            ['id' => 'a44b615b-9f26-4354-8149-c0c66f741e32', 'source' => 'fields:'.$newBlock, 'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false],
+        ];
+        $targetLayout['copies'] = [['id' => $newBlock, 'source' => 'template-fields', 'template_id' => $template['id'], 'template_revision' => 1, 'slot' => 'blank-fields:0',
+            'bind_to' => [['placement' => $placement, 'fields' => [['slot' => 99, 'position' => 0]]]],
+        ]];
+        $this->putJson($targetUrl, $targetLayout)->assertUnprocessable();
+        $this->assertSame(0, $target->blocks()->count());
+        $this->assertDatabaseCount('field_definitions', 1);
+        $targetLayout['copies'][0]['bind_to'][0]['fields'][0]['slot'] = 1;
+        array_pop($targetLayout['tabs'][0]['placements']);
+        $invalid = $targetLayout;
+        $invalid['tabs'][0]['placements'][0]['source'] = 'equipment';
+        $this->putJson($targetUrl, $invalid)->assertUnprocessable();
+        $invalid = $targetLayout;
+        $invalid['copies'][0]['bind_to'][0]['fields'][0]['position'] = 199;
+        $this->putJson($targetUrl, $invalid)->assertUnprocessable();
+        $this->assertSame(0, $target->blocks()->count());
+        $this->assertDatabaseCount('field_definitions', 1);
+        $result = $this->putJson($targetUrl, $targetLayout)->assertOk()->json();
+        $newId = $target->blocks()->sole()->field_schema[0]['field_definition_id'];
+        $this->assertNotSame($field->id, $newId);
+        $this->assertSame([$newId], $result['tabs'][0]['placements'][0]['field_order']);
+        $this->assertSame(0, $target->fieldValues()->count());
+        $this->assertSame('Capacité privée', $content->fieldValues()->sole()->value_json[0]['label']);
     }
 
     public function test_field_block_deletion_checks_dependencies_and_retains_canonical_values(): void

@@ -1,6 +1,7 @@
 import { defaultPlacementsFor, mergePlacements } from './fichePlacementDefaults';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 import { contentRequest } from '../../services/contentRecovery';
+import { instantiateTemplatePlacements, collectTemplateBindings, templateBindingFields } from './templatePlacements';
 
 import { icons } from './ficheIcons';
 const optionalTabs = [['capabilities', 'Capacités'], ['equipment', 'Équipements']];
@@ -16,7 +17,7 @@ export default {
     data: () => ({ icons, optionalTabs, layout: null, tabs: [], saving: false, error: '', conflict: false, reloadCount: 0, templates: null, templateName: '', templateScope: 'project', templateId: null, templateQuery: '', pendingTemplateTab: null, removalId: null, removalDestination: null, revisions: null }),
     computed: {
         hasPendingSources() {
-            return this.tabs.some(tab => tab.placements?.some(placement => placement.newText || placement.newFields));
+            return this.tabs.some(tab => tab.placements?.some(placement => placement.newText || placement.newFields || placement.newBindings?.length));
         },
         filteredTemplates() {
             const query = this.templateQuery.trim().toLocaleLowerCase('fr');
@@ -35,6 +36,7 @@ export default {
         else this.ensureVisibleTab();
     },
     methods: {
+        templateBindingFields,
         placementLabel(placement) {
             if (placement.title) return placement.title;
             const source = this.resolveSource?.(placement.source);
@@ -138,25 +140,13 @@ export default {
         applyTemplate() {
             const definition = this.selectedTemplate?.definition;
             if (!definition || this.tabs.length >= 24) return;
-            const sourceSlots = new Map();
             const tabId = 'tab-' + crypto.randomUUID();
             this.tabs.push({
                 id: tabId,
                 title: definition.title,
                 icon: definition.icon,
                 hidden: false,
-                placements: definition.placements.map(placement => {
-                    const id = crypto.randomUUID();
-                    if (placement.source.startsWith('blank-fields:')) {
-                        if (!sourceSlots.has(placement.source)) sourceSlots.set(placement.source, crypto.randomUUID());
-                        return { ...placement, id, source: 'fields:' + sourceSlots.get(placement.source), newFields: {
-                            template_id: this.selectedTemplate.id, template_revision: definition.revision ?? 1, slot: placement.source,
-                        } };
-                    }
-                    if (!placement.source.startsWith('blank:')) return { ...placement, id };
-                    if (!sourceSlots.has(placement.source)) sourceSlots.set(placement.source, crypto.randomUUID());
-                    return { ...placement, id, source: 'text:' + sourceSlots.get(placement.source), newText: true };
-                }),
+                placements: instantiateTemplatePlacements(definition.placements, this.selectedTemplate.id, definition.revision ?? 1),
             });
             this.pendingTemplateTab = tabId;
         },
@@ -226,8 +216,9 @@ export default {
             const copies = new Map();
             const tabs = this.tabs.map(tab => {
                 if (!tab.placements) return tab;
-                const placements = tab.placements.map(({ newText, newFields, ...placement }) => {
-                    if (newFields) copies.set(placement.source.slice(7), { id: placement.source.slice(7), source: 'template-fields', ...newFields });
+                const placements = tab.placements.map(({ newText, newFields, newBindings, ...placement }) => {
+                    collectTemplateBindings(copies, newBindings);
+                    if (newFields) copies.set(placement.source.slice(7), { ...copies.get(placement.source.slice(7)), id: placement.source.slice(7), source: 'template-fields', ...newFields });
                     if (newText) {
                         const id = placement.source.slice(5);
                         const existing = copies.get(id);

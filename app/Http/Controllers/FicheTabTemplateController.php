@@ -67,9 +67,29 @@ class FicheTabTemplateController extends Controller
         $fieldSlots = [];
         $placements = array_map(function (array $placement) use (&$textSlots, &$fieldBlocks, &$fieldSlots, $blocks, $definitions, $globalFields, $input): array {
             $source = $placement['source'];
-            if (in_array($source, ['capabilities', 'equipment'], true)
-                && array_intersect($placement['field_order'] ?? [], $definitions->keys()->all()) !== []) {
-                abort(422, 'Ce bloc partage des champs indépendants de cette fiche. Enregistre le bloc de champs lui-même comme modèle pour réutiliser sa structure.');
+            if (in_array($source, ['capabilities', 'equipment'], true)) {
+                if ($input['scope'] === 'global' && isset($placement['field_order'])) {
+                    $placement['field_order'] = array_values(array_filter($placement['field_order'], fn (int $id): bool => $definitions->has($id) || in_array($id, $globalFields, true)));
+                }
+                $bindings = [];
+                foreach ($placement['field_order'] ?? [] as $position => $id) {
+                    $block = $blocks->first(fn (ContentBlock $block): bool => in_array($id, array_column($block->field_schema ?? [], 'field_definition_id'), true));
+                    if (! $block) {
+                        continue;
+                    }
+                    $blockSource = 'fields:'.$block->public_id;
+                    if (! isset($fieldBlocks[$blockSource])) {
+                        $result = $this->fieldBlueprint($block, $definitions, $input['scope'] === 'global');
+                        $fieldBlocks[$blockSource] = $result['blueprint'];
+                        $fieldSlots[$blockSource] = $result['slots'];
+                    }
+                    $slot = 'blank-fields:'.array_search($blockSource, array_keys($fieldBlocks), true);
+                    $bindings[$slot][] = ['slot' => $fieldSlots[$blockSource][$id], 'position' => $position];
+                }
+                if ($bindings !== []) {
+                    $placement['field_bindings'] = collect($bindings)->map(fn (array $fields, string $slot): array => ['slot' => $slot, 'fields' => $fields])->values()->all();
+                    $placement['field_order'] = array_values(array_diff($placement['field_order'], $definitions->keys()->all()));
+                }
             }
             if (str_starts_with($source, 'fields:')) {
                 $block = $blocks->get(substr($source, 7));
