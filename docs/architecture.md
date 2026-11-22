@@ -413,6 +413,13 @@ historique reprend la dernière version système disponible. Le choix explicite
 d’une version par l’utilisateur reste prioritaire, et aucune affectation
 existante n’est changée par cette sélection.
 
+La publication actuelle des blocs Personnage retire de sa nouvelle version
+le bloc texte hérité de section `character`, dont le titre doublonnait le bloc
+Personnalité à cinq champs de mots-clés. Son identifiant de publication diffère
+de l’ancienne édition : une base déjà installée reçoit une version supplémentaire,
+sans réécriture des versions publiées. Les valeurs héritées restent stockées et
+les affectations existantes ne changent que sur mise à niveau explicite.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;

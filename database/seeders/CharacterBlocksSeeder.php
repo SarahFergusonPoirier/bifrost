@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class CharacterBlocksSeeder extends Seeder
 {
-    public const RELEASE = 'Blocs Attributs clés et Personnalité du personnage.';
+    public const RELEASE = 'Blocs Attributs clés et Personnalité du personnage, sans doublon hérité.';
 
     public function run(): void
     {
@@ -29,6 +29,9 @@ class CharacterBlocksSeeder extends Seeder
             ]);
             $position = 0;
             foreach ($previous->fields as $field) {
+                if ($field->section_key === 'character') {
+                    continue;
+                }
                 $version->fields()->save($field->replicate());
                 $position = max($position, $field->position + 1);
             }

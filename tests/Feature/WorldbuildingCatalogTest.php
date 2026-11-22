@@ -7,6 +7,8 @@ use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
 use App\Models\TemplateVersion;
+use Database\Seeders\CharacterBlocksSeeder;
+use Database\Seeders\CharacterIdentitySeeder;
 use Database\Seeders\EncyclopedicCatalogSeeder;
 use Database\Seeders\WorldbuildingCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +17,41 @@ use Tests\TestCase;
 class WorldbuildingCatalogTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_new_block_release_preserves_legacy_personality_values_and_published_versions(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'personnage', 'name' => 'Personnage']);
+        $template = ContentTemplate::create(['name' => 'Personnage', 'content_type_id' => $type->id, 'scope_type' => 'global', 'is_system' => true]);
+        $legacyField = FieldDefinition::create(['key' => 'legacy-personality', 'label' => 'Personnalité et aptitudes', 'value_type' => 'text']);
+        $first = $template->versions()->create(['version_number' => 1]);
+        $first->fields()->create(['field_definition_id' => $legacyField->id, 'section_key' => 'character', 'position' => 0]);
+        $first->update(['published_at' => now()]);
+        $this->seed(CharacterIdentitySeeder::class);
+        $identity = $template->versions()->where('change_summary', CharacterIdentitySeeder::RELEASE)->sole();
+        $legacy = $template->versions()->create(['version_number' => 3, 'change_summary' => 'Blocs Attributs clés et Personnalité du personnage.']);
+        foreach ($identity->fields as $field) {
+            $legacy->fields()->save($field->replicate());
+        }
+        $legacy->update(['published_at' => now()]);
+        $id = $this->postJson('/api/contents', ['title' => 'Élia', 'project_id' => $project->id, 'content_type_id' => $type->id, 'template_version_id' => $legacy->id])->assertCreated()->json('public_id');
+        $this->patchJson('/api/contents/'.$id, ['title' => 'Élia', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $legacyField->id, 'value_text' => 'Personnalité conservée'],
+        ]])->assertOk();
+        $oldIds = $legacy->fields()->pluck('id')->all();
+        $this->seed(CharacterBlocksSeeder::class);
+        $modern = $template->versions()->where('change_summary', CharacterBlocksSeeder::RELEASE)->sole();
+        $this->assertSame(4, $modern->version_number);
+        $this->assertSame(0, $modern->fields()->where('section_key', 'character')->count());
+        $this->assertSame(5, $modern->fields()->where('section_key', 'personality')->count());
+        $this->assertSame($oldIds, $legacy->fields()->pluck('id')->all());
+        $this->getJson('/api/contents/'.$id)->assertOk()->assertJsonPath('template_assignment.template_version.id', $legacy->id)
+            ->assertJsonPath('field_values.0.value_text', 'Personnalité conservée');
+        $this->seed(CharacterBlocksSeeder::class);
+        $this->assertSame(4, $template->versions()->count());
+        $this->postJson("/api/contents/$id/template-versions/{$modern->id}/apply", ['from_version_id' => $legacy->id])->assertOk();
+        $this->getJson('/api/contents/'.$id)->assertOk()->assertJsonPath('field_values.0.value_text', 'Personnalité conservée');
+    }
 
     public function test_encyclopedic_publication_does_not_replace_the_minimal_identity_default(): void
     {
@@ -114,6 +151,7 @@ class WorldbuildingCatalogTest extends TestCase
             $allFields->where('section_key', 'attributes')->pluck('field_definition.label')->all());
         $this->assertSame(['Traits', 'Qualités', 'Défauts', 'Valeurs', 'Peurs'],
             $allFields->where('section_key', 'personality')->pluck('field_definition.label')->all());
+        $this->assertCount(0, $allFields->where('section_key', 'character'));
         $this->assertSame(['Âge', 'Genre', 'Statut vital', 'Rôle narratif'], $fields->pluck('field_definition.label')->all());
     }
 }
