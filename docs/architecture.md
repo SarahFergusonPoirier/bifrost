@@ -147,6 +147,9 @@ définitions et son schéma dans la même transaction. Les valeurs sont saisies
 ensuite avec les éditeurs habituels. Les champs obligatoires sont contrôlés
 lors de l’enregistrement des valeurs, sans effacer les autres modifications
 en cas de validation refusée.
+Les schémas des nouveaux blocs sont validés avant cette transaction, copie
+par copie, afin de garder une validation complète sans multiplier les règles
+imbriquées pour les autres opérations de disposition.
 
 `FicheDefaultValueEditor` réutilise les éditeurs de valeurs pour préparer les
 défauts typés des modèles et des blocs libres. `FieldSchema::applyDefaults`

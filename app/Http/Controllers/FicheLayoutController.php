@@ -9,6 +9,7 @@ use App\Models\FieldDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -44,8 +45,6 @@ class FicheLayoutController extends Controller
     public function destroyBlock(Request $request, string $project, string $content, string $block): JsonResponse
     {
         $input = $request->validate([
-            ...FieldSchema::rules('copies.*.fields'),
-            'copies.*.fields' => ['required_if:copies.*.source,blank-fields', 'array', 'list', 'min:1', 'max:200'],
             'version' => ['required', 'integer', 'min:0'],
             'block_version' => ['required', 'string', 'size:64'],
             'confirmed' => ['required', 'accepted'],
@@ -111,6 +110,7 @@ class FicheLayoutController extends Controller
     public function update(Request $request, string $project, string $content): JsonResponse
     {
         $input = $request->validate([
+            'copies.*.fields' => ['required_if:copies.*.source,blank-fields', 'prohibited_unless:copies.*.source,blank-fields', 'array', 'list', 'min:1', 'max:200'],
             'version' => ['required', 'integer', 'min:0'],
             'copies' => ['sometimes', 'array', 'list', 'max:80'],
             'copies.*' => ['required', 'array:id,source,title,body,field_ids,template_id,template_revision,slot,fields'],
@@ -152,6 +152,12 @@ class FicheLayoutController extends Controller
             'tabs.*.placements.*.tag_limit' => ['sometimes', 'integer', 'between:0,100'],
             'tabs.*.placements.*.text_limit' => ['sometimes', 'nullable', 'integer', 'between:0,5000'],
         ]);
+
+        foreach ($input['copies'] ?? [] as $index => $copy) {
+            if ($copy['source'] === 'blank-fields') {
+                $input['copies'][$index]['fields'] = Validator::make($copy, FieldSchema::rules())->validate()['fields'];
+            }
+        }
 
         if (collect($input['tabs'])->every(fn (array $tab): bool => (bool) $tab['hidden'])) {
             throw ValidationException::withMessages(['tabs' => 'Conserve au moins un onglet visible.']);

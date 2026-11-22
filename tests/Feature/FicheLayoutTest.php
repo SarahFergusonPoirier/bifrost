@@ -40,6 +40,21 @@ class FicheLayoutTest extends TestCase
         $this->putJson($url, $layout)->assertUnprocessable();
         $this->assertDatabaseCount('field_definitions', 0);
         unset($layout['copies'][0]['fields'][6]['reference_types']);
+        foreach ([
+            'fields.0.label' => ['label' => '', 'section' => 'Libre', 'type' => 'text'],
+            'fields.0.type' => ['label' => 'Invalide', 'section' => 'Libre', 'type' => 'unknown'],
+            'fields.0.levels' => ['label' => 'Niveau', 'section' => 'Libre', 'type' => 'scale', 'levels' => 21],
+            'fields.0.default_value' => ['label' => 'Texte', 'section' => 'Libre', 'type' => 'text', 'default_value' => ['content_id' => $content->id]],
+        ] as $errorKey => $invalidField) {
+            $invalid = $layout;
+            $invalid['copies'][0]['fields'] = [$invalidField];
+            $this->putJson($url, $invalid)->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+            $this->assertDatabaseCount('field_definitions', 0);
+            $this->assertDatabaseCount('fiche_layout_revisions', 0);
+        }
+        $missingFields = $layout;
+        unset($missingFields['copies'][0]['fields']);
+        $this->putJson($url, $missingFields)->assertUnprocessable()->assertJsonValidationErrors('copies.0.fields');
         $invalid = $layout;
         $invalid['copies'][0]['fields'][0]['type'] = 'json';
         $this->putJson($url, $invalid)->assertUnprocessable();
