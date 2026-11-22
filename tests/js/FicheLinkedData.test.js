@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
+import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
@@ -16,6 +17,27 @@ afterEach(() => {
     delete HTMLDialogElement.prototype.showModal;
 });
 
+it('refreshes other shared placements after a link removal without deleting the referenced fiche', async () => {
+    let relations = [{ id: 7, link_id: 7, public_id: 'mentor', title: 'Mentor', type_key: 'mentor', label: 'Mentor' }];
+    contentRequest.mockReset().mockImplementation(async (path, method) => {
+        if (method === 'DELETE') relations = [];
+        return { data: { relations } };
+    });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(FicheOverview, { props: {
+        templateSections: new Map(), hiddenFields: [], displayValue: () => '', active: 'relations', linksPath: '/links', connectionsPath: '/connections',
+        placements: [{ id: 'first', source: 'relations', width: 6, height: 2 }, { id: 'second', source: 'relations', width: 6, height: 2 }],
+    } });
+    await flushPromises();
+    expect(wrapper.findAllComponents(FicheLinkedData).every(view => view.text().includes('Mentor'))).toBe(true);
+    await wrapper.findAll('button').find(button => button.text() === 'Retirer le lien').trigger('click');
+    await flushPromises();
+    expect(wrapper.findAllComponents(FicheLinkedData).every(view => view.text().includes('Aucune relation'))).toBe(true);
+    expect(contentRequest.mock.calls.filter(([, method]) => method === 'DELETE')).toEqual([['/connections/7', 'DELETE']]);
+    confirm.mockRestore();
+    wrapper.unmount();
+});
+
 it('opens complementary equipment fields in the full view even without a description', async () => {
     const wrapper = mount(FicheLinkedData, { props: {
         kind: 'equipment', localEquipment: [{ title: 'Épée', fields: [{ id: 'owner', label: 'Propriétaire', value: '**Élia**' }] }],
@@ -24,6 +46,21 @@ it('opens complementary equipment fields in the full view even without a descrip
     await wrapper.findAll('button').find(button => button.text().includes('Voir tout')).trigger('click');
     expect(wrapper.get('dt').text()).toBe('Propriétaire');
     expect(wrapper.get('dd strong').text()).toBe('Élia');
+    wrapper.unmount();
+});
+
+it('keeps a failed link removal visible and does not announce a successful change', async () => {
+    const item = { link_id: 7, public_id: 'target', title: 'Épée' };
+    contentRequest.mockReset().mockResolvedValueOnce({ data: { equipment: [item] } }).mockRejectedValueOnce(new Error('Enregistrement interrompu'));
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(FicheLinkedData, { props: { path: '/links', connectionsPath: '/connections', kind: 'equipment', full: true } });
+    await flushPromises();
+    await wrapper.findAll('button').find(button => button.text() === 'Retirer le lien').trigger('click');
+    await flushPromises();
+    expect(wrapper.get('li').text()).toContain('Épée');
+    expect(wrapper.get('[role="alert"]').text()).toContain('Enregistrement interrompu');
+    expect(wrapper.emitted('changed')).toBeUndefined();
+    confirm.mockRestore();
     wrapper.unmount();
 });
 
@@ -117,6 +154,7 @@ it('creates an equipment relation from the active fiche and reloads the list', a
         source: 'source', target: 'target', type_key: 'equipment',
     });
     expect(wrapper.find('select').exists()).toBe(false);
+    expect(wrapper.emitted('changed')).toHaveLength(1);
     expect(wrapper.get('li').text()).toBe('Épée');
 });
 
@@ -161,6 +199,7 @@ it('saves directional labels in canonical order from the inverse fiche', async (
         type_key: 'mentoring',
         properties: { role: null, status: null, start: null, end: null, note: null, forward_label: 'Élève', inverse_label: 'Guide' },
     });
+    expect(wrapper.emitted('changed')).toHaveLength(1);
 });
 
 it('uses explicit calendar positions ahead of labels for fictional dates', async () => {

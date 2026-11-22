@@ -10,7 +10,7 @@ const titles = { relations: 'Relations', timeline: 'Chronologie', equipment: 'É
 export default {
     components: { FicheEntryFields },
     props: { path: String, connectionsPath: String, contentId: String, targets: { type: Array, default: () => [] }, kind: { type: String, required: true }, full: Boolean, hasTab: Boolean, sort: String, view: String, localCapabilities: { type: Array, default: () => [] }, localEquipment: { type: Array, default: () => [] } },
-    emits: ['open', 'show-all'],
+    emits: ['open', 'show-all', 'changed'],
     data() { return { data: this.path ? null : {}, error: '', expanded: false, previewSize: 4, target: '', relationType: '', outgoingLabel: '', incomingLabel: '', savingLink: false, linkError: '', editingLink: null }; },
     setup() {
         return { relationTypeListId: useId() };
@@ -89,6 +89,7 @@ export default {
                 this.outgoingLabel = '';
                 this.incomingLabel = '';
                 await this.load();
+                this.$emit('changed', this);
             } catch (error) {
                 this.linkError = error.message;
             } finally {
@@ -127,6 +128,7 @@ export default {
                 });
                 this.editingLink = null;
                 await this.load();
+                this.$emit('changed', this);
             } catch (error) {
                 this.linkError = error.message;
             } finally {
@@ -140,6 +142,7 @@ export default {
             try {
                 await contentRequest(this.connectionsPath + '/' + entry.link_id, 'DELETE');
                 await this.load();
+                this.$emit('changed', this);
             } catch (error) {
                 this.linkError = error.message;
             } finally {

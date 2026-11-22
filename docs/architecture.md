@@ -357,3 +357,10 @@ extérieur ou choix d’une action. Les paramètres ouvrent le brouillon de layo
 et placent le focus sur les dimensions du placement choisi ; aucune écriture
 n’a lieu avant l’enregistrement explicite. Le redimensionnement reste accessible
 directement dans l’aperçu d’édition et le signal de partage reste visible.
+
+Après une écriture de lien réussie, `FicheLinkedData` émet `changed` avec son
+instance d’origine. `FicheOverview` recharge les autres vues liées du même
+onglet via leurs références de composants ; l’origine vient déjà de se recharger.
+Cela synchronise les placements partagés sans modifier leurs paramètres visuels
+ni réécrire leurs valeurs. Une écriture refusée conserve la vue et son erreur,
+sans émettre de changement réussi. Retirer un lien ne supprime pas la fiche cible.

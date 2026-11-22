@@ -239,6 +239,11 @@ export default {
         },
     },
     methods: {
+        refreshLinkedData(origin) {
+            for (const view of this.$refs.linkedViews ?? []) {
+                if (view !== origin) view.load();
+            }
+        },
         blockDimensions,
         localBindingFields(kind) {
             return [...new Map([...this.templateSections.values()].flat()
