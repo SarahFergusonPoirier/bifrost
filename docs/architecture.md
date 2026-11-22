@@ -229,4 +229,14 @@ Les dates imbriquées alimentent la chronologie par une clé stable composée
 des identifiants des entrées et des membres ; décocher conserve la date.
 La bibliothèque globale vérifie récursivement les restrictions et défauts
 pour ne pas transporter des références propres à un projet.
-Cette fondation serveur précède le raccordement de l’éditeur des groupes.
+`FicheFieldBlockBuilder` réutilise son éditeur pour configurer récursivement
+les sous-champs avant la création du groupe. Une structure en cours doit
+être appliquée avant de préparer le bloc parent. `fieldSchemaSpecs` traduit
+les descripteurs persistés en configuration éditable et prépare les aperçus.
+`FicheValueEditor` fournit la saisie commune des valeurs typées ;
+`FicheDefaultValueEditor` est son adaptation pour les valeurs par défaut.
+`FicheGroupValues` gère la saisie et la lecture des membres d’une entrée,
+et `FicheEntryList` centralise le rendu des listes, descriptions et dates.
+Ces composants réutilisent les classes et variables du design existant.
+La structure d’un groupe déjà enregistré reste pour l’instant conservée :
+une autre structure exige un nouveau champ, sans détruire les anciennes valeurs.

@@ -1,16 +1,17 @@
-import { useId } from 'vue';
+import { defineAsyncComponent, useId } from 'vue';
 import { contentRequest } from '../services/contentRecovery';
 import FicheTextEditor from './fiche/FicheTextEditor.vue';
 import FicheEntryFields from './fiche/FicheEntryFields.vue';
 
 export default {
-    components: { FicheTextEditor, FicheEntryFields },
+    components: { FicheTextEditor, FicheEntryFields, FicheGroupValues: defineAsyncComponent(() => import('./fiche/FicheGroupValues.vue')) },
     props: {
         format: { type: String, required: true },
         value: { type: [Object, Array], default: null },
         levels: { type: Number, default: 5 },
         contentId: String,
         levelMode: String,
+        entryFields: { type: Array, default: () => [] },
         categoryOptions: { type: Array, default: () => [] },
         targets: { type: Array, default: () => [] },
     },
@@ -52,7 +53,9 @@ export default {
             const label = this.keyword.trim();
             const entries = this.value ?? [];
             if (!label || entries.length >= 100) return;
-            this.setKeywords([...entries, { label}]);
+            const defaults = Object.fromEntries(this.entryFields.filter(field => field.default_value != null)
+                .map(field => [field.key, JSON.parse(JSON.stringify(field.default_value))]));
+            this.setKeywords([...entries, { label, ...(this.format === 'repeatable' && Object.keys(defaults).length ? { values: defaults } : {}) }]);
             this.keyword = '';
         },
         editKeyword(index, key, text, trim = true) {
@@ -78,6 +81,9 @@ export default {
         },
         setEntryFields(index, fields) {
             this.setKeywords(this.value.map((entry, position) => position === index ? { ...entry, fields } : entry));
+        },
+        setGroupValues(index, values) {
+            this.setKeywords(this.value.map((entry, position) => position === index ? { ...entry, values } : entry));
         },
         moveKeyword(index, offset) {
             const entries = [...this.value];

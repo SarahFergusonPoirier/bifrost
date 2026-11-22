@@ -14,6 +14,7 @@ import FicheBlock from './FicheBlock.vue';
 import FicheText from './FicheText.vue';
 import FicheTextEditor from './FicheTextEditor.vue';
 import FicheEntryFields from './FicheEntryFields.vue';
+import FicheEntryList from './FicheEntryList.vue';
 import FicheFieldBlockBuilder from './FicheFieldBlockBuilder.vue';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 
@@ -26,7 +27,7 @@ function placement(source, id = crypto.randomUUID()) {
 }
 
 export default {
-    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheFieldBlockBuilder, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
+    components: { FicheBlockDeletion, FicheFieldHistory, FicheBlock, FicheText, FicheTextEditor, FicheEntryFields, FicheEntryList, FicheFieldBlockBuilder, FicheTags, FicheScale, FicheLinkedData, ContentAttachments, WorkspaceIcon },
     props: {
         summary: String,
         fullName: String,
@@ -110,6 +111,7 @@ export default {
                     image: field.format === 'image' ? this.fieldValue?.(field)?.image : null,
                     levelMode: field.display_options?.repeatable_level_mode,
                     entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
+                    entryFields: field.field_definition.options_data?.entry_fields ?? [],
                     keywords: field.format === 'keywords' ? this.fieldValue?.(field) : null,
                     scale: field.format === 'scale' && this.fieldValue?.(field)?.level && this.fieldValue(field).level <= (field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5)
                         ? {

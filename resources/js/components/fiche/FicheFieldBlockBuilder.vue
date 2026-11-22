@@ -1,8 +1,8 @@
 <template>
-    <fieldset :disabled="disabled">
-        <legend>{{ schema ? 'Modifier les champs du bloc' : 'Nouveau bloc libre' }}</legend>
-        <p v-if="schema">Les valeurs des champs retirés seront conservées et resteront accessibles dans l’historique et les données conservées.</p>
-        <label>Titre du bloc libre <input v-model="title" maxlength="255" @keydown.enter.prevent /></label>
+    <fieldset :disabled="disabled" @input="$emit('pending', true)" @change="$emit('pending', true)">
+        <legend>{{ groupMode ? 'Sous-champs de chaque entrée' : schema ? 'Modifier les champs du bloc' : 'Nouveau bloc libre' }}</legend>
+        <p v-if="schema && !groupMode">Les valeurs des champs retirés seront conservées et resteront accessibles dans l’historique et les données conservées.</p>
+        <label v-if="!groupMode">Titre du bloc libre <input v-model="title" maxlength="255" @keydown.enter.prevent /></label>
         <div v-for="(field, index) in fields" :key="field.id">
             <h3>Champ {{ index + 1 }}</h3>
             <label>Nom du champ <input v-model="field.label" maxlength="255" @keydown.enter.prevent /></label>
@@ -35,6 +35,13 @@
             <label v-if="field.type === 'repeatable'">Niveaux de la liste
                 <select v-model="field.repeatable_level_mode"><option value="text">Texte</option><option value="segments">Segments</option></select>
             </label>
+            <details v-if="field.type === 'repeatable'">
+                <summary>Configurer les sous-champs du groupe · {{ field.entry_fields.length }}</summary>
+                <p v-if="field.existingId">La structure enregistrée est conservée. Pour créer une autre structure, ajoute un nouveau champ ; les valeurs précédentes resteront accessibles.</p>
+                <FicheFieldBlockBuilder v-else group-mode :depth="depth + 1" :schema="field.groupEditor"
+                    :content-id="contentId" :targets="targets" :reference-types="referenceTypes" @pending="field.groupPending = $event" @update="setGroupFields(field, $event.fields)" />
+                <p v-if="field.groupPending" role="status">Applique la structure du groupe avant de préparer ce bloc.</p>
+            </details>
             <template v-if="['reference', 'references'].includes(field.type)">
                 <label>Types de fiches autorisés
                     <select v-model="field.reference_types" :disabled="Boolean(field.existingId)" multiple><option v-for="type in referenceTypes" :key="type.id" :value="type.id">{{ type.name }}</option></select>
@@ -45,13 +52,13 @@
             <label><input v-model="field.default_enabled" type="checkbox" /> Définir une valeur par défaut</label>
             <FicheDefaultValueEditor v-if="field.default_enabled" v-model="field.default_value" :type="field.type" :content-id="contentId" :targets="targets"
                 :reference-types="field.reference_types" :choices="field.choicesText.split('\n').map(value => value.trim()).filter(Boolean)"
-                :levels="Number(field.levels) || 5" :level-mode="field.repeatable_level_mode" />
+                :levels="Number(field.levels) || 5" :level-mode="field.repeatable_level_mode" :entry-fields="previewEntryFields(field.entry_fields)" />
             <button type="button" :disabled="index === 0" :aria-label="'Monter le champ ' + field.label" @click="move(index, -1)">Monter</button>
             <button type="button" :disabled="index === fields.length - 1" :aria-label="'Descendre le champ ' + field.label" @click="move(index, 1)">Descendre</button>
-            <button type="button" :aria-label="'Retirer le champ ' + field.label" @click="fields.splice(index, 1)">Retirer le champ</button>
+            <button type="button" :aria-label="'Retirer le champ ' + field.label" @click="removeField(index)">Retirer le champ</button>
         </div>
-        <button type="button" :disabled="fields.length >= 200" @click="addField">Ajouter un champ</button>
-        <button type="button" :disabled="!valid" @click="create">{{ schema ? 'Préparer les changements des champs' : 'Ajouter le bloc libre à la disposition' }}</button>
+        <button type="button" :disabled="fields.length >= limit" @click="addField">Ajouter un champ</button>
+        <button type="button" :disabled="!valid" @click="create">{{ groupMode ? 'Appliquer la structure du groupe' : schema ? 'Préparer les changements des champs' : 'Ajouter le bloc libre à la disposition' }}</button>
         <button v-if="title || fields.length" type="button" @click="reset">Effacer le bloc en préparation</button>
     </fieldset>
 </template>

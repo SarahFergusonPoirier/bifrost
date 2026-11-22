@@ -61,6 +61,7 @@
                 <label v-else-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
+                    <FicheGroupValues :schema="entryFields" :values="entry.values" editable :content-id="contentId" :targets="targets" @change="setGroupValues(index, $event)" />
                     <label>Période <input :value="entry.period ?? ''" maxlength="255"
                         @change="editKeyword(index, 'period', $event.target.value)" /></label>
                     <details>
@@ -97,7 +98,7 @@
                     :targets="targets" editable @change="setEntryFields(index, $event)" />
                 <button type="button" :disabled="index === 0" @click="moveKeyword(index, -1)">Monter</button>
                 <button type="button" :disabled="index === value.length - 1" @click="moveKeyword(index, 1)">Descendre</button>
-                <button v-if="['capabilities', 'equipment'].includes(format)" type="button"
+                <button v-if="['capabilities', 'equipment', 'repeatable'].includes(format)" type="button"
                     :disabled="value.length >= 100" @click="duplicateEntry(index)">Dupliquer indépendamment</button>
                 <button type="button" @click="setKeywords(value.filter((item, i) => i !== index))">Retirer</button>
             </li>

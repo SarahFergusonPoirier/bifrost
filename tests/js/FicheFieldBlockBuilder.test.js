@@ -3,6 +3,28 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('configures typed group members recursively and stages their stable keys', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    wrapper.vm.title = 'Parcours';
+    wrapper.vm.addField();
+    wrapper.vm.fields[0].type = 'repeatable';
+    await wrapper.vm.$nextTick();
+    const child = wrapper.findAllComponents(FicheFieldBlockBuilder).find(component => component.vm !== wrapper.vm);
+    child.vm.addField();
+    child.vm.fields[0].label = 'Achevé';
+    child.vm.fields[0].type = 'boolean';
+    await child.vm.$nextTick();
+    expect(wrapper.vm.valid).toBe(false);
+    child.vm.create();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.valid).toBeTruthy();
+    const key = wrapper.vm.fields[0].entry_fields[0].key;
+    wrapper.vm.create();
+    expect(wrapper.emitted('create')[0][0].fields[0].entry_fields[0]).toMatchObject({ key, type: 'boolean', label: 'Achevé' });
+    expect(wrapper.emitted('create')[0][0].fields[0].entry_fields[0]).not.toHaveProperty('id');
+    wrapper.unmount();
+});
+
 it('edits existing field identities and requires confirmation before changing a scale', async () => {
     const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {
         title: 'Talents', fields: [{ field_definition_id: 27, label_override: 'Force',

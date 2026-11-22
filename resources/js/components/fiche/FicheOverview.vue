@@ -312,17 +312,8 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
-                            <ul v-else-if="field.entries?.length" class="fiche-entry-list">
-                                <li v-for="(entry, index) in field.entries" :key="entry.id ?? index">
-                                    <strong>{{ entry.label }}</strong>
-                                    <span v-if="entry.date"> · {{ formatTemporalDate(entry.date) }}</span>
-                                    <span v-if="entry.period"> · {{ entry.period }}</span>
-                                    <FicheScale v-if="field.levelMode === 'segments' && entry.rank"
-                                        :label="entry.label + ' · Niveau'" :level="Number(entry.rank)" :levels="5" mode="segments" />
-                                    <span v-else-if="entry.level"> · {{ entry.level }}</span>
-                                    <FicheText v-if="entry.description" :text="entry.description" :limit="placement.text_limit ?? undefined" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
-                                </li>
-                            </ul>
+                            <FicheEntryList v-else-if="field.entries?.length" :entries="field.entries" :schema="field.entryFields" :level-mode="field.levelMode"
+                                :content-id="contentId" :targets="referenceTargets" :resolve-reference="resolveReference" :text-limit="placement.text_limit ?? undefined" @open="$emit('open', $event)" />
                             <ul v-else-if="field.keywords?.length" class="fiche-tags">
                                 <li v-for="(keyword, index) in field.keywords" :key="index">
                                     <details v-if="keyword.description">

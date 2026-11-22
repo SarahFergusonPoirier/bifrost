@@ -1,16 +1,18 @@
 import { fieldTypes } from './fieldTypes';
 import FicheDefaultValueEditor from './FicheDefaultValueEditor.vue';
+import { fieldSchemaSpec, previewEntryFields } from './fieldSchemaSpecs';
 
 export default {
     components: { FicheDefaultValueEditor },
-    props: { disabled: Boolean, schema: Object, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
-    emits: ['create', 'update'],
+    props: { disabled: Boolean, schema: Object, groupMode: Boolean, depth: { type: Number, default: 0 }, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
+    emits: ['create', 'update', 'pending'],
     data: () => ({ title: '', fields: [] }),
     computed: {
-        types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json')); },
+        types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json' && (this.depth < 3 || type !== 'repeatable'))); },
+        limit() { return this.groupMode ? 20 : 200; },
         valid() {
-            return this.title.trim() && this.fields.length > 0 && this.fields.every(field => field.label.trim()
-                && this.types[field.type] && (!field.default_enabled || field.default_value != null)
+            return this.title.trim() && (this.groupMode || this.fields.length > 0) && this.fields.every(field => field.label.trim()
+                && this.types[field.type] && !field.groupPending && (!field.default_enabled || field.default_value != null)
                 && (field.type !== 'scale' || Number.isInteger(Number(field.levels)) && Number(field.levels) >= 2 && Number(field.levels) <= 20
                     && (!field.existingId || Number(field.levels) === field.originalLevels || field.preserveScale)));
         },
@@ -18,27 +20,18 @@ export default {
     watch: { schema: { immediate: true, handler(schema) { if (schema) this.loadSchema(schema); } } },
     methods: {
         newField() {
-            return { id: crypto.randomUUID(), label: 'Champ ' + (this.fields.length + 1), type: 'text',
+            return { id: crypto.randomUUID(), key: crypto.randomUUID(), entry_fields: [], groupPending: false, groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: [] }, label: 'Champ ' + (this.fields.length + 1), type: 'text',
                 help: '', required: false, history_view: 'current', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '', originalLevels: 5, preserveScale: false,
                 scale_display: 'both', badge_color: 'accent', repeatable_level_mode: 'text', reference_types: [], allow_reference_creation: false, calculation: 'none' };
         },
         loadSchema(schema) {
             this.title = schema.title || 'Champs';
             const originals = new Map(schema.fields.map(field => [field.field_definition_id, field]));
-            const entries = schema.pendingFields ?? schema.fields.map(field => ({
-                id: field.field_definition_id, label: field.label_override || field.field_definition.label,
-                type: field.field_definition.options_data?.format || field.field_definition.value_type,
-                help: field.help_text, required: field.is_required, default_value: field.default_value,
-                choices: field.display_options?.choices ?? field.field_definition.options_data?.choices,
-                levels: field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5,
-                level_descriptions: field.display_options?.level_descriptions, scale_display: field.display_options?.scale_display,
-                badge_color: field.display_options?.badge_color, history_view: field.display_options?.history_view,
-                repeatable_level_mode: field.display_options?.repeatable_level_mode, calculation: field.display_options?.calculation,
-                reference_types: field.field_definition.options_data?.content_type_ids, allow_reference_creation: field.display_options?.allow_reference_creation,
-            }));
+            const entries = schema.pendingFields ?? schema.fields.map(fieldSchemaSpec);
             this.fields = entries.map(field => {
                 const original = originals.get(field.id);
                 return { ...this.newField(), ...field, id: crypto.randomUUID(), existingId: field.id,
+                    entry_fields: field.entry_fields ?? [], groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: field.entry_fields ?? [] },
                     help: field.help || '', required: Boolean(field.required), default_enabled: field.default_value != null,
                     choicesText: (field.choices ?? []).join('\n'), levelDescriptions: (field.level_descriptions ?? []).join('\n'),
                     levels: String(field.levels ?? 5), originalLevels: original?.display_options?.scale_levels ?? original?.field_definition.options_data?.levels ?? 5,
@@ -50,14 +43,16 @@ export default {
             });
         },
         addField() {
-            if (this.fields.length >= 200) return;
+            if (this.fields.length >= this.limit) return;
             this.fields.push(this.newField());
+            this.$emit('pending', true);
         },
         move(index, offset) {
             const destination = index + offset;
             if (destination < 0 || destination >= this.fields.length) return;
             const [field] = this.fields.splice(index, 1);
             this.fields.splice(destination, 0, field);
+            this.$emit('pending', true);
         },
         create() {
             if (!this.valid || this.disabled) return;
@@ -65,6 +60,8 @@ export default {
             const fields = this.fields.map(field => ({
                 label: field.label.trim(), type: field.type, section: title, help: field.help.trim() || null,
                 ...(field.existingId ? { id: field.existingId } : {}),
+                ...(this.groupMode ? { key: field.key } : {}),
+                ...(field.type === 'repeatable' && !field.existingId && field.entry_fields.length ? { entry_fields: field.entry_fields } : {}),
                 required: field.required, history_view: field.history_view,
                 ...(field.default_enabled ? { default_value: field.default_value } : this.schema ? { default_value: null } : {}),
                 ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type) ? { choices: field.choicesText.split('\n').map(value => value.trim()).filter(Boolean) } : {}),
@@ -79,6 +76,18 @@ export default {
             this.$emit(this.schema ? 'update' : 'create', { title, fields });
             this.reset();
         },
-        reset() { if (this.schema) this.loadSchema(this.schema); else { this.title = ''; this.fields = []; } },
+        reset() {
+            if (this.schema) this.loadSchema(this.schema);
+            else { this.title = ''; this.fields = []; }
+            this.$emit('pending', false);
+        },
+        previewEntryFields,
+        setGroupFields(field, fields) {
+            field.entry_fields = fields;
+            field.groupEditor = { title: 'Champs du groupe', fields: [], pendingFields: fields };
+            field.groupPending = false;
+            this.$emit('pending', true);
+        },
+        removeField(index) { this.fields.splice(index, 1); this.$emit('pending', true); },
     },
 };
