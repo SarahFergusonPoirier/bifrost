@@ -304,7 +304,8 @@
                                 :aria-label="'Modifier ' + field.label" @click="$emit('edit-field', field.definitionId)"><WorkspaceIcon name="narration" /></button>
                         </dt>
                         <dd>
-                            <ContentAttachments v-if="field.image && contentId" :key="field.image + ':' + attachmentsRevision" :content-id="contentId"
+                            <ContentAttachments v-if="field.attachment && contentId" :key="field.attachment + ':' + attachmentsRevision" :content-id="contentId" :attachment-id="field.attachment" read-only />
+                            <ContentAttachments v-else-if="field.image && contentId" :key="field.image + ':' + attachmentsRevision" :content-id="contentId"
                                 :image-id="field.image" gallery single read-only />
                             <ul v-else-if="field.references.length" class="fiche-references">
                                 <li v-for="reference in field.references" :key="reference.id">
@@ -312,7 +313,7 @@
                                     <span v-else>{{ reference.title }}</span>
                                 </li>
                             </ul>
-                            <FicheEntryList v-else-if="field.entries?.length" :entries="field.entries" :schema="field.entryFields" :level-mode="field.levelMode"
+                            <FicheEntryList v-else-if="field.entries?.length" :key="'entries:' + field.definitionId + ':' + attachmentsRevision" :entries="field.entries" :schema="field.entryFields" :level-mode="field.levelMode"
                                 :content-id="contentId" :targets="referenceTargets" :resolve-reference="resolveReference" :text-limit="placement.text_limit ?? undefined" @open="$emit('open', $event)" />
                             <ul v-else-if="field.keywords?.length" class="fiche-tags">
                                 <li v-for="(keyword, index) in field.keywords" :key="index">

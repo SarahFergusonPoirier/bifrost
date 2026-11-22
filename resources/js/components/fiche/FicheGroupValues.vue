@@ -30,6 +30,7 @@
                     </li>
                 </ul>
                 <ContentAttachments v-else-if="type(field) === 'image' && contentId" :content-id="contentId" :image-id="value(field).image" gallery single read-only />
+                <ContentAttachments v-else-if="type(field) === 'attachment' && contentId" :content-id="contentId" :attachment-id="value(field).attachment" read-only />
                 <FicheScale v-else-if="type(field) === 'scale' && Number(value(field).level) <= (field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5)" :label="field.field_definition.label" :level="Number(value(field).level)"
                     :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels ?? 5"
                     :mode="field.display_options?.scale_display" :descriptions="field.display_options?.level_descriptions" />

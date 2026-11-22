@@ -1,6 +1,23 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
+
+it('renders only the canonical file selected by a field and explains a missing reference', async () => {
+    contentRequest.mockResolvedValueOnce({ data: [
+        { public_id: 'selected', original_name: 'Source.pdf', metadata: { caption: 'Source actuelle' } },
+        { public_id: 'other', original_name: 'Autre.txt' },
+    ] });
+    const wrapper = mount(ContentAttachments, { props: { contentId: 'fiche', attachmentId: 'selected', readOnly: true } });
+    await flushPromises();
+    expect(wrapper.findAll('a')).toHaveLength(1);
+    expect(wrapper.get('a').attributes('href')).toBe('/api/contents/fiche/attachments/selected');
+    expect(wrapper.text()).toContain('Source actuelle');
+    expect(wrapper.text()).not.toContain('Autre.txt');
+    await wrapper.setProps({ attachmentId: 'missing' });
+    expect(wrapper.find('a').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Pièce jointe indisponible. La référence est conservée.');
+    wrapper.unmount();
+});
 import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));

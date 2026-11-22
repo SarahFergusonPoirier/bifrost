@@ -109,6 +109,7 @@ export default {
                         ? field.display_options?.badge_color : null,
                     url: field.format === 'external_link' ? this.safeExternalUrl(this.fieldValue?.(field)?.url) : null,
                     image: field.format === 'image' ? this.fieldValue?.(field)?.image : null,
+                    attachment: field.format === 'attachment' ? this.fieldValue?.(field)?.attachment : null,
                     levelMode: field.display_options?.repeatable_level_mode,
                     entries: ['repeatable', 'bullets'].includes(field.format) ? this.fieldValue?.(field) : null,
                     entryFields: field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields ?? [],

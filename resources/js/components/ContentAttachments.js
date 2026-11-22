@@ -1,10 +1,11 @@
 import { contentRequest } from '../services/contentRecovery';
 
 export default {
-    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, selectImage: Boolean, fit: String },
+    props: { contentId: { type: String, required: true }, readOnly: Boolean, gallery: Boolean, single: Boolean, imageId: String, attachmentId: String, selectImage: Boolean, fit: String },
     emits: ['select-image', 'changed'],
     data: () => ({ attachments: [], alt: '', caption: '', editing: null, loaded: false, busy: false, error: '' }),
     computed: {
+        displayedAttachments() { return this.attachmentId ? this.attachments.filter(item => item.public_id === this.attachmentId) : this.attachments; },
         displayedImages() {
             if (!this.single) return this.images;
             if (!this.imageId) return this.images.slice(0, 1);

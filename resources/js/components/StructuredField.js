@@ -16,7 +16,7 @@ export default {
         targets: { type: Array, default: () => [] },
     },
     emits: ['change'],
-    data: () => ({ keyword: '', images: [], imageError: '' }),
+    data: () => ({ keyword: '', images: [], imageError: '', attachments: [], attachmentError: '' }),
     setup() {
         return { categoryListId: useId() };
     },
@@ -48,6 +48,16 @@ export default {
                 ? entries.map(entry => entry.id ? entry : { ...entry, id: crypto.randomUUID() })
                 : entries;
             this.$emit('change', values.length ? values : '');
+        },
+        async loadAttachments() {
+            if (!this.contentId) return;
+            this.attachmentError = '';
+            try {
+                const { data } = await contentRequest('/contents/' + encodeURIComponent(this.contentId) + '/attachments');
+                this.attachments = data;
+            } catch (error) {
+                this.attachmentError = error.message;
+            }
         },
         addKeyword() {
             const label = this.keyword.trim();

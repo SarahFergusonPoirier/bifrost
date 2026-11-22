@@ -114,7 +114,8 @@ it('offers every supported field type and refuses an invalid scale before stagin
     wrapper.vm.fields[0].type = 'scale';
     wrapper.vm.fields[0].levels = '21';
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('select').findAll('option')).toHaveLength(20);
+    expect(wrapper.get('select').findAll('option')).toHaveLength(21);
+    expect(wrapper.get('select').text()).toContain('Pièce jointe');
     const add = wrapper.findAll('button').find(button => button.text() === 'Ajouter le bloc libre à la disposition');
     expect(add.attributes('disabled')).toBeDefined();
     wrapper.vm.create();

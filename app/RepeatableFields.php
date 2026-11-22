@@ -129,7 +129,7 @@ class RepeatableFields
             abort(422, 'Ce groupe utilise un type de fiche propre au projet.');
         }
         if (($definition['value_type'] === 'reference' && isset($default['reference_content_id']))
-            || (in_array($options['format'] ?? null, ['references', 'image'], true) && isset($default['value_json']))) {
+            || (in_array($options['format'] ?? null, ['references', 'image', 'attachment'], true) && isset($default['value_json']))) {
             abort(422, 'Ce groupe utilise une référence ou une image par défaut propre au projet.');
         }
         foreach ($display['entry_fields'] ?? $options['entry_fields'] ?? [] as $field) {

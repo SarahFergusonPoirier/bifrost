@@ -34,6 +34,17 @@
             <label>Description <textarea :value="value.timeline_description ?? ''" maxlength="10000" @input="update('timeline_description', $event.target.value)" /></label>
         </template>
     </div>
+    <div v-else-if="format === 'attachment'">
+        <label>Fichier joint
+            <select :value="value?.attachment ?? ''" :disabled="!contentId" @focus="loadAttachments" @change="update('attachment', $event.target.value)">
+                <option value="">Aucun fichier</option>
+                <option v-if="value?.attachment && !attachments.some(file => file.public_id === value.attachment)" :value="value.attachment">Fichier enregistré ou indisponible</option>
+                <option v-for="file in attachments" :key="file.public_id" :value="file.public_id">{{ file.original_name }}</option>
+            </select>
+        </label>
+        <p>Joins le fichier à la fiche, puis sélectionne-le ici. Effacer ce champ ne supprime pas le fichier.</p>
+        <p v-if="attachmentError" role="alert">{{ attachmentError }} <button type="button" @click="loadAttachments">Réessayer</button></p>
+    </div>
     <div v-else-if="format === 'image'">
         <label>Image jointe
             <select :value="value?.image ?? ''" :disabled="!contentId" @focus="loadImages" @change="update('image', $event.target.value)">

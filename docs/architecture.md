@@ -249,3 +249,14 @@ un changement d’échelle demande une stratégie explicite. Les modèles globau
 contrôlent récursivement ce schéma personnalisé comme la définition source.
 Les défauts des membres actifs s’appliquent aux nouvelles entrées sans
 remplacer les valeurs des entrées existantes.
+
+Le format `attachment` conserve uniquement l’UUID du fichier sous
+`value_json.attachment`. La sélection utilise les pièces jointes existantes
+de la fiche ; `ContentAttachments` relit leur nom, légende et lien canonique
+avec `attachmentId`, sans recopier ces métadonnées dans le champ. Une nouvelle
+référence doit appartenir à la fiche et provenir du stockage des pièces jointes.
+Une référence anciennement valide peut rester enregistrée si le fichier est
+retiré de la fiche ; la lecture signale alors son indisponibilité. Effacer
+le champ ne supprime ni la ressource ni le fichier. Les groupes répétables
+réutilisent la même validation. Un défaut pointant vers un fichier local
+est refusé dans les modèles globaux, y compris dans un groupe imbriqué.

@@ -137,6 +137,10 @@ class ContentFieldValue extends Model
     {
         $format = $definition->options_data['format'] ?? null;
         $rules = match ($format) {
+            'attachment' => [
+                'value_json' => ['required', 'array:attachment'],
+                'value_json.attachment' => ['required', 'uuid'],
+            ],
             'image' => [
                 'value_json' => ['required', 'array:image'],
                 'value_json.image' => ['required', 'uuid'],
@@ -191,6 +195,12 @@ class ContentFieldValue extends Model
         };
 
         Validator::make(['value_json' => $this->value_json], $rules)->validate();
+        if ($format === 'attachment' && ($this->value_json['attachment'] ?? null) !== ($this->getOriginal('value_json')['attachment'] ?? null)) {
+            $attachment = $content->resources()->where('storage_mode', 'imported')->where('public_id', $this->value_json['attachment'])->first();
+            if (! $attachment || preg_match('/\Acontent-attachments\/[0-9a-f-]{36}\z/', $attachment->location) !== 1) {
+                throw ValidationException::withMessages(['value_json.attachment' => 'Choisis un fichier joint à cette fiche.']);
+            }
+        }
         if ($format === 'repeatable') {
             $display = $this->fieldDisplayOptions($definition, $content);
             RepeatableFields::validate($this->value_json, $display['entry_fields'] ?? $definition->options_data['entry_fields'] ?? [], $content, $this->getOriginal('value_json') ?? []);

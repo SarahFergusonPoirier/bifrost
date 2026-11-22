@@ -5,6 +5,21 @@ import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
 
+it('selects an attached file and clears its reference without removing the resource', async () => {
+    contentRequest.mockResolvedValue({ data: [{ public_id: 'source', original_name: 'Source.pdf' }] });
+    const wrapper = mount(StructuredField, { props: { format: 'attachment', contentId: 'fiche' } });
+    await wrapper.get('select').trigger('focus');
+    await flushPromises();
+    expect(contentRequest).toHaveBeenCalledWith('/contents/fiche/attachments');
+    await wrapper.get('select').setValue('source');
+    expect(wrapper.emitted('change').at(-1)).toEqual([{ attachment: 'source' }]);
+    await wrapper.setProps({ value: { attachment: 'source' } });
+    await wrapper.get('select').setValue('');
+    expect(wrapper.emitted('change').at(-1)).toEqual(['']);
+    expect(contentRequest.mock.calls.some(([, method]) => method === 'DELETE')).toBe(false);
+    wrapper.unmount();
+});
+
 it('selects an attached image and clears the field without deleting the file', async () => {
     contentRequest.mockResolvedValue({ data: [{ public_id: 'portrait', original_name: 'Portrait.png' }] });
     const wrapper = mount(StructuredField, { props: { format: 'image', contentId: 'fiche', value: null } });

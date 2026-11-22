@@ -4,7 +4,7 @@ export const fieldTypes = {
     temporal: 'Date ou période fictive', references: 'Références multiples', multiple_choice: 'Choix multiple',
     scale: 'Échelle segmentée', keywords: 'Mots-clés libres', equipment: 'Équipements intégrés',
     capabilities: 'Capacités intégrées', repeatable: 'Liste structurée', bullets: 'Liste à puces',
-    external_link: 'Lien externe', image: 'Image jointe',
+    external_link: 'Lien externe', image: 'Image jointe', attachment: 'Pièce jointe',
 };
 
 export const structuredFieldTypes = Object.keys(fieldTypes).filter(type =>

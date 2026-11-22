@@ -22,7 +22,7 @@ class FieldSchema
             "$path.*.id" => ['nullable', 'integer', 'distinct'],
             "$path.*.label" => ['required', 'string', 'max:255'],
             "$path.*.section" => ['required', 'string', 'max:255'],
-            "$path.*.type" => ['required', 'in:text,rich_text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link,image'],
+            "$path.*.type" => ['required', 'in:text,rich_text,number,boolean,date,choice,reference,json,measurement,coordinates,temporal,references,multiple_choice,scale,keywords,equipment,capabilities,repeatable,bullets,external_link,image,attachment'],
             "$path.*.help" => ['nullable', 'string', 'max:10000'],
             "$path.*.required" => ['sometimes', 'boolean'],
             "$path.*.allow_reference_creation" => ['sometimes', 'boolean'],

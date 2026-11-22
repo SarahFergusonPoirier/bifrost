@@ -27,9 +27,9 @@
             </div>
             <p v-else-if="loaded && !busy && !error">{{ missingSelectedImage ? 'L’image choisie n’est plus disponible.' : 'Aucune image disponible.' }}</p>
         </template>
-        <p v-else-if="readOnly && loaded && !busy && !error && !attachments.length">Aucune pièce jointe.</p>
-        <ul v-if="!gallery && attachments.length">
-            <li v-for="attachment in attachments" :key="attachment.public_id">
+        <p v-else-if="readOnly && loaded && !busy && !error && !displayedAttachments.length">{{ attachmentId ? 'Pièce jointe indisponible. La référence est conservée.' : 'Aucune pièce jointe.' }}</p>
+        <ul v-if="!gallery && displayedAttachments.length">
+            <li v-for="attachment in displayedAttachments" :key="attachment.public_id">
                 <a :href="download(attachment.public_id)">{{ attachment.original_name }}</a>
                 <p v-if="attachment.metadata?.caption">{{ attachment.metadata.caption }}</p>
                 <button v-if="!readOnly && editing?.id !== attachment.public_id" type="button" :disabled="busy"

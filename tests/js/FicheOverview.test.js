@@ -2,6 +2,17 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
+
+it('reads an attachment field through the canonical file list', () => {
+    const field = { id: 1, field_definition_id: 7, section_key: 'sources',
+        field_definition: { label: 'Source', value_type: 'json', options_data: { format: 'attachment' } } };
+    const wrapper = mount(FicheOverview, { props: {
+        contentId: 'fiche', templateSections: groupTemplateFields([field]), hiddenFields: [],
+        displayValue: () => 'Pièce jointe', fieldValue: () => ({ attachment: 'source' }),
+    }, global: { stubs: { ContentAttachments: true } } });
+    expect(wrapper.getComponent(ContentAttachments).props()).toMatchObject({ contentId: 'fiche', attachmentId: 'source', readOnly: true });
+    wrapper.unmount();
+});
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import { groupContentFields, groupTemplateFields } from '../../resources/js/components/fiche/templateFields';
 
