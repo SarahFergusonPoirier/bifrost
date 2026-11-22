@@ -12,11 +12,4 @@
     </template>
 </template>
 
-<script setup>
-import { computed } from 'vue';
-import { inlineText } from './ficheTextFormat';
-
-const props = defineProps({ text: { type: String, required: true }, resolveReference: Function });
-defineEmits(['open']);
-const parts = computed(() => inlineText(props.text));
-</script>
+<script src="./FicheInlineText.js"></script>

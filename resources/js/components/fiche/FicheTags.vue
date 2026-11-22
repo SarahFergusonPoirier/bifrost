@@ -14,16 +14,4 @@
     </button>
 </template>
 
-<script setup>
-import { computed, ref, useId } from 'vue';
-
-const props = defineProps({
-    tags: { type: Array, required: true },
-    label: { type: String, required: true },
-    limit: { type: Number, default: 0 },
-});
-const expanded = ref(false);
-const listId = useId();
-const limited = computed(() => props.limit > 0 && props.tags.length > props.limit);
-const visible = computed(() => limited.value && !expanded.value ? props.tags.slice(0, props.limit) : props.tags);
-</script>
+<script src="./FicheTags.js"></script>

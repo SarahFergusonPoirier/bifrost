@@ -10,17 +10,4 @@
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-
-const props = defineProps({
-    targets: { type: Array, required: true },
-});
-const emit = defineEmits(['insert']);
-const selected = ref('');
-
-function insert() {
-    if (!props.targets.some(target => target.public_id === selected.value)) return;
-    emit('insert', selected.value);
-}
-</script>
+<script src="./FicheReferencePicker.js"></script>

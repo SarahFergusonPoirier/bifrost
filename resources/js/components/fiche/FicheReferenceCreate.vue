@@ -17,31 +17,4 @@
     </details>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { contentRequest } from '../../services/contentRecovery';
-
-const props = defineProps({ projectId: String, full: Boolean, types: { type: Array, required: true } });
-const emit = defineEmits(['created']);
-const title = ref('');
-const typeId = ref(null);
-const busy = ref(false);
-const error = ref('');
-
-async function create() {
-    if (busy.value || props.full || !title.value || !props.types.some(type => type.id === typeId.value)) return;
-    busy.value = true;
-    error.value = '';
-    try {
-        const { data } = await contentRequest('/contents', 'POST', {
-            title: title.value, content_type_id: typeId.value, project_id: props.projectId,
-        });
-        emit('created', data);
-        title.value = '';
-    } catch (failure) {
-        error.value = failure.message;
-    } finally {
-        busy.value = false;
-    }
-}
-</script>
+<script src="./FicheReferenceCreate.js"></script>

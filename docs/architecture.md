@@ -380,6 +380,15 @@ Les snapshots et les copies indépendantes conservent ces options. La migration
 ajoute la colonne sans transformer les dates existantes ; un retour arrière
 supprime ses métadonnées, donc une correction en avant est préférable après usage.
 
+Les composants de lecture et de références suivent aussi la séparation des
+fichiers adjacents : `FicheText`, `FicheInlineText`, `FicheTags`,
+`FicheReferencePicker` et `FicheReferenceCreate` gardent leur template dans le
+`.vue` et leur état, calculs et actions dans le `.js`. Le parseur commun reste
+dans `ficheTextFormat`, les requêtes dans `contentRecovery` et les styles dans
+`resources/css/components/fiche.css`. Les composants purement déclaratifs tels
+que `FicheBlock` et `FicheScale` peuvent garder leurs seules déclarations de
+propriétés dans le template Vue, sans ajouter une abstraction sans comportement.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;
