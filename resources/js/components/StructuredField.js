@@ -10,12 +10,13 @@ export default {
         value: { type: [Object, Array], default: null },
         levels: { type: Number, default: 5 },
         contentId: String,
+        projectId: String, contentTypes: { type: Array, default: () => [] },
         levelMode: String,
         entryFields: { type: Array, default: () => [] },
         categoryOptions: { type: Array, default: () => [] },
         targets: { type: Array, default: () => [] },
     },
-    emits: ['change'],
+    emits: ['change', 'reference-created'],
     data: () => ({ keyword: '', images: [], imageError: '', attachments: [], attachmentError: '' }),
     setup() {
         return { categoryListId: useId() };

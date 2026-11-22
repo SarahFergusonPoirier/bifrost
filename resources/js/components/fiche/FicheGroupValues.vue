@@ -3,6 +3,8 @@
         <div v-for="field in schema.filter(field => !field.retired)" :key="field.key">
             <FicheValueEditor :label="field.field_definition.label + (field.is_required ? ' · obligatoire' : '')"
                 :type="type(field)" :model-value="values[field.key]" :content-id="contentId" :targets="targets"
+                :project-id="projectId" :content-types="contentTypes" :allow-reference-creation="field.display_options?.allow_reference_creation"
+                @reference-created="$emit('reference-created', $event)"
                 :entry-fields="field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields"
                 :reference-types="field.field_definition.options_data?.content_type_ids"
                 :choices="field.display_options?.choices ?? field.field_definition.options_data?.choices"

@@ -447,11 +447,16 @@ export default {
             return field.format === 'references' && fieldValue(field).length >= 200;
         }
 
-        function useCreatedReference(field, content) {
+        function registerCreatedReference(content) {
             if (!draft.value || Number(content.project_id) !== Number(projectId.value)) return;
             if (!treeContents.value.some(item => item.public_id === content.public_id)) {
                 treeContents.value = [...treeContents.value, { ...content, folder_id: null }];
             }
+        }
+
+        function useCreatedReference(field, content) {
+            if (!draft.value || Number(content.project_id) !== Number(projectId.value)) return;
+            registerCreatedReference(content);
             if (referenceFieldIsFull(field)) return;
             const current = fieldValue(field);
             setField(field, field.format === 'references' ? [...(Array.isArray(current) ? current : []), content.public_id] : content.id);
@@ -653,7 +658,7 @@ export default {
                 if (selected.value?.public_id === id && !dirty.value) accept(response.data, response.version);
             }),
             ficheTab, ficheTabUrl, selectFicheTab, ficheEditing, editFiche, editFicheButton, returnToFicheTab, editFicheField, editFicheAttachments, compact, hiddenFields, showHidden, setCompact, toggleHidden, displayValue, archivedFields, formatHistoricalValue, effectiveFieldValue, resolveFicheReference, fieldReferences, fieldState, setFieldState,
-            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
+            suggestedFullName, useSuggestedFullName, sidebarItems, templateSections, fieldValue, setField, allowedTargets, referenceCreationTypes, referenceFieldIsFull, useCreatedReference, registerCreatedReference, choiceOptions, setMultipleChoice, templateId, templateOptions, versions, versionId,
             upgradeVersions, upgradeVersionId, upgradePreview,
             loadUpgradeVersions: () => run(async () => {
                 const assignment = selected.value.template_assignment;

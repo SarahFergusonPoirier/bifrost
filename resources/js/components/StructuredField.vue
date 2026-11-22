@@ -72,7 +72,8 @@
                 <label v-else-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
-                    <FicheGroupValues :schema="entryFields" :values="entry.values" editable :content-id="contentId" :targets="targets" @change="setGroupValues(index, $event)" />
+                    <FicheGroupValues :schema="entryFields" :values="entry.values" editable :content-id="contentId" :targets="targets"
+                        :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)" @change="setGroupValues(index, $event)" />
                     <label>Période <input :value="entry.period ?? ''" maxlength="255"
                         @change="editKeyword(index, 'period', $event.target.value)" /></label>
                     <details>

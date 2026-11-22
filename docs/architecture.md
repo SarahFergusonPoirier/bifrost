@@ -260,3 +260,12 @@ retiré de la fiche ; la lecture signale alors son indisponibilité. Effacer
 le champ ne supprime ni la ressource ni le fichier. Les groupes répétables
 réutilisent la même validation. Un défaut pointant vers un fichier local
 est refusé dans les modèles globaux, y compris dans un groupe imbriqué.
+
+Les références simples et multiples intégrées aux groupes utilisent aussi
+`FicheReferenceCreate` lorsque `allow_reference_creation` est activé. Le
+contexte du projet et les types accessibles traversent récursivement les
+éditeurs. L’événement `reference-created` remonte jusqu’à la vue pour mettre
+à jour le catalogue local des cibles, puis la valeur typée référence l’ID
+numérique ou l’UUID canonique de la fiche créée. Le résultat doit appartenir
+au projet et à un type autorisé. Les erreurs conservent la saisie et la limite
+de deux cents références reste appliquée, y compris après une création lente.

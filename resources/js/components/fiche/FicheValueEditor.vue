@@ -7,6 +7,7 @@
         <template v-if="!state">
             <FicheTextEditor v-if="type === 'rich_text'" label="Texte" :model-value="value" :targets="targets" @update:model-value="update" />
             <StructuredField v-else-if="structured" :format="type" :value="value || null" :content-id="contentId"
+                :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)"
                 :targets="allowedTargets" :entry-fields="entryFields" :levels="levels" :category-options="choices" :level-mode="levelMode" @change="update" />
             <label v-else-if="type === 'multiple_choice'">Choix
                 <select multiple @change="updateMultiple"><option v-for="choice in choices" :key="choice" :value="choice" :selected="value.includes(choice)">{{ choice }}</option></select>
@@ -24,6 +25,8 @@
                 <input :type="type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'" :step="type === 'number' ? 'any' : undefined"
                     :value="value" @input="update(type === 'number' && $event.target.value !== '' ? Number($event.target.value) : $event.target.value)" @keydown.enter.prevent />
             </label>
+            <FicheReferenceCreate v-if="projectId && allowReferenceCreation && ['reference', 'references'].includes(type)" :project-id="projectId"
+                :types="creationTypes" :full="referenceFull" @created="useCreatedReference" />
         </template>
     </fieldset>
 </template>

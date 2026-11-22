@@ -11,9 +11,10 @@ export default {
     props: {
         schema: { type: Array, default: () => [] }, values: { type: Object, default: () => ({}) },
         editable: Boolean, contentId: String, targets: { type: Array, default: () => [] },
+        projectId: String, contentTypes: { type: Array, default: () => [] },
         resolveReference: Function, textLimit: Number,
     },
-    emits: ['change', 'open'],
+    emits: ['change', 'open', 'reference-created'],
     methods: {
         type(field) { return field.field_definition.options_data?.format || field.field_definition.value_type; },
         value(field) { return this.values[field.key]?.[fieldColumns[field.field_definition.value_type]]; },
