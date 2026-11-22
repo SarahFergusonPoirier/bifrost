@@ -16,6 +16,43 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_editing_a_field_block_preserves_values_and_snapshots_the_previous_schema(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $kept = FieldDefinition::create(['key' => 'kept', 'label' => 'Nom', 'value_type' => 'text']);
+        $removed = FieldDefinition::create(['key' => 'removed', 'label' => 'Ancien', 'value_type' => 'text']);
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Identité', 'field_schema' => [
+            ['field_definition_id' => $kept->id], ['field_definition_id' => $removed->id],
+        ]]);
+        $content->fieldValues()->create(['field_definition_id' => $kept->id, 'value_text' => 'Valeur actuelle']);
+        $content->fieldValues()->create(['field_definition_id' => $removed->id, 'value_text' => 'Valeur ancienne']);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $layout = $this->getJson($url)->json();
+        $layout['block_updates'] = [['id' => $block->public_id, 'title' => 'Identité révisée', 'fields' => [
+            ['id' => $kept->id, 'label' => 'Nom complet', 'section' => 'Identité', 'type' => 'text', 'default_value' => ['value_text' => 'Défaut']],
+            ['label' => 'Nouveau', 'section' => 'Identité', 'type' => 'boolean', 'default_value' => ['value_boolean' => false]],
+        ]]];
+        $this->putJson($url, $layout)->assertOk();
+        $schema = $block->fresh()->field_schema;
+        $this->assertSame('Nom complet', $schema[0]['label_override']);
+        $this->assertDatabaseHas('content_field_values', ['content_id' => $content->id, 'field_definition_id' => $kept->id, 'value_text' => 'Valeur actuelle']);
+        $this->assertDatabaseHas('content_field_values', ['content_id' => $content->id, 'field_definition_id' => $removed->id, 'value_text' => 'Valeur ancienne']);
+        $this->assertDatabaseHas('content_field_values', ['content_id' => $content->id, 'field_definition_id' => $schema[1]['field_definition_id'], 'value_boolean' => false]);
+        $snapshot = json_decode(DB::table('content_revisions')->where('content_id', $content->id)->value('snapshot'), true);
+        $this->assertSame('Identité', $snapshot['blocks'][0]['title']);
+        $this->assertCount(2, $snapshot['field_values']);
+        $this->putJson($url, $layout)->assertConflict();
+        $current = $this->getJson($url)->json();
+        $current['block_updates'] = $layout['block_updates'];
+        $current['block_updates'][0]['fields'][0]['type'] = 'number';
+        $this->putJson($url, $current)->assertUnprocessable();
+        $this->assertDatabaseCount('content_revisions', 1);
+        $this->assertDatabaseCount('field_definitions', 3);
+        $this->assertSame($schema, $block->fresh()->field_schema);
+    }
+
     public function test_a_free_block_creates_supported_field_types_and_validates_required_values(): void
     {
         $project = Project::create(['name' => 'Projet']);

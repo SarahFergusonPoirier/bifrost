@@ -36,6 +36,17 @@
             </fieldset>
             <FicheFieldBlockBuilder v-if="canCopy" :disabled="draft.length >= 80" :reference-types="referenceTypes" :content-id="contentId" :targets="referenceTargets" @create="addFieldBlock" />
         </details>
+        <section v-if="schemaEditorBlock" ref="schemaEditor" aria-label="Modifier les champs du bloc">
+            <FicheFieldBlockBuilder :schema="schemaEditorBlock" :content-id="contentId" :reference-types="referenceTypes" :targets="referenceTargets" @update="prepareFieldUpdate" />
+            <button type="button" @click="closeFieldEditor">Annuler la préparation des champs</button>
+        </section>
+        <section v-if="blockUpdates.length" aria-label="Modifications de champs en attente">
+            <p>Les changements de champs seront appliqués avec l’enregistrement des blocs.</p>
+            <div v-for="update in blockUpdates" :key="update.id">
+                <strong>{{ update.title }}</strong><ul><li v-for="(field, index) in update.fields" :key="field.id ?? index">{{ field.label }}</li></ul>
+                <button type="button" @click="blockUpdates = blockUpdates.filter(item => item.id !== update.id)">Annuler ces changements de champs</button>
+            </div>
+        </section>
         <details v-if="blockLibraryPath" @toggle="$event.target.open && loadBlockTemplates()">
             <summary>Modèles de blocs enregistrés</summary>
             <p v-if="loadingBlockTemplates" role="status">Chargement des modèles…</p>
@@ -205,6 +216,9 @@
                 <label><input v-model="placement.hidden" type="checkbox" /> Masqué</label>
                 <label><input v-model="placement.collapsed" type="checkbox" /> Réduit</label>
                 <button type="button" :disabled="index === 0" @click="move(index, index - 1)" :aria-label="'Monter ' + (placement.title || bySource.get(placement.source)?.title || 'le bloc')">Monter</button>
+                <button v-if="canCopy && placement.source.startsWith('fields:') && blocks.some(block => block.public_id === placement.source.slice(7))" type="button"
+                    :aria-label="'Modifier les champs de ' + (placement.title || bySource.get(placement.source)?.title || 'ce bloc')"
+                    @click="editFieldBlock(placement.source.slice(7))">Modifier les champs</button>
                 <button type="button" :disabled="index === draft.length - 1" @click="move(index, index + 1)" :aria-label="'Descendre ' + (placement.title || bySource.get(placement.source)?.title || 'le bloc')">Descendre</button>
                 <button v-if="destination" type="button" :disabled="!canTransfer(placement)" @click="transfer(index, false)">Déplacer vers l’onglet</button>
                 <button v-if="destination" type="button" :disabled="!canTransfer(placement)" @click="transfer(index, true)">Afficher aussi (données partagées)</button>
@@ -215,7 +229,7 @@
             </li>
         </ol>
         <div class="fiche-grid-actions">
-            <button type="submit" :disabled="savingLayout || !persist || (copies.length > 0 && !canCopy)">Enregistrer les blocs</button>
+            <button type="submit" :disabled="savingLayout || editingBlockId || !persist || ((copies.length > 0 || blockUpdates.length > 0) && !canCopy)">Enregistrer les blocs</button>
             <button type="button" :disabled="savingLayout" @click="cancel">Annuler</button>
         </div>
     </form>

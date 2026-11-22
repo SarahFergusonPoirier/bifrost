@@ -200,3 +200,13 @@ d’onglets. Ces modèles enregistrent une disposition dans la bibliothèque du
 projet ou dans la bibliothèque globale. Le contenu métier demeure dans les
 fiches. Les styles de la grille et des blocs réutilisent les variables de
 `resources/css/base/tokens.css` pour suivre le thème actif.
+
+Les modifications de schéma des blocs de champs sont préparées localement,
+puis envoyées avec la disposition dans `block_updates`. Le serveur vérifie
+la version et l’appartenance de chaque champ dans une même transaction.
+`ContentSnapshots` centralise la capture des révisions : une copie de la
+fiche précède toute modification de schéma. Retirer un champ de ce schéma
+conserve sa valeur archivée ; renommer ou réordonner conserve son identifiant.
+Les valeurs par défaut ne sont appliquées qu’aux nouveaux champs. Changer
+le type d’un champ existant nécessite d’ajouter un nouveau champ ; modifier
+une échelle demande une confirmation explicite de conservation des valeurs.

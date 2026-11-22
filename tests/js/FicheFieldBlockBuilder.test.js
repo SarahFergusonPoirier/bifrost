@@ -3,6 +3,28 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('edits existing field identities and requires confirmation before changing a scale', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {
+        title: 'Talents', fields: [{ field_definition_id: 27, label_override: 'Force',
+            field_definition: { label: 'Force', value_type: 'json', options_data: { format: 'scale', levels: 5 } },
+            display_options: {},
+        }],
+    } } });
+    expect(wrapper.vm.fields[0].existingId).toBe(27);
+    wrapper.vm.fields[0].levels = '7';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.valid).toBe(false);
+    wrapper.vm.create();
+    expect(wrapper.emitted('update')).toBeUndefined();
+    wrapper.vm.fields[0].preserveScale = true;
+    wrapper.vm.fields[0].label = 'Puissance';
+    await wrapper.vm.$nextTick();
+    wrapper.vm.create();
+    expect(wrapper.emitted('update')[0][0].fields[0]).toMatchObject({ id: 27, label: 'Puissance', levels: 7, scale_strategy: 'preserve' });
+    expect(wrapper.emitted('create')).toBeUndefined();
+    wrapper.unmount();
+});
+
 it('prepares typed fields, keeps their order and excludes temporary identifiers', async () => {
     const wrapper = mount(FicheFieldBlockBuilder);
     await wrapper.get('input').setValue('  Talents  ');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\ContentSnapshots;
 use App\FieldSchema;
 use App\Models\Content;
 use App\Models\ContentBlock;
@@ -123,6 +124,11 @@ class FicheLayoutController extends Controller
             'copies.*.field_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
             'copies.*.title' => ['nullable', 'required_if:copies.*.source,blank,blank-fields', 'string', 'max:255'],
             'copies.*.body' => ['nullable', 'string'],
+            'block_updates' => ['sometimes', 'array', 'list', 'max:80'],
+            'block_updates.*' => ['required', 'array:id,title,fields'],
+            'block_updates.*.id' => ['required', 'uuid', 'distinct:ignore_case'],
+            'block_updates.*.title' => ['required', 'string', 'max:255'],
+            'block_updates.*.fields' => ['required', 'array', 'list', 'min:1', 'max:200'],
             'tabs' => ['required', 'array', 'list', 'max:24'],
             'tabs.*' => ['required', 'array:id,title,icon,hidden,placements'],
             'tabs.*.id' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/', 'distinct:strict'],
@@ -158,6 +164,9 @@ class FicheLayoutController extends Controller
                 $input['copies'][$index]['fields'] = Validator::make($copy, FieldSchema::rules())->validate()['fields'];
             }
         }
+        foreach ($input['block_updates'] ?? [] as $index => $update) {
+            $input['block_updates'][$index]['fields'] = Validator::make($update, FieldSchema::rules())->validate()['fields'];
+        }
 
         if (collect($input['tabs'])->every(fn (array $tab): bool => (bool) $tab['hidden'])) {
             throw ValidationException::withMessages(['tabs' => 'Conserve au moins un onglet visible.']);
@@ -167,6 +176,10 @@ class FicheLayoutController extends Controller
             $record = $this->content($project, $content, lock: true);
             $current = $this->layout($record);
             abort_if((int) $input['version'] !== $current['version'], 409, 'La disposition a changé depuis son ouverture.');
+            if (! empty($input['block_updates'])) {
+                ContentSnapshots::store($record, ContentSnapshots::data($record, $record->getAttributes()), ['label' => 'Avant modification des champs']);
+                $this->updateFieldBlocks($record, $input['block_updates']);
+            }
 
             DB::table('fiche_layout_revisions')->insert([
                 'content_id' => $record->id,
@@ -251,6 +264,56 @@ class FicheLayoutController extends Controller
             $block->public_id = $copy['id'];
             $block->save();
         }
+    }
+
+    private function updateFieldBlocks(Content $record, array $updates): void
+    {
+        foreach ($updates as $update) {
+            $block = $record->blocks()->where('block_type', 'fields')->where('public_id', $update['id'])->firstOrFail();
+            $known = collect($block->field_schema ?? [])->keyBy('field_definition_id');
+            $definitions = FieldDefinition::whereKey($known->keys()->all())->get()->keyBy('id');
+            $schema = [];
+            $newFields = [];
+            foreach ($update['fields'] as $field) {
+                if ($field['type'] === 'json') {
+                    throw ValidationException::withMessages(['fields' => 'Choisis un type de champ pris en charge par les fiches.']);
+                }
+                $old = $known->get($field['id'] ?? null);
+                if (isset($field['id']) && ! $old) {
+                    throw ValidationException::withMessages(['fields' => 'Un champ ne fait pas partie de ce bloc.']);
+                }
+                $attributes = FieldSchema::definitionAttributes($field, 'project', $record->project_id);
+                $definition = isset($field['id']) ? $definitions->get($field['id']) : null;
+                if ($old && ! $definition) {
+                    throw ValidationException::withMessages(['fields' => 'Un champ du bloc est indisponible.']);
+                }
+                if ($definition && ($definition->value_type !== $attributes['value_type']
+                    || ($definition->options_data['format'] ?? null) !== ($attributes['options_data']['format'] ?? null))) {
+                    throw ValidationException::withMessages(['fields' => 'Ajoute un nouveau champ pour utiliser un autre type. La valeur précédente sera conservée.']);
+                }
+                if ($definition && array_key_exists('reference_types', $field)
+                    && (array_diff($field['reference_types'], $definition->options_data['content_type_ids'] ?? []) !== []
+                        || array_diff($definition->options_data['content_type_ids'] ?? [], $field['reference_types']) !== [])) {
+                    throw ValidationException::withMessages(['fields' => 'Les types de référence d’un champ existant sont conservés.']);
+                }
+                $definition ??= FieldDefinition::create($attributes);
+                $default = array_key_exists('default_value', $field) ? $field['default_value'] : ($old['default_value'] ?? null);
+                $entry = [
+                    'field_definition_id' => $definition->id, 'label_override' => $field['label'],
+                    'section_key' => Str::slug($field['section']) ?: 'fields',
+                    'display_options' => FieldSchema::displayOptions($field + ['default_value' => $default], $definition, $old['display_options'] ?? [], $old['section_key'] ?? null, $old !== null),
+                    'is_required' => $field['required'] ?? $old['is_required'] ?? false,
+                    'help_text' => array_key_exists('help', $field) ? $field['help'] : ($old['help_text'] ?? null), 'default_value' => $default,
+                ];
+                $schema[] = $entry;
+                if ($old === null) {
+                    $newFields[] = $entry;
+                }
+            }
+            $block->update(['title' => $update['title'], 'field_schema' => $schema]);
+            FieldSchema::applyDefaults($record, $newFields);
+        }
+        $record->touch();
     }
 
     private function copyFieldBlock(Content $record, array $copy, int $position): array

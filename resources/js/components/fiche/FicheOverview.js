@@ -61,8 +61,16 @@ export default {
         useDefaults: { type: Boolean, default: true },
     },
     emits: ['open', 'select', 'block-deleted', 'edit-text', 'edit-field', 'edit-attachments'],
-    data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], draftVersion: null, dragged: null, destination: '', transfers: [], resizing: null, copies: [], query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
+    data: () => ({ icons, editing: false, savingLayout: false, source: '', draft: [], draftVersion: null, dragged: null, destination: '', transfers: [], resizing: null, copies: [], blockUpdates: [], editingBlockId: null, query: '', newTitle: 'Texte', newBody: '', blockTemplates: [], blockTemplateId: null, blockTemplateName: '', blockTemplateScope: 'project', templatePlacementId: null, libraryError: '', savingBlockTemplate: false, loadingBlockTemplates: false }),
     computed: {
+        schemaEditorBlock() {
+            const block = this.blocks.find(block => block.public_id === this.editingBlockId && block.block_type === 'fields');
+            if (!block) return null;
+            const update = this.blockUpdates.find(update => update.id === block.public_id);
+            return { ...block, title: update?.title ?? block.title,
+                fields: [...this.templateSections.values()].flat().filter(field => field.blockId === block.public_id),
+                pendingFields: update?.fields };
+        },
         editableEntryFields() {
             const fields = {};
             for (const section of this.templateSections.values()) {
@@ -82,10 +90,10 @@ export default {
         cards() {
             const identityTitle = identitySectionTitle(this.templateSections);
             const sections = Array.from(this.templateSections, ([title, fields]) => ({
-                source: fields[0]?.blockId ? 'fields:' + fields[0].blockId : 'section:' + title,
-                aliases: fields[0]?.blockId ? [] : [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
+                source: this.fieldBlockId(title, fields) ? 'fields:' + this.fieldBlockId(title, fields) : 'section:' + title,
+                aliases: this.fieldBlockId(title, fields) ? [] : [...new Set(fields.flatMap(field => field.display_options?.section_aliases ?? []))],
                 fullName: title === identityTitle ? this.fullName : null,
-                title: templateSectionLabel(title, fields),
+                title: fields.length ? templateSectionLabel(title, fields) : this.blocks.find(block => 'block:' + block.public_id === title)?.title || 'Champs',
                 icon: 'catalogue',
                 fields: fields.filter(field => !this.hiddenFields.includes(field.field_definition_id)).map(field => ({
                     id: field.id,
@@ -255,6 +263,24 @@ export default {
         },
     },
     methods: {
+        editFieldBlock(id) {
+            this.schemaTrigger = document.activeElement;
+            this.editingBlockId = id;
+            this.$nextTick(() => this.$refs.schemaEditor?.querySelector('input')?.focus());
+        },
+        closeFieldEditor() {
+            this.editingBlockId = null;
+            this.$nextTick(() => { if (this.schemaTrigger?.isConnected) this.schemaTrigger.focus(); });
+        },
+        fieldBlockId(section, fields) {
+            return fields[0]?.blockId ?? this.blocks.find(block => block.block_type === 'fields' && 'block:' + block.public_id === section)?.public_id;
+        },
+        prepareFieldUpdate({ title, fields }) {
+            if (!this.editingBlockId) return;
+            const id = this.editingBlockId;
+            this.blockUpdates = [...this.blockUpdates.filter(update => update.id !== id), { id, title, fields }];
+            this.closeFieldEditor();
+        },
         copyTarget(copy) {
             return (copy.field_ids || ['template-fields', 'blank-fields'].includes(copy.source) ? 'fields:' : 'text:') + copy.id;
         },
@@ -317,6 +343,8 @@ export default {
                 ?? this.initialPlacements.map(item => placement(item.source));
             this.transfers = [];
             this.copies = [];
+            this.blockUpdates = [];
+            this.editingBlockId = null;
             this.editing = true;
             this.$nextTick(() => this.$refs.blockSearch?.focus());
         },
@@ -522,11 +550,13 @@ export default {
         },
         cancel() {
             this.copies = [];
+            this.blockUpdates = [];
+            this.editingBlockId = null;
             this.editing = false;
             this.$nextTick(() => this.$refs.editButton?.focus());
         },
         async save() {
-            if (this.savingLayout) return;
+            if (this.savingLayout || this.editingBlockId || ((this.copies.length || this.blockUpdates.length) && !this.canCopy)) return;
             const placed = new Set([...this.draft, ...this.transfers.map(item => item.placement)].map(item => item.source));
             const copies = this.copies.filter(copy => placed.has(this.copyTarget(copy))).map(({ card, ...copy }) => copy);
             const defaults = this.defaults.filter(item => !this.copies.some(copy => item.source === this.copyTarget(copy)))
@@ -534,7 +564,7 @@ export default {
             this.savingLayout = true;
             try {
                 const transfers = this.transfers.map(({ tab, placement }) => ({ tab, placement }));
-                if (await this.persist(this.draft, transfers, defaults, copies, this.draftVersion)) this.cancel();
+                if (await this.persist(this.draft, transfers, defaults, copies, this.draftVersion, this.blockUpdates)) this.cancel();
             } finally {
                 this.savingLayout = false;
             }

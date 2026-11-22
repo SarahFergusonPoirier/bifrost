@@ -404,6 +404,7 @@
                                 <select v-else-if="field.field_definition.value_type === 'choice' && (field.display_options?.choices ?? field.field_definition.options_data?.choices)?.length"
                                     :value="fieldValue(field)" @change="setField(field, $event.target.value)">
                                     <option value="">Vide</option>
+                                    <option v-if="fieldValue(field) && !choiceOptions(field).includes(fieldValue(field))" :value="fieldValue(field)">{{ fieldValue(field) }} · Valeur conservée</option>
                                     <option v-for="option in choiceOptions(field)" :key="option" :value="option">{{ option }}</option>
                                 </select>
                                 <select v-else-if="field.column === 'value_boolean'" :value="String(fieldValue(field))" @change="setField(field, $event.target.value)">

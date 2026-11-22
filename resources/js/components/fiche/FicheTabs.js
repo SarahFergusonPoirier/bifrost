@@ -203,7 +203,7 @@ export default {
             this.tabs = this.tabs.filter(item => item.id !== tab.id);
             this.cancelRemoval();
         },
-        savePlacements(next, transfers, defaults, copies, draftVersion = this.layout.version) {
+        savePlacements(next, transfers, defaults, copies, draftVersion = this.layout.version, blockUpdates = []) {
             if (draftVersion !== this.layout.version) {
                 this.error = 'La disposition a changé depuis l’ouverture de l’éditeur de blocs.';
                 this.conflict = true;
@@ -219,7 +219,7 @@ export default {
                 const added = transfers.filter(transfer => transfer.tab === tab.id).map(transfer => transfer.placement);
                 if (!added.length) return tab;
                 return { ...tab, placements: mergePlacements(tab, added, defaults) };
-            }), copies);
+            }), copies, blockUpdates);
         },
         async saveTabs() {
             if (this.hasPendingSources && !this.canCopy) return;
@@ -244,7 +244,7 @@ export default {
             if (saved && this.visibleTabs.some(tab => tab.id === pendingTab)) this.$emit('select', pendingTab);
             return saved;
         },
-        async save(tabs, copies = []) {
+        async save(tabs, copies = [], blockUpdates = []) {
             if (this.saving) return false;
             if (!tabs.some(tab => !tab.hidden)) {
                 this.error = 'Conserve au moins un onglet visible.';
@@ -253,10 +253,10 @@ export default {
             this.saving = true;
             this.error = '';
             try {
-                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs, copies });
+                const { data } = await contentRequest(this.path, 'PUT', { version: this.layout.version, tabs, copies, ...(blockUpdates.length ? { block_updates: blockUpdates } : {}) });
                 this.accept(data);
                 this.revisions = null;
-                if (copies.length) this.$emit('copied');
+                if (copies.length || blockUpdates.length) this.$emit('copied');
                 return true;
             } catch (error) {
                 this.error = error.message;
