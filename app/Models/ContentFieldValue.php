@@ -222,9 +222,7 @@ class ContentFieldValue extends Model
         }
 
         if ($format === 'image' && ($this->value_json['image'] ?? null) !== ($this->getOriginal('value_json')['image'] ?? null)) {
-            $image = $content->resources()->where('storage_mode', 'imported')
-                ->where('public_id', $this->value_json['image'])->first();
-            if (! $image?->attachmentImageMime()) {
+            if (! $this->referencesOwnedImages($content, [$this->value_json['image']])) {
                 throw ValidationException::withMessages(['value_json.image' => 'Choisis une image jointe à cette fiche.']);
             }
         }
@@ -233,9 +231,8 @@ class ContentFieldValue extends Model
             $ids = collect($this->value_json)->pluck('image')->filter()->unique();
             $previous = collect($this->getOriginal('value_json') ?? [])->pluck('image')->filter();
             $added = $ids->diff($previous);
-            if ($added->isNotEmpty() && $content->resources()->where('storage_mode', 'imported')
-                ->where('location', 'like', 'content-attachments/%')->whereIn('public_id', $added)->count() !== $added->count()) {
-                throw ValidationException::withMessages(['value_json' => 'Une image ne fait pas partie des pièces jointes de la fiche.']);
+            if ($added->isNotEmpty() && ! $this->referencesOwnedImages($content, $added->all())) {
+                throw ValidationException::withMessages(['value_json' => 'Choisis uniquement des images jointes à cette fiche.']);
             }
         }
 
@@ -256,6 +253,12 @@ class ContentFieldValue extends Model
                 throw ValidationException::withMessages(['value_json' => 'Une fiche liée est indisponible dans cet espace.']);
             }
         }
+    }
+
+    private function referencesOwnedImages(Content $content, array $ids): bool
+    {
+        return $content->resources()->where('storage_mode', 'imported')->whereIn('public_id', $ids)->get()
+            ->filter(fn (Resource $resource): bool => $resource->attachmentImageMime() !== null)->count() === count($ids);
     }
 
     public function content(): BelongsTo

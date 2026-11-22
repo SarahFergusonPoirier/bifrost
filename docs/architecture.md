@@ -376,6 +376,13 @@ conservation. Si la cible existe encore, les restrictions de type et de projet
 restent vérifiées. Ce comportement rejoint celui des références multiples et
 évite de bloquer l’édition des autres membres d’un groupe.
 
+Les champs Image et les images des équipements intégrés partagent le contrôle
+`referencesOwnedImages` : appartenance à la fiche, stockage importé, chemin
+canonique et type réel autorisé via `Resource::attachmentImageMime`. Les nouvelles
+affectations ne peuvent pas utiliser un document ordinaire ou le fichier d’une
+autre fiche. Un pointeur déjà enregistré reste conservable si l’image devient
+indisponible ; cela ne supprime aucun autre fichier joint.
+
 Les dates simples gardent leur valeur canonique dans `value_date`. La colonne
 nullable `date_options` contient uniquement leur lien de chronologie, son titre,
 sa description et son calendrier. Ces options ne peuvent accompagner ni un

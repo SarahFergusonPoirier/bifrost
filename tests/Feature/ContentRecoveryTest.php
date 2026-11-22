@@ -18,6 +18,32 @@ class ContentRecoveryTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_equipment_images_reject_non_images_and_foreign_files_but_keep_existing_missing_images(): void
+    {
+        Storage::fake('local');
+        $content = $this->content();
+        $other = $this->content();
+        $field = FieldDefinition::create(['key' => 'equipment-images', 'label' => 'Équipement', 'value_type' => 'json', 'options_data' => ['format' => 'equipment']]);
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aA1sAAAAASUVORK5CYII=');
+        $url = '/api/contents/'.$content->public_id;
+        $image = $this->post("$url/attachments", ['file' => UploadedFile::fake()->createWithContent('objet.png', $png)], ['Accept' => 'application/json'])->assertCreated()->json('public_id');
+        $document = $this->post("$url/attachments", ['file' => UploadedFile::fake()->createWithContent('notice.txt', 'Notice')], ['Accept' => 'application/json'])->assertCreated()->json('public_id');
+        $foreign = $this->post('/api/contents/'.$other->public_id.'/attachments', ['file' => UploadedFile::fake()->createWithContent('autre.png', $png)], ['Accept' => 'application/json'])->assertCreated()->json('public_id');
+        $save = fn (string $id, string $description = 'Avant') => $this->patchJson($url, ['title' => 'Original', 'summary' => null, 'field_values' => [[
+            'field_definition_id' => $field->id, 'value_json' => [['label' => 'Objet', 'image' => $id, 'description' => $description]],
+        ]]]);
+        $save($image)->assertOk();
+        foreach ([$document, $foreign] as $invalid) {
+            $save($invalid)->assertUnprocessable()->assertJsonValidationErrors('value_json');
+        }
+        $this->patchJson($url, ['title' => 'Original', 'summary' => null])->assertOk();
+        $this->deleteJson("$url/attachments/$image")->assertNoContent();
+        $save($image, 'Après')->assertOk();
+        $this->assertSame('Après', $content->fieldValues()->sole()->value_json[0]['description']);
+        $this->assertSame($image, $content->fieldValues()->sole()->value_json[0]['image']);
+        $this->getJson("$url/attachments/$document")->assertOk();
+    }
+
     public function test_named_snapshot_can_be_restored_without_losing_the_current_version(): void
     {
         $content = $this->content();
