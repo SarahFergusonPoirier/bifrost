@@ -420,6 +420,15 @@ de l’ancienne édition : une base déjà installée reçoit une version suppl�
 sans réécriture des versions publiées. Les valeurs héritées restent stockées et
 les affectations existantes ne changent que sur mise à niveau explicite.
 
+`config/fiche-block-presets.json` définit les structures de départ du bloc libre.
+L’éditeur et `CharacterBlocksSeeder` lisent la même définition pour les attributs
+et la personnalité. Les capacités, équipements et ressources sont également
+proposés à toutes les fiches dans cet éditeur. Choisir une structure prépare des
+champs vides avec de nouveaux identifiants, sans affectation à une valeur existante
+et sans enregistrement automatique. Un brouillon doit être explicitement effacé
+avant de choisir une autre structure ; les groupes et les schémas déjà enregistrés
+ne peuvent pas être remplacés par cette action.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;

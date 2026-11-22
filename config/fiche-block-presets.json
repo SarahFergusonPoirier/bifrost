@@ -1,0 +1,27 @@
+[
+    { "key": "attributes", "title": "Attributs clés", "fields": [
+        { "label": "Force", "type": "scale", "levels": 5 },
+        { "label": "Agilité", "type": "scale", "levels": 5 },
+        { "label": "Intelligence", "type": "scale", "levels": 5 },
+        { "label": "Endurance", "type": "scale", "levels": 5 },
+        { "label": "Charisme", "type": "scale", "levels": 5 }
+    ] },
+    { "key": "personality", "title": "Personnalité", "fields": [
+        { "label": "Traits", "type": "keywords" },
+        { "label": "Qualités", "type": "keywords" },
+        { "label": "Défauts", "type": "keywords" },
+        { "label": "Valeurs", "type": "keywords" },
+        { "label": "Peurs", "type": "keywords" }
+    ] },
+    { "key": "capabilities", "title": "Capacités", "fields": [
+        { "label": "Capacités", "type": "capabilities" }
+    ] },
+    { "key": "equipment", "title": "Objets et équipement", "fields": [
+        { "label": "Équipements", "type": "equipment" }
+    ] },
+    { "key": "resources", "title": "Images et ressources", "fields": [
+        { "label": "Image", "type": "image" },
+        { "label": "Fichier joint", "type": "attachment" },
+        { "label": "Lien externe", "type": "external_link" }
+    ] }
+]

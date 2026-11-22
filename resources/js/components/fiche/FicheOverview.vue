@@ -26,7 +26,7 @@
             <button type="button" :disabled="!selectedCard || draft.length >= 80" @click="add">Ajouter un placement</button>
             <fieldset v-if="canCopy">
                 <legend>Nouveau bloc de texte</legend>
-                <div v-if="textBlockTitles.length" role="group" aria-label="Types de blocs de texte">
+                <div v-if="textBlockTitles.length" class="fiche-preset-actions" role="group" aria-label="Types de blocs de texte">
                     <button v-for="title in textBlockTitles" :key="title" type="button"
                         @click="chooseTextBlockTitle(title)">{{ title }}</button>
                 </div>

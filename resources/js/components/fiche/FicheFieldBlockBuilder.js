@@ -1,6 +1,7 @@
 import { fieldTypes } from './fieldTypes';
 import FicheDefaultValueEditor from './FicheDefaultValueEditor.vue';
 import { fieldSchemaSpec, previewEntryFields } from './fieldSchemaSpecs';
+import blockPresets from '../../../../config/fiche-block-presets.json';
 
 export default {
     components: { FicheDefaultValueEditor },
@@ -8,6 +9,7 @@ export default {
     emits: ['create', 'update', 'pending'],
     data: () => ({ title: '', fields: [], blockScaleLevels: '5', blockScaleDisplay: 'both', preserveBlockScale: false, scalePending: false }),
     computed: {
+        presets() { return blockPresets; },
         types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json' && (this.depth < 3 || type !== 'repeatable'))); },
         limit() { return this.groupMode ? 20 : 200; },
         scaleFields() { return this.fields.filter(field => field.type === 'scale'); },
@@ -26,6 +28,14 @@ export default {
     },
     watch: { schema: { immediate: true, handler(schema) { if (schema) this.loadSchema(schema); } } },
     methods: {
+        usePreset(key) {
+            const preset = this.presets.find(preset => preset.key === key);
+            if (!preset || this.disabled || this.schema || this.groupMode || this.title || this.fields.length) return;
+            this.title = preset.title;
+            this.fields = preset.fields.map(field => ({ ...this.newField(), ...field, levels: String(field.levels ?? 5) }));
+            this.resetBlockScale();
+            this.$emit('pending', true);
+        },
         newField() {
             return { id: crypto.randomUUID(), key: crypto.randomUUID(), entryLabel: 'Libellé', entry_fields: [], groupPending: false, groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: [] }, label: 'Champ ' + (this.fields.length + 1), type: 'text',
                 help: '', required: false, history_view: 'current', emptyDisplay: 'inherit', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '', originalLevels: 5, preserveScale: false,

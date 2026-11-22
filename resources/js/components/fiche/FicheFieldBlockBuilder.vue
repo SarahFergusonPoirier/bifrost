@@ -1,6 +1,14 @@
 <template>
     <fieldset :disabled="disabled" @input="$emit('pending', true)" @change="$emit('pending', true)">
         <legend>{{ groupMode ? 'Sous-champs de chaque entrée' : schema ? 'Modifier les champs du bloc' : 'Nouveau bloc libre' }}</legend>
+        <fieldset v-if="!schema && !groupMode">
+            <legend>Structures de départ</legend>
+            <p>Prépare un bloc indépendant avec des champs vides. Tu peux ensuite adapter sa structure.</p>
+            <div class="fiche-preset-actions">
+                <button v-for="preset in presets" :key="preset.key" type="button" :disabled="!!title || fields.length > 0" @click="usePreset(preset.key)">{{ preset.title }}</button>
+            </div>
+            <p v-if="title || fields.length">Efface le bloc en préparation avant de choisir une autre structure.</p>
+        </fieldset>
         <p v-if="schema && !groupMode">Les valeurs des champs retirés seront conservées et resteront accessibles dans l’historique et les données conservées.</p>
         <label v-if="!groupMode">Titre du bloc libre <input v-model="title" maxlength="255" @keydown.enter.prevent /></label>
         <div v-for="(field, index) in fields" :key="field.id">

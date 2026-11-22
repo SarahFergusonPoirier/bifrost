@@ -3,6 +3,39 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it.each([
+    ['Attributs clés', ['scale', 'scale', 'scale', 'scale', 'scale']],
+    ['Personnalité', ['keywords', 'keywords', 'keywords', 'keywords', 'keywords']],
+    ['Capacités', ['capabilities']],
+    ['Objets et équipement', ['equipment']],
+    ['Images et ressources', ['image', 'attachment', 'external_link']],
+])('prepares an empty independent %s block without publishing it automatically', async (title, types) => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    const button = wrapper.findAll('button').find(button => button.text() === title);
+    await button.trigger('click');
+    expect(wrapper.vm.title).toBe(title);
+    expect(wrapper.vm.fields.map(field => field.type)).toEqual(types);
+    expect(wrapper.vm.fields.every(field => !field.default_enabled && field.default_value === null && !field.existingId)).toBe(true);
+    expect(wrapper.emitted('create')).toBeUndefined();
+    wrapper.vm.create();
+    expect(wrapper.emitted('create')[0][0]).toMatchObject({ title, fields: types.map(type => ({ type })) });
+    wrapper.unmount();
+});
+
+it('keeps a pending block when choosing a preset and generates fresh identifiers after explicit reset', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    wrapper.vm.usePreset('attributes');
+    const ids = wrapper.vm.fields.map(field => field.id);
+    wrapper.vm.fields[0].label = 'Force personnalisée';
+    wrapper.vm.usePreset('personality');
+    expect(wrapper.vm.fields[0].label).toBe('Force personnalisée');
+    wrapper.vm.reset();
+    wrapper.vm.usePreset('attributes');
+    expect(wrapper.vm.fields[0].label).toBe('Force');
+    expect(wrapper.vm.fields.every(field => !ids.includes(field.id))).toBe(true);
+    wrapper.unmount();
+});
+
 it('stages explicit show, hide and inherited empty-value rules', async () => {
     const wrapper = mount(FicheFieldBlockBuilder);
     for (const [setting, expected] of [['show', false], ['hide', true], ['inherit', null]]) {

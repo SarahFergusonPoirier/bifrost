@@ -36,24 +36,27 @@ class CharacterBlocksSeeder extends Seeder
                 $position = max($position, $field->position + 1);
             }
 
-            $blocks = [
-                ['attributes', 'Attributs clés', 'scale', ['Force', 'Agilité', 'Intelligence', 'Endurance', 'Charisme']],
-                ['personality', 'Personnalité', 'keywords', ['Traits', 'Qualités', 'Défauts', 'Valeurs', 'Peurs']],
-            ];
-            foreach ($blocks as [$section, $title, $format, $labels]) {
-                foreach ($labels as $label) {
+            $presets = json_decode(file_get_contents(config_path('fiche-block-presets.json')), true, flags: JSON_THROW_ON_ERROR);
+            foreach ($presets as $preset) {
+                $section = $preset['key'];
+                if (! in_array($section, ['attributes', 'personality'], true)) {
+                    continue;
+                }
+                foreach ($preset['fields'] as $field) {
+                    $label = $field['label'];
+                    $format = $field['type'];
                     $definition = FieldDefinition::firstOrCreate([
                         'key' => 'character-'.$section.'-'.Str::slug($label), 'scope_type' => 'global',
                     ], [
                         'label' => $label,
                         'value_type' => 'json',
-                        'options_data' => ['format' => $format] + ($format === 'scale' ? ['levels' => 5] : []),
+                        'options_data' => ['format' => $format] + ($format === 'scale' ? ['levels' => $field['levels']] : []),
                     ]);
                     $version->fields()->create([
                         'field_definition_id' => $definition->id,
                         'section_key' => $section,
                         'position' => $position++,
-                        'display_options' => ['section_label' => $title],
+                        'display_options' => ['section_label' => $preset['title']],
                     ]);
                 }
             }
