@@ -7,6 +7,7 @@ use App\Models\ContentType;
 use App\Models\FieldDefinition;
 use App\Models\Project;
 use App\Models\TemplateVersion;
+use Database\Seeders\EncyclopedicCatalogSeeder;
 use Database\Seeders\WorldbuildingCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,6 +15,25 @@ use Tests\TestCase;
 class WorldbuildingCatalogTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_encyclopedic_publication_does_not_replace_the_minimal_identity_default(): void
+    {
+        $this->seed(WorldbuildingCatalogSeeder::class);
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::where('key', 'personnage')->sole();
+        $template = ContentTemplate::where('name', 'Personnage')->sole();
+        $minimal = $template->versions()->reorder('version_number', 'desc')->firstOrFail();
+        $this->seed(EncyclopedicCatalogSeeder::class);
+        $encyclopedic = $template->versions()->where('change_summary', EncyclopedicCatalogSeeder::RELEASE)->sole();
+        $this->assertGreaterThan($minimal->version_number, $encyclopedic->version_number);
+        $create = ['title' => 'Élia', 'project_id' => $project->id, 'content_type_id' => $type->id];
+        $id = $this->postJson('/api/contents', $create)->assertCreated()->json('public_id');
+        $response = $this->getJson('/api/contents/'.$id)->assertOk()->assertJsonPath('template_assignment.template_version.id', $minimal->id);
+        $identity = collect($response->json('template_assignment.template_version.fields'))->where('section_key', 'identity');
+        $this->assertSame(['Âge', 'Genre', 'Statut vital', 'Rôle narratif'], $identity->pluck('field_definition.label')->all());
+        $custom = $this->postJson('/api/contents', $create + ['template_version_id' => $encyclopedic->id])->assertCreated()->json('public_id');
+        $this->getJson('/api/contents/'.$custom)->assertOk()->assertJsonPath('template_assignment.template_version.id', $encyclopedic->id);
+    }
 
     public function test_standard_database_seeding_installs_character_defaults_and_can_be_repeated(): void
     {

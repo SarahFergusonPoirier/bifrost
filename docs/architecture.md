@@ -404,6 +404,15 @@ dans `ficheTextFormat`, les requêtes dans `contentRecovery` et les styles dans
 que `FicheBlock` et `FicheScale` peuvent garder leurs seules déclarations de
 propriétés dans le template Vue, sans ajouter une abstraction sans comportement.
 
+La création automatique d’un personnage privilégie une version système publiée
+dont la section d’identité contient les quatre définitions canoniques Âge,
+Genre, Statut vital et Rôle narratif ; le nom complet reste le titre de fiche.
+Un catalogue encyclopédique plus récent ne remplace donc pas ce choix minimal
+par son seul numéro de version. En l’absence de cette structure, le comportement
+historique reprend la dernière version système disponible. Le choix explicite
+d’une version par l’utilisateur reste prioritaire, et aucune affectation
+existante n’est changée par cette sélection.
+
 ## Vérification du cahier des charges des blocs et onglets
 
 Les points ci-dessous indiquent les preuves à consulter lors de la recette ;

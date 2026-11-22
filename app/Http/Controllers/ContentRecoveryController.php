@@ -90,11 +90,7 @@ class ContentRecoveryController extends Controller
 
             $version = isset($validated['template_version_id'])
                 ? TemplateVersion::findOrFail($validated['template_version_id'])
-                : TemplateVersion::query()->whereNotNull('published_at')->whereHas('template', fn ($query) => $query
-                    ->where('is_system', true)->where('is_active', true)->where('scope_type', 'global')
-                    ->where('content_type_id', $content->content_type_id)
-                    ->whereHas('contentType', fn ($type) => $type->where('key', 'personnage')))
-                    ->orderByDesc('version_number')->first();
+                : $this->defaultCharacterVersion($content->content_type_id);
 
             if ($version) {
                 if (! $version->template?->is_active) {
@@ -277,6 +273,22 @@ class ContentRecoveryController extends Controller
         }
 
         return response()->json(['changes' => (object) $changes]);
+    }
+
+    private function defaultCharacterVersion(int $contentTypeId): ?TemplateVersion
+    {
+        $versions = TemplateVersion::query()->whereNotNull('published_at')->whereHas('template', fn ($query) => $query
+            ->where('is_system', true)->where('is_active', true)->where('scope_type', 'global')
+            ->where('content_type_id', $contentTypeId)
+            ->whereHas('contentType', fn ($type) => $type->where('key', 'personnage')))
+            ->orderByDesc('version_number');
+        $identityKeys = ['character-age', 'character-gender', 'character-vital-status', 'character-narrative-role'];
+
+        return (clone $versions)
+            ->whereHas('fields', fn ($field) => $field->where('section_key', 'identity'), '=', 4)
+            ->whereHas('fields', fn ($field) => $field->where('section_key', 'identity')
+                ->whereHas('fieldDefinition', fn ($definition) => $definition->whereIn('key', $identityKeys)), '=', 4)
+            ->first() ?? $versions->first();
     }
 
     private function saveBlocks(Content $content, array $blocks): void
