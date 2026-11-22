@@ -278,3 +278,12 @@ le bloc. Les paramètres sont ensuite persistés sur chaque champ par le même
 contrat de schéma, sans deuxième mécanisme d’écriture. Les descriptions des
 niveaux supérieurs restent enregistrées lors d’une réduction de l’échelle,
 même si seules les descriptions des niveaux affichés sont présentées.
+
+L’historique des sous-champs répétables utilise les révisions du champ parent.
+`fieldHistoryValue` suit un chemin composé d’UUID d’entrées et de clés de membres,
+sans dépendre de leur position. `FicheEntryList` et `FicheGroupValues` transmettent
+ce chemin et l’identifiant du champ canonique à `FicheFieldHistory`. Le rendu
+des anciennes valeurs réutilise les composants typés, sans rouvrir leur propre
+historique. Les doublons sont identifiés par la valeur canonique plutôt que
+par le libellé affiché. Une réponse de chargement devenue obsolète après un
+changement de fiche ou de chemin est ignorée.

@@ -4,7 +4,7 @@
         <p v-if="error" role="alert">{{ error }}</p>
         <ol v-if="entries.length">
             <li v-for="entry in entries" :key="entry.id">
-                <time :datetime="entry.date">{{ entry.date }}</time> · {{ entry.value }}
+                <time :datetime="entry.date">{{ entry.date }}</time> · <slot name="value" :entry="entry">{{ entry.value }}</slot>
             </li>
         </ol>
         <p v-else-if="page && !busy">Aucune valeur antérieure enregistrée.</p>

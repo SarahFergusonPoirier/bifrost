@@ -314,6 +314,7 @@
                                 </li>
                             </ul>
                             <FicheEntryList v-else-if="field.entries?.length" :key="'entries:' + field.definitionId + ':' + attachmentsRevision" :entries="field.entries" :schema="field.entryFields" :level-mode="field.levelMode"
+                                :parent-field-id="field.definitionId"
                                 :content-id="contentId" :targets="referenceTargets" :resolve-reference="resolveReference" :text-limit="placement.text_limit ?? undefined" @open="$emit('open', $event)" />
                             <ul v-else-if="field.keywords?.length" class="fiche-tags">
                                 <li v-for="(keyword, index) in field.keywords" :key="index">

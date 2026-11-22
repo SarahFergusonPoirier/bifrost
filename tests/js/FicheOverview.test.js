@@ -2,6 +2,39 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import FicheOverview from '../../resources/js/components/fiche/FicheOverview.vue';
 import ContentAttachments from '../../resources/js/components/ContentAttachments.vue';
+import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
+
+it('reads the history of a deeply nested member by its canonical field and entry identities', async () => {
+    const leaf = { key: 'flag', field_definition: { label: 'Accompli', value_type: 'boolean' }, display_options: { history_view: 'history' } };
+    const field = { id: 1, field_definition_id: 7, section_key: 'parcours', field_definition: {
+        label: 'Parcours', value_type: 'json', options_data: { format: 'repeatable', entry_fields: [
+            { key: 'nested', field_definition: { label: 'Étapes', value_type: 'json', options_data: { format: 'repeatable', entry_fields: [leaf] } }, display_options: {} },
+        ] },
+    } };
+    const entries = value => [{ id: 'outer', label: 'Formation', values: { nested: { value_json: [
+        { id: 'inner', label: 'Départ', values: { flag: { value_boolean: value } } },
+    ] } } }];
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ current_page: 1, last_page: 1, data: [
+        { id: 1, created_at: '2026-11-21', snapshot: { field_values: [{ field_definition_id: 7, value_json: entries(false) }] } },
+    ] }));
+    const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', templateSections: groupTemplateFields([field]), hiddenFields: [],
+        displayValue: () => 'Formation', fieldValue: () => entries(true),
+    } });
+    try {
+        await vi.dynamicImportSettled();
+        await flushPromises();
+        const history = wrapper.getComponent(FicheFieldHistory);
+        expect(history.props('parentFieldId')).toBe(7);
+        expect(history.props('path')).toEqual([{ entry: 'outer' }, { member: 'nested' }, { entry: 'inner' }, { member: 'flag' }]);
+        await history.get('button').trigger('click');
+        await flushPromises();
+        expect(history.text()).toContain('Non');
+        expect(wrapper.findAllComponents(FicheFieldHistory)).toHaveLength(1);
+    } finally {
+        wrapper.unmount();
+        fetch.mockRestore();
+    }
+});
 
 it('reads an attachment field through the canonical file list', () => {
     const field = { id: 1, field_definition_id: 7, section_key: 'sources',

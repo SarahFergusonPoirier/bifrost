@@ -38,9 +38,18 @@
                     :mode="field.display_options?.scale_display" :descriptions="field.display_options?.level_descriptions" />
                 <a v-else-if="type(field) === 'external_link' && safeUrl(value(field).url)" :href="safeUrl(value(field).url)" target="_blank" rel="noopener noreferrer">{{ formatted(field) }}</a>
                 <FicheEntryList v-else-if="['repeatable', 'equipment', 'capabilities', 'keywords', 'bullets'].includes(type(field))"
+                    :parent-field-id="parentFieldId" :history-path="[...historyPath, { member: field.key }]"
                     :entries="value(field)" :schema="field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields" :level-mode="field.display_options?.repeatable_level_mode"
                     :content-id="contentId" :targets="targets" :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
                 <span v-else>{{ formatted(field) }}</span>
+                <FicheFieldHistory v-if="contentId && parentFieldId && field.display_options?.history_view === 'history'"
+                    :content-id="contentId" :parent-field-id="parentFieldId" :field="field" :path="[...historyPath, { member: field.key }]"
+                    :format-value="(_, value) => formatPayload(field, value)">
+                    <template #value="{ entry }">
+                        <FicheGroupValues :schema="[field]" :values="{ [field.key]: entry.payload }" :content-id="contentId"
+                            :targets="targets" :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
+                    </template>
+                </FicheFieldHistory>
             </dd>
         </div>
     </dl>

@@ -12,6 +12,7 @@
             <FicheText v-if="entry.description" :text="entry.description" :limit="textLimit" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
             <FicheEntryFields v-if="entry.fields" :fields="entry.fields" :text-limit="textLimit" :resolve-reference="resolveReference" @open="$emit('open', $event)" />
             <FicheGroupValues v-if="schema.length" :schema="schema" :values="entry.values" :content-id="contentId" :targets="targets"
+                :parent-field-id="parentFieldId" :history-path="[...historyPath, { entry: entry.id }]"
                 :resolve-reference="resolveReference" :text-limit="textLimit" @open="$emit('open', $event)" />
         </li>
     </ul>
