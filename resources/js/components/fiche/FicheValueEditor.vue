@@ -10,7 +10,7 @@
                 :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)"
                 :targets="allowedTargets" :entry-fields="entryFields" :entry-label="entryLabel" :levels="levels" :category-options="choices" :level-mode="levelMode" @change="update" />
             <label v-else-if="type === 'multiple_choice'">Choix
-                <select multiple @change="updateMultiple"><option v-for="choice in choices" :key="choice" :value="choice" :selected="value.includes(choice)">{{ choice }}</option></select>
+                <select multiple @change="updateMultiple"><option v-for="choice in choices" :key="choice" :value="choice" :selected="value.includes(choice)">{{ choice }}</option><option v-for="choice in retainedChoices" :key="choice" :value="choice" selected>{{ choice }} · Valeur conservée</option></select>
             </label>
             <label v-else-if="type === 'reference'">Fiche liée
                 <select :value="value" @change="update($event.target.value ? Number($event.target.value) : '')"><option value="">Aucune fiche</option><option v-if="value && !allowedTargets.some(target => target.id === Number(value))" :value="value">Fiche indisponible</option><option v-for="target in allowedTargets" :key="target.id" :value="target.id">{{ target.title }}</option></select>
@@ -19,7 +19,7 @@
                 <select :value="String(value)" @change="update($event.target.value === '' ? '' : $event.target.value === 'true')"><option value="">Non renseignée</option><option value="true">Oui</option><option value="false">Non</option></select>
             </label>
             <label v-else-if="type === 'choice' && choices.length">Choix
-                <select :value="value" @change="update($event.target.value)"><option value="">Non renseigné</option><option v-for="choice in choices" :key="choice" :value="choice">{{ choice }}</option></select>
+                <select :value="value" @change="update($event.target.value)"><option value="">Non renseigné</option><option v-for="choice in choices" :key="choice" :value="choice">{{ choice }}</option><option v-for="choice in retainedChoices" :key="choice" :value="choice">{{ choice }} · Valeur conservée</option></select>
             </label>
             <label v-else>Valeur
                 <input :type="type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'" :step="type === 'number' ? 'any' : undefined"

@@ -22,6 +22,10 @@ export default {
         column() { return fieldColumns[this.type] ?? (this.type === 'rich_text' ? 'value_text' : 'value_json'); },
         value() { return this.modelValue?.[this.column] ?? ''; },
         state() { return this.modelValue?.value_state ?? ''; },
+        retainedChoices() {
+            const selected = Array.isArray(this.value) ? this.value : [this.value];
+            return selected.filter(choice => typeof choice === 'string' && choice !== '' && !this.choices.includes(choice));
+        },
         structured() { return structuredFieldTypes.includes(this.type) && this.type !== 'multiple_choice'; },
         allowedTargets() {
             return [...this.targets, ...this.createdTargets.filter(target => !this.targets.some(item => item.public_id === target.public_id))]

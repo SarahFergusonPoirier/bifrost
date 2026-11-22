@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Content;
 use App\Models\ContentTemplate;
 use App\Models\ContentType;
 use App\Models\FieldDefinition;
@@ -12,6 +13,50 @@ use Tests\TestCase;
 class TemplateUsageTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_removed_choices_can_be_retained_but_not_introduced_again_after_removal(): void
+    {
+        $type = ContentType::create(['key' => 'choice-history', 'name' => 'Fiche']);
+        $project = Project::create(['name' => 'Projet']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Choix', 'content_type_id' => $type->id,
+            'fields' => [
+                ['label' => 'État', 'section' => 'État', 'type' => 'choice', 'choices' => ['Actif', 'Ancien']],
+                ['label' => 'Couleurs', 'section' => 'État', 'type' => 'multiple_choice', 'choices' => ['Rouge', 'Bleu']],
+            ],
+        ])->assertCreated()->json();
+        $fields = $this->getJson("/api/content-templates/{$template['id']}")->assertOk()->json('versions.0.fields');
+        $id = $this->postJson('/api/contents', [
+            'title' => 'Fiche', 'project_id' => $project->id, 'content_type_id' => $type->id,
+            'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $input = ['title' => 'Fiche', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $fields[0]['field_definition_id'], 'value_text' => 'Ancien'],
+            ['field_definition_id' => $fields[1]['field_definition_id'], 'value_json' => ['Rouge', 'Bleu']],
+        ]];
+        $this->patchJson("/api/contents/$id", $input)->assertOk();
+        $version = $this->postJson("/api/content-templates/{$template['id']}/versions", [
+            'from_version_id' => $template['version_id'],
+            'fields' => [
+                ['id' => $fields[0]['field_definition_id'], 'label' => 'État', 'section' => 'État', 'type' => 'choice', 'choices' => ['Actif']],
+                ['id' => $fields[1]['field_definition_id'], 'label' => 'Couleurs', 'section' => 'État', 'type' => 'multiple_choice', 'choices' => ['Bleu', 'Vert']],
+            ],
+        ])->assertCreated()->json('id');
+        $this->postJson("/api/contents/$id/template-versions/$version/apply", ['from_version_id' => $template['version_id']])->assertOk();
+        $input['field_values'][1]['value_json'] = ['Rouge', 'Vert'];
+        $this->patchJson("/api/contents/$id", $input)->assertOk();
+        $this->assertDatabaseHas('content_field_values', ['content_id' => Content::where('public_id', $id)->value('id'), 'value_text' => 'Ancien']);
+        $input['field_values'][0]['value_text'] = 'Inventé';
+        $this->patchJson("/api/contents/$id", $input)->assertUnprocessable();
+        $input['field_values'][0]['value_text'] = 'Actif';
+        $input['field_values'][1]['value_json'] = ['Vert'];
+        $this->patchJson("/api/contents/$id", $input)->assertOk();
+        $input['field_values'][0]['value_text'] = 'Ancien';
+        $this->patchJson("/api/contents/$id", $input)->assertUnprocessable();
+        $input['field_values'][0]['value_text'] = 'Actif';
+        $input['field_values'][1]['value_json'] = ['Rouge'];
+        $this->patchJson("/api/contents/$id", $input)->assertUnprocessable();
+    }
 
     public function test_custom_project_type_is_usable_only_in_its_project(): void
     {

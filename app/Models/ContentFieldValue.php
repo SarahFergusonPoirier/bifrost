@@ -85,8 +85,9 @@ class ContentFieldValue extends Model
             $configuration = $this->fieldDisplayOptions($definition, $content);
             $choices = $configuration['choices'] ?? $definition->options_data['choices'] ?? [];
             $selected = $multipleChoice ? $this->value_json : [$this->value_text];
+            $previous = $multipleChoice ? ($this->getOriginal('value_json') ?? []) : [$this->getOriginal('value_text')];
 
-            if (! array_is_list($selected) || collect($selected)->contains(fn ($item) => ! is_string($item) || ($choices !== [] && ! in_array($item, $choices, true)))) {
+            if (! array_is_list($selected) || collect($selected)->contains(fn ($item) => ! is_string($item) || ($choices !== [] && ! in_array($item, $choices, true) && ! in_array($item, $previous, true)))) {
                 throw ValidationException::withMessages(['value' => 'Une option choisie ne figure pas dans la liste du champ.']);
             }
         }
