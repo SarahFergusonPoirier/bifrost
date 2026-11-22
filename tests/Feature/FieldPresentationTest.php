@@ -11,6 +11,22 @@ class FieldPresentationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_repeatable_entry_labels_are_validated_and_versioned(): void
+    {
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $field = ['label' => 'Langues', 'section' => 'Identité', 'type' => 'text', 'entry_label' => 'Langue'];
+        $this->postJson('/api/content-templates', ['name' => 'Identité', 'content_type_id' => $type->id, 'fields' => [$field]])->assertUnprocessable();
+        $this->assertDatabaseCount('content_templates', 0);
+        $field['type'] = 'repeatable';
+        $template = $this->postJson('/api/content-templates', ['name' => 'Identité', 'content_type_id' => $type->id, 'fields' => [$field]])->assertCreated()->json();
+        $url = '/api/content-templates/'.$template['id'];
+        $field['id'] = $this->getJson($url)->assertOk()->assertJsonPath('versions.0.fields.0.display_options.entry_label', 'Langue')->json('versions.0.fields.0.field_definition_id');
+        $field['entry_label'] = 'Nom de langue';
+        $this->postJson("$url/versions", ['from_version_id' => $template['version_id'], 'fields' => [$field]])->assertCreated();
+        $this->getJson($url)->assertOk()->assertJsonPath('versions.0.fields.0.display_options.entry_label', 'Langue')
+            ->assertJsonPath('versions.1.fields.0.display_options.entry_label', 'Nom de langue');
+    }
+
     public function test_project_variants_can_add_project_scoped_members_without_mutating_the_global_group(): void
     {
         $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);

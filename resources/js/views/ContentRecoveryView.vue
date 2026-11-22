@@ -390,6 +390,7 @@
                                 <StructuredField :format="field.format" :value="fieldValue(field) || null"
                                     :project-id="projectId" :content-types="types" @reference-created="registerCreatedReference"
                                     :entry-fields="field.display_options?.entry_fields ?? field.field_definition.options_data?.entry_fields"
+                                    :entry-label="field.display_options?.entry_label"
                                     :category-options="field.format === 'capabilities' ? (field.display_options?.choices ?? field.field_definition.options_data?.choices) : undefined"
                                     :content-id="selected.public_id" :targets="allowedTargets(field)" :levels="field.display_options?.scale_levels ?? field.field_definition.options_data?.levels" :level-mode="field.display_options?.repeatable_level_mode" @change="setField(field, $event)" />
                             </fieldset>

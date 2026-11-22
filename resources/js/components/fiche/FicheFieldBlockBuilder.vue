@@ -35,7 +35,8 @@
             <label v-if="field.type === 'number'">Calcul
                 <select v-model="field.calculation"><option value="none">Valeur saisie</option><option value="age">Âge depuis la date de naissance du bloc</option></select>
             </label>
-            <label v-if="field.type === 'repeatable'">Niveaux de la liste
+            <label v-if="field.type === 'repeatable'">Libellé de chaque entrée <input v-model="field.entryLabel" maxlength="120" @keydown.enter.prevent /></label>
+            <label v-if="field.type === 'repeatable' && !field.entry_fields.length">Niveaux de la liste
                 <select v-model="field.repeatable_level_mode"><option value="text">Texte</option><option value="segments">Segments</option></select>
             </label>
             <details v-if="field.type === 'repeatable'">
@@ -55,7 +56,7 @@
             <label><input v-model="field.default_enabled" type="checkbox" /> Définir une valeur par défaut</label>
             <FicheDefaultValueEditor v-if="field.default_enabled" v-model="field.default_value" :type="field.type" :content-id="contentId" :targets="targets"
                 :reference-types="field.reference_types" :choices="field.choicesText.split('\n').map(value => value.trim()).filter(Boolean)"
-                :levels="Number(field.levels) || 5" :level-mode="field.repeatable_level_mode" :entry-fields="previewEntryFields(field.entry_fields)" />
+                :levels="Number(field.levels) || 5" :level-mode="field.repeatable_level_mode" :entry-label="field.entryLabel" :entry-fields="previewEntryFields(field.entry_fields)" />
             <button type="button" :disabled="index === 0" :aria-label="'Monter le champ ' + field.label" @click="move(index, -1)">Monter</button>
             <button type="button" :disabled="index === fields.length - 1" :aria-label="'Descendre le champ ' + field.label" @click="move(index, 1)">Descendre</button>
             <button type="button" :aria-label="'Retirer le champ ' + field.label" @click="removeField(index)">Retirer le champ</button>

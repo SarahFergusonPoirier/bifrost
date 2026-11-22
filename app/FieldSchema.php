@@ -16,7 +16,8 @@ class FieldSchema
     {
         return [
             $path => ['present', 'array', 'list', 'max:200'],
-            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation,default_value,entry_fields,hide_empty'],
+            "$path.*" => ['required', 'array:id,label,section,type,help,required,choices,levels,level_descriptions,scale_display,badge_color,repeatable_level_mode,scale_strategy,calculation,history_view,reference_types,allow_reference_creation,default_value,entry_fields,hide_empty,entry_label'],
+            "$path.*.entry_label" => ['sometimes', 'string', 'max:120'],
             "$path.*.hide_empty" => ['sometimes', 'nullable', 'boolean'],
             "$path.*.entry_fields" => ['sometimes', 'array', 'list', 'max:20'],
             ...self::defaultRules("$path.*.default_value"),
@@ -112,6 +113,12 @@ class FieldSchema
             } else {
                 $display['hide_empty'] = (bool) $field['hide_empty'];
             }
+        }
+        if (isset($field['entry_label'])) {
+            if (($definition->options_data['format'] ?? null) !== 'repeatable') {
+                throw ValidationException::withMessages(['entry_label' => 'Le libellé d’entrée exige une liste structurée.']);
+            }
+            $display['entry_label'] = $field['entry_label'];
         }
         if ($existing && ($definition->options_data['format'] ?? null) === 'repeatable' && array_key_exists('entry_fields', $field)) {
             $next = RepeatableFields::schema($field['entry_fields'], $scope['type'] ?? $definition->scope_type,

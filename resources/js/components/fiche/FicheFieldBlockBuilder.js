@@ -27,7 +27,7 @@ export default {
     watch: { schema: { immediate: true, handler(schema) { if (schema) this.loadSchema(schema); } } },
     methods: {
         newField() {
-            return { id: crypto.randomUUID(), key: crypto.randomUUID(), entry_fields: [], groupPending: false, groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: [] }, label: 'Champ ' + (this.fields.length + 1), type: 'text',
+            return { id: crypto.randomUUID(), key: crypto.randomUUID(), entryLabel: 'Libellé', entry_fields: [], groupPending: false, groupEditor: { title: 'Champs du groupe', fields: [], pendingFields: [] }, label: 'Champ ' + (this.fields.length + 1), type: 'text',
                 help: '', required: false, history_view: 'current', emptyDisplay: 'inherit', default_enabled: false, default_value: null, choicesText: '', levels: '5', levelDescriptions: '', originalLevels: 5, preserveScale: false,
                 scale_display: 'both', badge_color: 'accent', repeatable_level_mode: 'text', reference_types: [], allow_reference_creation: false, calculation: 'none' };
         },
@@ -41,6 +41,7 @@ export default {
                 const children = original?.display_options?.entry_fields ?? original?.field_definition.options_data?.entry_fields ?? [];
                 return { ...this.newField(), ...field, id: crypto.randomUUID(), existingId: field.id,
                     existingKey: this.groupMode && original ? field.key : null,
+                    entryLabel: field.entry_label || 'Libellé',
                     entry_fields: field.entry_fields ?? [], groupEditor: { title: 'Champs du groupe', fields: children, pendingFields: field.entry_fields ?? [] },
                     help: field.help || '', required: Boolean(field.required), default_enabled: field.default_value != null,
                     emptyDisplay: field.hide_empty == null ? 'inherit' : field.hide_empty ? 'hide' : 'show',
@@ -79,7 +80,7 @@ export default {
                 ...(field.default_enabled ? { default_value: field.default_value } : this.schema ? { default_value: null } : {}),
                 ...(['choice', 'multiple_choice', 'capabilities'].includes(field.type) ? { choices: field.choicesText.split('\n').map(value => value.trim()).filter(Boolean) } : {}),
                 ...(field.type === 'choice' ? { badge_color: field.badge_color } : {}),
-                ...(field.type === 'repeatable' ? { repeatable_level_mode: field.repeatable_level_mode } : {}),
+                ...(field.type === 'repeatable' ? { repeatable_level_mode: field.repeatable_level_mode, entry_label: field.entryLabel.trim() || 'Libellé' } : {}),
                 ...(field.type === 'number' ? { calculation: field.calculation } : {}),
                 ...(['reference', 'references'].includes(field.type) ? { reference_types: field.reference_types, allow_reference_creation: field.allow_reference_creation } : {}),
                 ...(field.type === 'scale' ? { levels: Number(field.levels), scale_display: field.scale_display,

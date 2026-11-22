@@ -340,3 +340,13 @@ valeurs vides. Les données de travail de l’éditeur ne sont pas envoyées à 
 La validation des nouveaux membres utilise la portée du modèle publié : une
 variante de projet peut ajouter ses références locales tout en conservant la
 définition canonique globale du champ parent. La version globale reste inchangée.
+
+Les groupes prédéfinis d’identité fournissent leurs sous-champs typés : périodes
+et motif pour les anciens noms, période pour les titres, référence facultative
+et période pour la nationalité, niveau et remarques pour les langues. Chaque
+ajout reçoit de nouvelles clés de membres ; la déduplication des alias utilise
+le libellé canonique, sans générer d’identifiants inutiles. Le nom de l’entrée
+est configurable par `display_options.entry_label` et suit les versions du modèle.
+Lorsqu’un groupe définit ses propres membres, l’éditeur présente ces membres
+et le nom de l’entrée. Les anciens champs génériques restent éditables tant
+qu’ils contiennent une valeur ; aucune conversion automatique ne les efface.

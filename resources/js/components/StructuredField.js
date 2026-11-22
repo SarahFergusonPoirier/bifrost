@@ -13,6 +13,7 @@ export default {
         projectId: String, contentTypes: { type: Array, default: () => [] },
         levelMode: String,
         entryFields: { type: Array, default: () => [] },
+        entryLabel: { type: String, default: 'Libellé' },
         categoryOptions: { type: Array, default: () => [] },
         targets: { type: Array, default: () => [] },
     },
@@ -22,6 +23,7 @@ export default {
         return { categoryListId: useId() };
     },
     computed: {
+        customGroup() { return this.format === 'repeatable' && this.entryFields.length > 0; },
         abilityCategories() {
             if (this.format !== 'capabilities') return [];
             return [...new Set([...this.categoryOptions, ...(this.value ?? []).map(entry => entry.category)].filter(Boolean))];

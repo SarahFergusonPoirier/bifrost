@@ -3,7 +3,7 @@ import { fieldTypes } from '../components/fiche/fieldTypes';
 import FicheDefaultValueEditor from '../components/fiche/FicheDefaultValueEditor.vue';
 import FicheFieldBlockBuilder from '../components/fiche/FicheFieldBlockBuilder.vue';
 import { fieldSchemaSpec, previewEntryFields } from '../components/fiche/fieldSchemaSpecs';
-import { findIdentitySuggestions, identityGroups, identityPreset } from './identityFieldCatalog';
+import { findIdentitySuggestions, identityGroups, identityPreset, identityLabel } from './identityFieldCatalog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { cloneContentTemplate, getContentTemplate, getContentTemplates } from '../services/contentTemplate';
 import { contentRequest } from '../services/contentRecovery';
@@ -104,6 +104,7 @@ export default {
                         defaultEnabled: field.default_value != null, defaultValue: field.default_value ?? null,
                         emptyDisplay: field.display_options?.hide_empty == null ? 'inherit' : field.display_options.hide_empty ? 'hide' : 'show',
                         entryFields: fieldSchemaSpec(field).entry_fields,
+                        entryLabel: field.display_options?.entry_label ?? 'Libellé',
                         groupEditor: { title: 'Sous-champs', fields: field.display_options?.entry_fields ?? field.field_definition?.options_data?.entry_fields ?? [], pendingFields: fieldSchemaSpec(field).entry_fields },
                         groupPending: false,
                     })),
@@ -167,11 +168,11 @@ export default {
                 if (fields.some(field => field.defaultEnabled && field.defaultValue == null)) {
                     throw new Error('Renseigne une valeur par défaut ou désactive cette option.');
                 }
-                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, defaultEnabled, defaultValue, emptyDisplay, entryFields, groupEditor, groupPending, ...field }) => ({
+                const payloadFields = fields.map(({ choicesText, levels, levelDescriptions, scaleDisplay, badgeColor, repeatableLevelMode, originalLevels, preserveScale, calculation, historyView, referenceTypes, allowReferenceCreation, defaultEnabled, defaultValue, emptyDisplay, entryFields, entryLabel, groupEditor, groupPending, ...field }) => ({
                     ...field,
                     default_value: defaultEnabled ? defaultValue : null,
                     hide_empty: emptyDisplay === 'hide' ? true : emptyDisplay === 'show' ? false : null,
-                    ...(field.type === 'repeatable' ? { entry_fields: entryFields ?? [] } : {}),
+                    ...(field.type === 'repeatable' ? { entry_fields: entryFields ?? [], entry_label: entryLabel?.trim() || 'Libellé' } : {}),
                     ...(['reference', 'references'].includes(field.type) ? { allow_reference_creation: Boolean(allowReferenceCreation) } : {}),
                     ...(!field.id && ['reference', 'references'].includes(field.type) ? { reference_types: referenceTypes ?? [] } : {}),
                     ...(field.type === 'number' ? { calculation: calculation ?? 'none' } : {}),
@@ -284,7 +285,7 @@ export default {
 
         function addIdentityField(label) {
             const field = identityPreset(label);
-            const exists = editor.value.fields.some(item => identityPreset(item.label).label === field.label);
+            const exists = editor.value.fields.some(item => identityLabel(item.label) === field.label);
             if (!exists && editor.value.fields.length < 200) {
                 ensureGroupEditor(field);
                 editor.value.fields.push(field);
@@ -292,7 +293,10 @@ export default {
         }
 
         function ensureGroupEditor(field) {
-            field.entryFields ??= [];
+            field.entryFields ??= field.entry_fields ?? [];
+            field.entryLabel ??= field.entry_label ?? 'Libellé';
+            delete field.entry_fields;
+            delete field.entry_label;
             field.groupEditor ??= { title: 'Sous-champs', fields: [], pendingFields: field.entryFields };
             field.groupPending ??= false;
         }

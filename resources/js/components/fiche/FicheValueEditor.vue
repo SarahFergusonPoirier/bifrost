@@ -8,7 +8,7 @@
             <FicheTextEditor v-if="type === 'rich_text'" label="Texte" :model-value="value" :targets="targets" @update:model-value="update" />
             <StructuredField v-else-if="structured" :format="type" :value="value || null" :content-id="contentId"
                 :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)"
-                :targets="allowedTargets" :entry-fields="entryFields" :levels="levels" :category-options="choices" :level-mode="levelMode" @change="update" />
+                :targets="allowedTargets" :entry-fields="entryFields" :entry-label="entryLabel" :levels="levels" :category-options="choices" :level-mode="levelMode" @change="update" />
             <label v-else-if="type === 'multiple_choice'">Choix
                 <select multiple @change="updateMultiple"><option v-for="choice in choices" :key="choice" :value="choice" :selected="value.includes(choice)">{{ choice }}</option></select>
             </label>

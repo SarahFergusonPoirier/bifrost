@@ -65,28 +65,28 @@
     <div v-else-if="['keywords', 'equipment', 'capabilities', 'repeatable', 'bullets'].includes(format)">
         <ol v-if="value?.length">
             <li v-for="(entry, index) in value" :key="entry.id ?? index">
-                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : ['repeatable', 'bullets'].includes(format) ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
+                <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : format === 'repeatable' ? entryLabel : format === 'bullets' ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <FicheTextEditor v-if="format === 'capabilities'" label="Description" :model-value="entry.description"
                     :max-length="1000" :targets="targets" @update:model-value="editKeyword(index, 'description', $event, false)" />
-                <label v-else-if="format !== 'bullets'">Description <input :value="entry.description ?? ''" maxlength="1000"
+                <label v-else-if="format !== 'bullets' && (!customGroup || entry.description)">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
                     <FicheGroupValues :schema="entryFields" :values="entry.values" editable :content-id="contentId" :targets="targets"
                         :project-id="projectId" :content-types="contentTypes" @reference-created="$emit('reference-created', $event)" @change="setGroupValues(index, $event)" />
-                    <label>Période <input :value="entry.period ?? ''" maxlength="255"
+                    <label v-if="!customGroup || entry.period">Période <input :value="entry.period ?? ''" maxlength="255"
                         @change="editKeyword(index, 'period', $event.target.value)" /></label>
-                    <details>
+                    <details v-if="!customGroup || entry.date">
                         <summary>Date structurée</summary>
                         <StructuredField format="temporal" :value="entry.date ?? null" @change="setRepeatableDate(index, $event)" />
                     </details>
-                    <label v-if="levelMode === 'segments'">Niveau sur 5
+                    <label v-if="(!customGroup && levelMode === 'segments') || entry.rank">Niveau sur 5
                         <select :value="entry.rank ?? ''" @change="editKeyword(index, 'rank', $event.target.value)">
                             <option value="">Non renseigné</option>
                             <option v-for="rank in 5" :key="rank" :value="rank">{{ rank }} / 5</option>
                         </select>
                     </label>
-                    <label>Niveau en texte libre <input :value="entry.level ?? ''" maxlength="120"
+                    <label v-if="!customGroup || entry.level">Niveau en texte libre <input :value="entry.level ?? ''" maxlength="120"
                         @change="editKeyword(index, 'level', $event.target.value)" /></label>
                 </template>
                 <template v-if="format === 'capabilities'">

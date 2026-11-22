@@ -11,6 +11,7 @@ export function fieldSchemaSpec(field) {
         level_descriptions: display.level_descriptions, scale_display: display.scale_display,
         badge_color: display.badge_color, history_view: display.history_view,
         hide_empty: display.hide_empty ?? null,
+        entry_label: display.entry_label,
         repeatable_level_mode: display.repeatable_level_mode, calculation: display.calculation,
         reference_types: options.content_type_ids, allow_reference_creation: display.allow_reference_creation,
         entry_fields: (display.entry_fields ?? options.entry_fields ?? []).filter(field => !field.retired).map(fieldSchemaSpec),
@@ -26,7 +27,7 @@ export function previewEntryFields(fields) {
             options_data: { format: field.type, levels: field.levels, content_type_ids: field.reference_types,
                 entry_fields: previewEntryFields(field.entry_fields ?? []) },
         },
-        display_options: { choices: field.choices, repeatable_level_mode: field.repeatable_level_mode },
+        display_options: { choices: field.choices, repeatable_level_mode: field.repeatable_level_mode, entry_label: field.entry_label },
         is_required: field.required, help_text: field.help, default_value: field.default_value,
     }));
 }

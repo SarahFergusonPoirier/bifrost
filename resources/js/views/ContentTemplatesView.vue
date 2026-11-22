@@ -72,7 +72,8 @@
                             <option value="history">Valeur actuelle et historique</option>
                         </select>
                     </label>
-                    <label v-if="field.type === 'repeatable'">Présentation du niveau
+                    <label v-if="field.type === 'repeatable'">Libellé de chaque entrée <input v-model="field.entryLabel" maxlength="120" /></label>
+                    <label v-if="field.type === 'repeatable' && !field.entryFields?.length">Présentation du niveau
                         <select v-model="field.repeatableLevelMode">
                             <option value="text">Texte libre</option>
                             <option value="segments">Échelle segmentée</option>
@@ -120,7 +121,7 @@
                     <label v-if="field.type !== 'json'"><input v-model="field.defaultEnabled" type="checkbox" /> Définir une valeur par défaut</label>
                     <FicheDefaultValueEditor v-if="field.defaultEnabled && field.type !== 'json'" v-model="field.defaultValue" :type="field.type" :targets="defaultTargets"
                         :reference-types="field.referenceTypes ?? []" :choices="(field.choicesText ?? '').split('\n').map(value => value.trim()).filter(Boolean)"
-                        :levels="field.levels ?? 5" :level-mode="field.repeatableLevelMode" :entry-fields="previewEntryFields(field.entryFields ?? [])" />
+                        :levels="field.levels ?? 5" :level-mode="field.repeatableLevelMode" :entry-label="field.entryLabel" :entry-fields="previewEntryFields(field.entryFields ?? [])" />
                     <button type="button" :disabled="index === 0" @click="moveField(index, -1)">Monter</button>
                     <button type="button" :disabled="index === editor.fields.length - 1" @click="moveField(index, 1)">Descendre</button>
                     <button type="button" @click="editor.fields.splice(index, 1)">Retirer le champ</button>

@@ -10,6 +10,7 @@ export default {
         label: { type: String, default: 'Valeur' },
         projectId: String, allowReferenceCreation: Boolean, contentTypes: { type: Array, default: () => [] },
         entryFields: { type: Array, default: () => [] },
+        entryLabel: String,
         type: { type: String, required: true }, modelValue: Object, contentId: String,
         choices: { type: Array, default: () => [] }, levels: { type: Number, default: 5 },
         targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] }, levelMode: String,

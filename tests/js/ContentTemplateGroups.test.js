@@ -14,6 +14,25 @@ beforeEach(() => {
     contentRequest.mockImplementation(async path => ({ data: path === '/content-types' ? [{ id: 1, name: 'Fiche', scope_type: 'global' }] : [] }));
 });
 
+it('adds a canonical identity group once and publishes its predefined member schema', async () => {
+    const wrapper = mount(ContentTemplatesView, { global: { stubs: { RouterLink: true } } });
+    await flushPromises();
+    await wrapper.vm.editTemplate();
+    wrapper.vm.editor.name = 'Identité';
+    wrapper.vm.editor.content_type_id = 1;
+    wrapper.vm.addIdentityField('Nationalité');
+    wrapper.vm.addIdentityField('Citoyenneté');
+    expect(wrapper.vm.editor.fields).toHaveLength(1);
+    expect(wrapper.vm.editor.fields[0].entryFields.map(field => field.type)).toEqual(['reference', 'temporal']);
+    await wrapper.vm.saveTemplate();
+    const input = contentRequest.mock.calls.find(([, method]) => method === 'POST')[2];
+    expect(input.fields[0]).toMatchObject({ label: 'Nationalité/citoyenneté', entry_label: 'Nationalité ou citoyenneté',
+        entry_fields: [{ label: 'Fiche liée', type: 'reference' }, { label: 'Période', type: 'temporal' }],
+    });
+    expect(input.fields[0]).not.toHaveProperty('entryLabel');
+    wrapper.unmount();
+});
+
 it('publishes typed group schemas only after applying their configuration', async () => {
     const wrapper = mount(ContentTemplatesView, { global: { stubs: { RouterLink: true } } });
     await flushPromises();

@@ -149,8 +149,17 @@ const referenceLabels = new Set([
 ]);
 const choiceLabels = new Set(['État civil', 'Classe sociale', 'Statut génétique', 'Statut juridique', 'Condition sociale']);
 
+const repeatablePresets = {
+    'Anciens noms': { label: 'Nom', fields: [['Période', 'temporal'], ['Motif', 'text']] },
+    'Titres honorifiques': { label: 'Titre', fields: [['Période', 'temporal']] },
+    'Nationalité/citoyenneté': { label: 'Nationalité ou citoyenneté', fields: [['Fiche liée', 'reference'], ['Période', 'temporal']] },
+    'Langues parlées': { label: 'Langue', fields: [['Niveau', 'text'], ['Remarques', 'rich_text']] },
+};
+
+export function identityLabel(suggestion) { return aliases.get(suggestion) ?? suggestion; }
+
 export function identityPreset(suggestion) {
-    const label = aliases.get(suggestion) ?? suggestion;
+    const label = identityLabel(suggestion);
     const normalized = label.replaceAll("'", '’');
     let type = 'text';
     if (referenceLabels.has(normalized)) type = 'reference';
@@ -160,7 +169,10 @@ export function identityPreset(suggestion) {
     else if (/^Statut /.test(label) || choiceLabels.has(label)) type = 'choice';
     else if (['Anciens noms', 'Titres honorifiques', 'Langues parlées', 'Nationalité/citoyenneté'].includes(label)) type = 'repeatable';
     else if (label === 'Surnoms et alias') type = 'keywords';
-    return { label, section: 'Identité', type, help: '', required: false, ...(type === 'scale' ? { levels: 5 } : {}) };
+    const group = Object.hasOwn(repeatablePresets, label) ? repeatablePresets[label] : null;
+    return { label, section: 'Identité', type, help: '', required: false, ...(type === 'scale' ? { levels: 5 } : {}),
+        ...(group ? { entry_label: group.label, entry_fields: group.fields.map(([label, type]) => ({ key: crypto.randomUUID(), label, type })) } : {}),
+    };
 }
 
 function searchableLabel(label) {
@@ -172,7 +184,7 @@ export function findIdentitySuggestions(group, query) {
     const search = searchableLabel(query.trim());
     const matches = new Set();
     for (const label of labels) {
-        const canonical = aliases.get(label) ?? label;
+        const canonical = identityLabel(label);
         if ([label, canonical].some(item => searchableLabel(item).includes(search))) matches.add(canonical);
     }
     return [...matches];

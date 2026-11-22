@@ -5,6 +5,21 @@ import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
 
+it('uses a named structured entry while retaining existing legacy period and description values', async () => {
+    const wrapper = mount(StructuredField, { props: { format: 'repeatable', entryLabel: 'Langue',
+        entryFields: [{ key: 'remarks', field_definition: { label: 'Remarques', value_type: 'text' }, display_options: {} }],
+        value: [{ id: 'entry', label: 'Ancien', description: 'Conservée', period: 'An 42', level: 'Avancé' }],
+    } });
+    expect(wrapper.findAll('label').some(label => label.text().trim() === 'Langue')).toBe(true);
+    expect(wrapper.findAll('input').some(input => input.element.value === 'Conservée')).toBe(true);
+    expect(wrapper.findAll('input').some(input => input.element.value === 'An 42')).toBe(true);
+    await wrapper.setProps({ value: [{ id: 'new-entry', label: 'Nouvelle' }] });
+    expect(wrapper.findAll('label').some(label => label.text().trim() === 'Description')).toBe(false);
+    expect(wrapper.findAll('label').some(label => label.text().trim() === 'Période')).toBe(false);
+    expect(wrapper.text()).not.toContain('Date structurée');
+    wrapper.unmount();
+});
+
 it('selects an attached file and clears its reference without removing the resource', async () => {
     contentRequest.mockResolvedValue({ data: [{ public_id: 'source', original_name: 'Source.pdf' }] });
     const wrapper = mount(StructuredField, { props: { format: 'attachment', contentId: 'fiche' } });
