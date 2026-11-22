@@ -35,7 +35,12 @@ et Vue 3 pour l’interface.
 
    ```bash
    php artisan migrate
+   php artisan db:seed
    ```
+
+   Le seeding installe les types et modèles de base, notamment les blocs
+   d’identité, d’attributs et de personnalité des personnages. Il peut être
+   relancé sans dupliquer ce catalogue ni modifier les fiches déjà créées.
 
 4. Démarrer l’application en développement dans deux terminaux :
 
