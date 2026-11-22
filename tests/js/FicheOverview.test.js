@@ -5,6 +5,23 @@ import ContentAttachments from '../../resources/js/components/ContentAttachments
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 
+it('shows the actual default capability view in settings and keeps an explicit list choice', async () => {
+    const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', templateSections: new Map(), hiddenFields: [], displayValue: () => '', persist: () => {},
+        placements: [{ id: 'abilities', source: 'capabilities', width: 6, height: 2 }],
+    } });
+    expect(wrapper.getComponent(FicheLinkedData).props('view')).toBe('cards');
+    wrapper.vm.begin();
+    await wrapper.vm.$nextTick();
+    const label = wrapper.findAll('label').find(label => label.text().startsWith('Présentation de la liste'));
+    expect(label.get('select').element.value).toBe('cards');
+    await label.get('select').setValue('list');
+    expect(wrapper.getComponent(FicheLinkedData).props('view')).toBe('list');
+    wrapper.vm.cancel();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.getComponent(FicheLinkedData).props('view')).toBe('cards');
+    wrapper.unmount();
+});
+
 it('previews valid type-specific sizes without mutating the saved legacy placement', async () => {
     const persist = vi.fn().mockResolvedValue(undefined);
     const placements = [{ id: 'gallery', source: 'gallery', width: 1, height: 1 }];

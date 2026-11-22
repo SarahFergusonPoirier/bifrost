@@ -214,7 +214,7 @@
                     </label>
                 </details>
                 <label v-if="['relations', 'equipment', 'capabilities'].includes(placement.source)">Présentation de la liste
-                    <select :value="placement.view ?? 'list'" @change="placement.view = $event.target.value">
+                    <select :value="placement.view ?? (placement.source === 'capabilities' ? 'cards' : 'list')" @change="placement.view = $event.target.value">
                         <option value="list">Liste compacte</option>
                         <option value="cards">Cartes</option>
                     </select>

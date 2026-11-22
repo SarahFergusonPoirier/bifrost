@@ -73,6 +73,10 @@
     margin: 0;
 }
 
+.fiche-block__header > .workspace-icon {
+    color: var(--workspace-caption, var(--color-primary));
+}
+
 .fiche-text {
     white-space: pre-wrap;
 }
