@@ -1,0 +1,14 @@
+{
+    "default": { "minWidth": 1, "maxWidth": 12, "minHeight": 1, "maxHeight": 12 },
+    "types": {
+        "summary": { "minWidth": 2 },
+        "text": { "minWidth": 2 },
+        "fields": { "minWidth": 2 },
+        "relations": { "minWidth": 2 },
+        "timeline": { "minWidth": 2 },
+        "capabilities": { "minWidth": 2 },
+        "equipment": { "minWidth": 2 },
+        "attachments": { "minWidth": 2 },
+        "gallery": { "minWidth": 2, "minHeight": 2 }
+    }
+}

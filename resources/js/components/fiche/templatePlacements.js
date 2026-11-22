@@ -1,3 +1,5 @@
+import { normalizeBlockSize } from './blockDimensions';
+
 export function instantiateTemplatePlacements(placements, templateId, revision = 1) {
     const sources = new Map();
     const sourceId = slot => {
@@ -18,7 +20,7 @@ export function instantiateTemplatePlacements(placements, templateId, revision =
             id: sourceId(binding.slot), source: 'template-fields', template_id: templateId, template_revision: revision,
             slot: binding.slot, bind_to: [{ placement: id, fields: binding.fields }],
         }));
-        return result;
+        return normalizeBlockSize(result);
     });
 }
 

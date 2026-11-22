@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\ContentSnapshots;
+use App\FicheBlockDimensions;
 use App\FieldSchema;
 use App\Models\Content;
 use App\Models\ContentBlock;
@@ -207,6 +208,7 @@ class FicheLayoutController extends Controller
             $record = $this->content($project, $content, lock: true);
             $current = $this->layout($record);
             abort_if((int) $input['version'] !== $current['version'], 409, 'La disposition a changé depuis son ouverture.');
+            FicheBlockDimensions::validate($input['tabs'], $current['tabs']);
             if (! empty($input['block_updates'])) {
                 ContentSnapshots::store($record, ContentSnapshots::data($record, $record->getAttributes()), ['label' => 'Avant modification des champs']);
                 $this->updateFieldBlocks($record, $input['block_updates']);

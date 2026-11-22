@@ -1,6 +1,7 @@
 import { defaultPlacementsFor, mergePlacements } from './fichePlacementDefaults';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
 import { contentRequest } from '../../services/contentRecovery';
+import { normalizeBlockSize } from './blockDimensions';
 import { instantiateTemplatePlacements, collectTemplateBindings, templateBindingFields } from './templatePlacements';
 
 import { icons } from './ficheIcons';
@@ -184,7 +185,7 @@ export default {
             if (this.removalDestination) {
                 const target = this.removalTargets(tab).find(item => item.id === this.removalDestination);
                 if (!target) return;
-                const materialize = placements => placements.map(placement => ({ ...placement, id: crypto.randomUUID() }));
+                const materialize = placements => placements.map(placement => normalizeBlockSize({ ...placement, id: crypto.randomUUID() }));
                 const added = tab.placements ?? materialize(this.placementsForRemoval(tab));
                 const defaults = materialize(this.getDefaultPlacements?.() ?? []);
                 target.placements = mergePlacements(target, added, defaults);

@@ -5,6 +5,28 @@ import ContentAttachments from '../../resources/js/components/ContentAttachments
 import FicheFieldHistory from '../../resources/js/components/fiche/FicheFieldHistory.vue';
 import FicheLinkedData from '../../resources/js/components/fiche/FicheLinkedData.vue';
 
+it('previews valid type-specific sizes without mutating the saved legacy placement', async () => {
+    const persist = vi.fn().mockResolvedValue(undefined);
+    const placements = [{ id: 'gallery', source: 'gallery', width: 1, height: 1 }];
+    const wrapper = mount(FicheOverview, { props: { contentId: 'fiche', templateSections: new Map(), hiddenFields: [], displayValue: () => '', placements, persist },
+        global: { stubs: { ContentAttachments: true } } });
+    expect(wrapper.get('.fiche-block').element.style.getPropertyValue('--fiche-width')).toBe('1');
+    await wrapper.get('button').trigger('click');
+    expect(wrapper.vm.draft[0]).toMatchObject({ width: 2, height: 2 });
+    expect(placements[0]).toMatchObject({ width: 1, height: 1 });
+    const controls = wrapper.findAll('input[type="number"]');
+    expect(controls[0].attributes('min')).toBe('2');
+    expect(controls[1].attributes('min')).toBe('2');
+    const item = wrapper.vm.draft[0];
+    wrapper.vm.resizeWithKeyboard({ key: 'ArrowLeft', preventDefault: vi.fn() }, item);
+    wrapper.vm.resizeWithKeyboard({ key: 'ArrowUp', preventDefault: vi.fn() }, item);
+    expect(item).toMatchObject({ width: 2, height: 2 });
+    await wrapper.vm.save();
+    expect(persist.mock.calls[0][0][0]).toMatchObject({ width: 2, height: 2 });
+    expect(placements[0]).toMatchObject({ width: 1, height: 1 });
+    wrapper.unmount();
+});
+
 it('lets field empty-value settings override the block while keeping zero and false visible', () => {
     const fields = [
         { id: 1, field_definition_id: 1, section_key: 'test', field_definition: { label: 'Vide hérité', value_type: 'text' } },

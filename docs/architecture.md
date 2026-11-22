@@ -323,3 +323,12 @@ revenir à cet héritage. Les groupes répétables propagent la règle à leurs
 membres, dont les réglages explicites restent prioritaires. L’édition présente
 toujours les champs actifs. Zéro, faux, « inconnu » et « non applicable » ne
 sont pas des valeurs vides. Les valeurs et les révisions restent conservées.
+
+`config/fiche-block-dimensions.json` centralise les limites de grille par type.
+Le serveur les applique avec `FicheBlockDimensions` et le client avec
+`blockDimensions`, pour les contrôles numériques, les poignées et les modèles
+réutilisés. Une ancienne dimension hors des nouveaux minima peut être relue
+et conservée si le placement et sa source restent identiques. L’ouverture de
+l’éditeur prépare un aperçu conforme aux limites sans modifier la disposition
+enregistrée ; seule sa sauvegarde persiste ces dimensions. Les valeurs de la
+fiche ne sont jamais changées par ce réglage de présentation.

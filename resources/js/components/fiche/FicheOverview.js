@@ -1,6 +1,7 @@
 import { formatTemporalDate } from './formatFieldValue';
 import FicheBlockDeletion from './FicheBlockDeletion.vue';
 import { contentRequest } from '../../services/contentRecovery';
+import { blockDimensions, clampBlockSize, normalizeBlockSize } from './blockDimensions';
 import { instantiateTemplatePlacements, templateBindingFields } from './templatePlacements';
 import { identitySectionTitle } from './identitySection';
 import { templateSectionLabel } from './templateFields';
@@ -18,10 +19,6 @@ import FicheEntryFields from './FicheEntryFields.vue';
 import FicheEntryList from './FicheEntryList.vue';
 import FicheFieldBlockBuilder from './FicheFieldBlockBuilder.vue';
 import WorkspaceIcon from '../WorkspaceIcon.vue';
-
-function clampSize(size) {
-    return Math.max(1, Math.min(12, size));
-}
 
 function placement(source, id = crypto.randomUUID()) {
     return { id, source, width: 6, height: 2, hidden: false, collapsed: false };
@@ -241,6 +238,7 @@ export default {
         },
     },
     methods: {
+        blockDimensions,
         localBindingFields(kind) {
             return [...new Map([...this.templateSections.values()].flat()
                 .filter(field => field.format === kind && !this.hiddenFields.includes(field.field_definition_id))
@@ -354,6 +352,7 @@ export default {
             this.draftVersion = this.layoutVersion;
             this.draft = this.placements?.map(item => ({ ...item }))
                 ?? this.initialPlacements.map(item => placement(item.source));
+            this.draft = this.draft.map(normalizeBlockSize);
             this.transfers = [];
             this.copies = [];
             this.blockUpdates = [];
@@ -398,10 +397,10 @@ export default {
             const state = this.resizing;
             if (!state || state.pointerId !== event.pointerId) return;
             if (state.widthStep > 0) {
-                state.item.width = clampSize(state.width + Math.round((event.clientX - state.x) / state.widthStep));
+                state.item.width = clampBlockSize(state.item.source, 'width', state.width + Math.round((event.clientX - state.x) / state.widthStep));
             }
             if (state.heightStep > 0) {
-                state.item.height = clampSize(state.height + Math.round((event.clientY - state.y) / state.heightStep));
+                state.item.height = clampBlockSize(state.item.source, 'height', state.height + Math.round((event.clientY - state.y) / state.heightStep));
             }
         },
         finishResize(event) {
@@ -429,7 +428,7 @@ export default {
             if (!delta) return;
             event.preventDefault();
             const [dimension, step] = delta;
-            item[dimension] = clampSize(item[dimension] + step);
+            item[dimension] = clampBlockSize(item.source, dimension, item[dimension] + step);
         },
         canTransfer(item) {
             const target = this.destinations.find(tab => tab.id === this.destination);
@@ -506,7 +505,7 @@ export default {
                 };
                 this.copies.push({ id, source: 'template-fields', template_id: this.selectedLibraryEntry.id,
                     template_revision: this.selectedLibraryEntry.definition.revision ?? 1, slot: template.source, card });
-                this.draft.push({ ...template, id: crypto.randomUUID(), source: 'fields:' + id });
+                this.draft.push(normalizeBlockSize({ ...template, id: crypto.randomUUID(), source: 'fields:' + id }));
             } else if (template.source.startsWith('blank:')) {
                 if (!this.canCopy) return;
                 this.addTextPlacement(this.blockLabel(template, this.selectedLibraryEntry.name), '', template);
@@ -541,7 +540,7 @@ export default {
             const card = { title, text: body, icon: 'narration' };
             this.copies.push({ id, source: 'blank', title, body, card });
             const item = placement('text:' + id);
-            this.draft.push({ ...item, ...settings, id: item.id, source: item.source });
+            this.draft.push(normalizeBlockSize({ ...item, ...settings, id: item.id, source: item.source }));
         },
         addFieldBlock({ title, fields }) {
             if (!this.canCopy || this.draft.length >= 80) return;

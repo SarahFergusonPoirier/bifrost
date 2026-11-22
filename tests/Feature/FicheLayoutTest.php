@@ -16,6 +16,30 @@ class FicheLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_type_specific_sizes_reject_new_invalid_blocks_but_preserve_unchanged_legacy_layouts(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $content = $project->contents()->create(['title' => 'Élia', 'summary' => 'Texte conservé', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $url = "/api/projects/{$project->id}/contents/{$content->public_id}/fiche-layout";
+        $gallery = ['id' => '4d33921c-3ad1-49da-a200-b214b1297d72', 'source' => 'gallery', 'width' => 1, 'height' => 1, 'hidden' => false, 'collapsed' => false];
+        $tabs = [['id' => 'overview', 'title' => 'Vue d’ensemble', 'icon' => 'overview', 'hidden' => false, 'placements' => [$gallery]]];
+        $this->putJson($url, ['version' => 0, 'tabs' => $tabs])->assertUnprocessable()
+            ->assertJsonValidationErrors(['tabs.0.placements.0.width', 'tabs.0.placements.0.height']);
+        $this->assertDatabaseCount('fiche_layouts', 0);
+        DB::table('fiche_layouts')->insert(['content_id' => $content->id, 'version' => 3, 'tabs' => json_encode($tabs), 'created_at' => now(), 'updated_at' => now()]);
+        $read = $this->getJson($url)->assertOk()->assertJsonPath('tabs.0.placements.0.width', 1)->assertJsonPath('tabs.0.placements.0.height', 1)->json();
+        $read['tabs'][0]['title'] = 'Aperçu';
+        $read['tabs'][0]['placements'][] = ['id' => '8484c53f-bef7-4a8a-9ca5-1bb04f2bb122', 'source' => 'tags', 'width' => 1, 'height' => 1, 'hidden' => false, 'collapsed' => false];
+        $this->putJson($url, $read)->assertOk()->assertJsonPath('tabs.0.placements.0.width', 1)->assertJsonPath('tabs.0.placements.1.width', 1);
+        $read = $this->getJson($url)->json();
+        $read['tabs'][0]['placements'][0]['width'] = 2;
+        $read['tabs'][0]['placements'][0]['height'] = 2;
+        $this->putJson($url, $read)->assertOk();
+        $this->assertSame('Texte conservé', $content->fresh()->summary);
+        $this->assertDatabaseCount('content_field_values', 0);
+    }
+
     public function test_explicit_capability_bindings_protect_the_source_and_reuse_only_its_schema(): void
     {
         $project = Project::create(['name' => 'Projet']);

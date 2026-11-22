@@ -35,7 +35,7 @@ it('creates one shared field structure for a template binding and its direct pla
 
 it('creates one empty field source for shared placements from an approved template revision', async () => {
     const existing = { id: 'overview', title: 'Aperçu', icon: 'overview', hidden: false };
-    const placement = { source: 'blank-fields:0', width: 6, height: 2, hidden: false, collapsed: false, field_order: [1] };
+    const placement = { source: 'blank-fields:0', width: 1, height: 2, hidden: false, collapsed: false, field_order: [1] };
     contentRequest.mockResolvedValueOnce({ data: { version: 1, tabs: [existing] } });
     const wrapper = mount(FicheTabs, { props: { path: '/layout', active: 'overview', canCopy: true } });
     await flushPromises();
@@ -52,6 +52,7 @@ it('creates one empty field source for shared placements from an approved templa
     expect(request.copies).toEqual([{ id: expect.any(String), source: 'template-fields', template_id: 4, template_revision: 3, slot: 'blank-fields:0' }]);
     expect(request.tabs[1].placements.map(item => item.source)).toEqual(Array(2).fill('fields:' + request.copies[0].id));
     expect(request.tabs[1].placements.some(item => item.newFields)).toBe(false);
+    expect(request.tabs[1].placements[0].width).toBe(2);
     wrapper.unmount();
 });
 
