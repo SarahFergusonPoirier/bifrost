@@ -368,6 +368,14 @@ Les chargements portent un compteur local : une réponse ou une erreur d’une
 ancienne requête ne remplace jamais le résultat d’une requête plus récente.
 Le démontage invalide également les lectures en cours.
 
+Une référence unique déjà enregistrée peut rester dans un groupe si sa cible
+est supprimée ou n’existe plus. La validation compare le pointeur à celui de
+la même entrée et du même membre avant modification ; elle n’autorise pas une
+nouvelle affectation indisponible. Retirer ce pointeur retire aussi ce droit de
+conservation. Si la cible existe encore, les restrictions de type et de projet
+restent vérifiées. Ce comportement rejoint celui des références multiples et
+évite de bloquer l’édition des autres membres d’un groupe.
+
 Les dates simples gardent leur valeur canonique dans `value_date`. La colonne
 nullable `date_options` contient uniquement leur lien de chronologie, son titre,
 sa description et son calendrier. Ces options ne peuvent accompagner ni un

@@ -15,6 +15,46 @@ class RepeatableFieldsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_a_missing_reference_does_not_block_other_group_edits_but_cannot_be_added_again(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'fiche', 'name' => 'Fiche']);
+        $source = $project->contents()->create(['title' => 'Source', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $target = $project->contents()->create(['title' => 'Cible', 'scope_type' => 'project', 'content_type_id' => $type->id]);
+        $reference = (string) Str::uuid();
+        $text = (string) Str::uuid();
+        $entry = (string) Str::uuid();
+        $definition = FieldDefinition::create(FieldSchema::definitionAttributes([
+            'label' => 'Parcours', 'type' => 'repeatable', 'entry_fields' => [
+                ['key' => $reference, 'label' => 'Allié', 'type' => 'reference'],
+                ['key' => $text, 'label' => 'Notes', 'type' => 'text'],
+            ],
+        ], 'project', $project->id));
+        $values = [['id' => $entry, 'label' => 'Rencontre', 'values' => [
+            $reference => ['reference_content_id' => $target->id], $text => ['value_text' => 'Avant'],
+        ]]];
+        $source->fieldValues()->create(['field_definition_id' => $definition->id, 'value_json' => $values]);
+        $target->delete();
+        $save = fn (array $entries) => $this->patchJson('/api/contents/'.$source->public_id, ['title' => 'Source', 'summary' => null, 'field_values' => [[
+            'field_definition_id' => $definition->id, 'value_json' => $entries,
+        ]]]);
+        $values[0]['values'][$text]['value_text'] = 'Après';
+        $save($values)->assertOk();
+        $this->assertSame($values, $source->fieldValues()->sole()->value_json);
+        $target->forceDelete();
+        $values[0]['values'][$text]['value_text'] = 'Après purge de la cible';
+        $save($values)->assertOk();
+        $this->assertSame($values, $source->fieldValues()->sole()->value_json);
+        $another = $values;
+        $another[] = ['id' => (string) Str::uuid(), 'label' => 'Nouvelle rencontre', 'values' => [$reference => ['reference_content_id' => $target->id]]];
+        $save($another)->assertUnprocessable();
+        $withoutReference = $values;
+        unset($withoutReference[0]['values'][$reference]);
+        $save($withoutReference)->assertOk();
+        $save($values)->assertUnprocessable();
+        $this->assertSame($withoutReference, $source->fieldValues()->sole()->value_json);
+    }
+
     public function test_retired_members_do_not_reduce_the_capacity_for_current_group_values(): void
     {
         $project = Project::create(['name' => 'Projet']);

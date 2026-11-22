@@ -106,9 +106,14 @@ class ContentFieldValue extends Model
         }
 
         if ($definition->value_type === 'reference') {
-            $target = Content::query()->find($this->reference_content_id);
+            $target = Content::withTrashed()->find($this->reference_content_id);
+            $retained = $this->getOriginal('reference_content_id') !== null
+                && (string) $this->getOriginal('reference_content_id') === (string) $this->reference_content_id;
+            if (! $target && $retained) {
+                return;
+            }
             $allowed = $definition->options_data['content_type_ids'] ?? null;
-            if (! $target || ($allowed && ! in_array($target->content_type_id, $allowed))
+            if (! $target || ($target->trashed() && ! $retained) || ($allowed && ! in_array($target->content_type_id, $allowed))
                 || ($target->project_id !== null && $content->project_id !== null
                     && (int) $target->project_id !== (int) $content->project_id)) {
                 throw ValidationException::withMessages(['reference_content_id' => 'Le contenu cible de la référence n’est pas autorisé.']);
