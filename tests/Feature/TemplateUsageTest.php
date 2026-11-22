@@ -14,6 +14,30 @@ class TemplateUsageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_capability_descriptions_preserve_long_rich_text(): void
+    {
+        $project = Project::create(['name' => 'Projet']);
+        $type = ContentType::create(['key' => 'abilities', 'name' => 'Capacités']);
+        $template = $this->postJson('/api/content-templates', [
+            'name' => 'Capacités', 'content_type_id' => $type->id,
+            'fields' => [['label' => 'Techniques', 'section' => 'Capacités', 'type' => 'capabilities']],
+        ])->assertCreated()->json();
+        $fieldId = $this->getJson('/api/content-templates/'.$template['id'])->assertOk()->json('versions.0.fields.0.field_definition_id');
+        $id = $this->postJson('/api/contents', [
+            'title' => 'Fiche', 'project_id' => $project->id, 'content_type_id' => $type->id,
+            'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $description = str_repeat("## Technique\nUne **description** détaillée.\n- Une condition\n", 200);
+        $input = ['title' => 'Fiche', 'summary' => null, 'field_values' => [
+            ['field_definition_id' => $fieldId, 'value_json' => [['label' => 'Technique', 'description' => $description]]],
+        ]];
+        $this->patchJson("/api/contents/$id", $input)->assertOk();
+        $this->getJson("/api/contents/$id")->assertOk()->assertJsonPath('field_values.0.value_json.0.description', $description);
+        $input['field_values'][0]['value_json'][0]['description'] = ['Texte invalide'];
+        $this->patchJson("/api/contents/$id", $input)->assertUnprocessable();
+        $this->getJson("/api/contents/$id")->assertOk()->assertJsonPath('field_values.0.value_json.0.description', $description);
+    }
+
     public function test_removed_choices_can_be_retained_but_not_introduced_again_after_removal(): void
     {
         $type = ContentType::create(['key' => 'choice-history', 'name' => 'Fiche']);

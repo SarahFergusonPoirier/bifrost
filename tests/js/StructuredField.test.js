@@ -1,9 +1,39 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import StructuredField from '../../resources/js/components/StructuredField.vue';
+import FicheEntryList from '../../resources/js/components/fiche/FicheEntryList.vue';
 import { contentRequest } from '../../resources/js/services/contentRecovery';
 
 vi.mock('../../resources/js/services/contentRecovery', () => ({ contentRequest: vi.fn() }));
+
+it('expands a capability description inside its text region without navigating or interpreting HTML', async () => {
+    const description = 'Début **important**. ' + 'Détails. '.repeat(100) + '<script>danger()</script> Fin intégrale';
+    const wrapper = mount(FicheEntryList, { props: { entries: [{ label: 'Technique', description }], textLimit: 80 } });
+    expect(wrapper.text()).not.toContain('Fin intégrale');
+    const button = wrapper.get('.fiche-text button');
+    expect(button.text()).toBe('Voir plus');
+    await button.trigger('click');
+    expect(wrapper.text()).toContain('Fin intégrale');
+    expect(wrapper.find('script').exists()).toBe(false);
+    expect(button.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.emitted('open')).toBeUndefined();
+    await button.trigger('click');
+    expect(wrapper.text()).not.toContain('Fin intégrale');
+    expect(description).toContain('Fin intégrale');
+    wrapper.unmount();
+});
+
+it('edits long capability descriptions without a short-text character limit', async () => {
+    const original = { label: 'Technique', description: 'Résumé' };
+    const wrapper = mount(StructuredField, { props: { format: 'capabilities', value: [original] } });
+    const description = '## Technique\n' + '**Une description longue.**\n'.repeat(200);
+    const editor = wrapper.get('textarea');
+    expect(editor.attributes('maxlength')).toBeUndefined();
+    await editor.setValue(description);
+    expect(wrapper.emitted('change').at(-1)[0][0].description).toBe(description);
+    expect(original.description).toBe('Résumé');
+    wrapper.unmount();
+});
 
 it('uses a named structured entry while retaining existing legacy period and description values', async () => {
     const wrapper = mount(StructuredField, { props: { format: 'repeatable', entryLabel: 'Langue',

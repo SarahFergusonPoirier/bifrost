@@ -68,7 +68,7 @@
                 <label>{{ format === 'equipment' ? 'Nom de l’objet' : format === 'capabilities' ? 'Nom de la capacité' : format === 'repeatable' ? entryLabel : format === 'bullets' ? 'Libellé' : 'Mot-clé' }} <input :value="entry.label" required maxlength="120"
                     @change="editKeyword(index, 'label', $event.target.value)" /></label>
                 <FicheTextEditor v-if="format === 'capabilities'" label="Description" :model-value="entry.description"
-                    :max-length="1000" :targets="targets" @update:model-value="editKeyword(index, 'description', $event, false)" />
+                    :targets="targets" @update:model-value="editKeyword(index, 'description', $event, false)" />
                 <label v-else-if="format !== 'bullets' && (!customGroup || entry.description)">Description <input :value="entry.description ?? ''" maxlength="1000"
                     @change="editKeyword(index, 'description', $event.target.value)" /></label>
                 <template v-if="format === 'repeatable'">
