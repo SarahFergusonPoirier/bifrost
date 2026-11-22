@@ -126,7 +126,7 @@ class FieldSchema
                 $display['scale_levels'] = $levels;
             }
             if (array_key_exists('level_descriptions', $field)) {
-                $display['level_descriptions'] = array_slice($field['level_descriptions'], 0, $levels);
+                $display['level_descriptions'] = array_slice($field['level_descriptions'], 0, 20);
             }
             if (isset($field['scale_display'])) {
                 $display['scale_display'] = $field['scale_display'];

@@ -3,6 +3,51 @@ import { expect, it } from 'vitest';
 import FicheFieldBlockBuilder from '../../resources/js/components/fiche/FicheFieldBlockBuilder.vue';
 import FicheDefaultValueEditor from '../../resources/js/components/fiche/FicheDefaultValueEditor.vue';
 
+it('applies a common block scale only after confirming preservation and keeps level descriptions', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {
+        title: 'Attributs clés', fields: [5, 10].map((levels, index) => ({
+            field_definition_id: index + 1,
+            field_definition: { label: index ? 'Agilité' : 'Force', value_type: 'json', options_data: { format: 'scale', levels } },
+            display_options: { level_descriptions: ['Débutant', 'Apprenti', 'Confirmé', 'Expert', 'Maître'] },
+        })),
+    } } });
+    const control = wrapper.findAll('fieldset').find(fieldset => fieldset.find('legend').text() === 'Échelles du bloc');
+    await control.get('input[inputmode="numeric"]').setValue('3');
+    await control.get('select').setValue('segments');
+    expect(control.text()).toContain('Force : 5 → 3 niveaux');
+    expect(control.text()).toContain('Agilité : 10 → 3 niveaux');
+    expect(wrapper.vm.valid).toBe(false);
+    wrapper.vm.applyBlockScale();
+    expect(wrapper.vm.fields.map(field => field.levels)).toEqual(['5', '10']);
+    await control.get('input[type="checkbox"]').setValue(true);
+    await control.findAll('button').find(button => button.text() === 'Appliquer aux échelles du bloc').trigger('click');
+    expect(wrapper.vm.fields.map(field => [field.levels, field.scale_display, field.preserveScale])).toEqual([
+        ['3', 'segments', true], ['3', 'segments', true],
+    ]);
+    wrapper.vm.create();
+    const fields = wrapper.emitted('update')[0][0].fields;
+    expect(fields.every(field => field.levels === 3 && field.scale_strategy === 'preserve')).toBe(true);
+    expect(fields[0].level_descriptions).toEqual(['Débutant', 'Apprenti', 'Confirmé', 'Expert', 'Maître']);
+    wrapper.unmount();
+});
+
+it('cancels a pending common scale without changing the fields', async () => {
+    const wrapper = mount(FicheFieldBlockBuilder);
+    wrapper.vm.title = 'Attributs';
+    wrapper.vm.addField();
+    wrapper.vm.fields[0].type = 'scale';
+    await wrapper.vm.$nextTick();
+    const control = wrapper.findAll('fieldset').find(fieldset => fieldset.find('legend').text() === 'Échelles du bloc');
+    await control.get('input[inputmode="numeric"]').setValue('21');
+    expect(wrapper.vm.canApplyBlockScale).toBe(false);
+    wrapper.vm.applyBlockScale();
+    expect(wrapper.vm.fields[0].levels).toBe('5');
+    await control.findAll('button').find(button => button.text() === 'Annuler le réglage commun').trigger('click');
+    expect(wrapper.vm.blockScaleLevels).toBe('5');
+    expect(wrapper.vm.valid).toBeTruthy();
+    wrapper.unmount();
+});
+
 it('edits persisted group members while preserving their keys and locking existing types', async () => {
     const member = { key: 'member', field_definition: { label: 'Ancien nom', value_type: 'text' }, display_options: {} };
     const wrapper = mount(FicheFieldBlockBuilder, { props: { schema: {

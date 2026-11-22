@@ -57,6 +57,20 @@
             <button type="button" :disabled="index === fields.length - 1" :aria-label="'Descendre le champ ' + field.label" @click="move(index, 1)">Descendre</button>
             <button type="button" :aria-label="'Retirer le champ ' + field.label" @click="removeField(index)">Retirer le champ</button>
         </div>
+        <fieldset v-if="!groupMode && scaleFields.length" @input="scalePending = true" @change="scalePending = true">
+            <legend>Échelles du bloc</legend>
+            <p>Appliquer un réglage commun aux {{ scaleFields.length }} échelle(s) de ce bloc.</p>
+            <label>Nombre commun de niveaux, de 2 à 20 <input v-model="blockScaleLevels" inputmode="numeric" @keydown.enter.prevent /></label>
+            <label>Affichage commun
+                <select v-model="blockScaleDisplay"><option value="both">Segments et chiffre</option><option value="segments">Segments</option><option value="number">Chiffre</option></select>
+            </label>
+            <ul v-if="scaleChanges.length"><li v-for="field in scaleChanges" :key="field.id">{{ field.label }} : {{ field.originalLevels }} → {{ blockScaleLevels }} niveaux.</li></ul>
+            <label v-if="scaleChanges.length"><input v-model="preserveBlockScale" type="checkbox" /> Conserver les valeurs existantes lors de ce changement commun</label>
+            <p v-if="scaleChanges.length">Les valeurs actuelles restent enregistrées. Celles qui dépassent le nouveau maximum sont signalées comme valeurs conservées.</p>
+            <button type="button" :disabled="!canApplyBlockScale" @click="applyBlockScale">Appliquer aux échelles du bloc</button>
+            <button v-if="scalePending" type="button" @click="resetBlockScale">Annuler le réglage commun</button>
+            <p v-if="scalePending" role="status">Applique ou annule ce réglage commun avant de préparer le bloc.</p>
+        </fieldset>
         <button type="button" :disabled="fields.length >= limit" @click="addField">Ajouter un champ</button>
         <button type="button" :disabled="!valid" @click="create">{{ groupMode ? 'Appliquer la structure du groupe' : schema ? 'Préparer les changements des champs' : 'Ajouter le bloc libre à la disposition' }}</button>
         <button v-if="title || fields.length" type="button" @click="reset">Effacer le bloc en préparation</button>

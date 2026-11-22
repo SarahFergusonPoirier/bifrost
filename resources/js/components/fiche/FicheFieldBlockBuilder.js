@@ -6,12 +6,19 @@ export default {
     components: { FicheDefaultValueEditor },
     props: { disabled: Boolean, schema: Object, groupMode: Boolean, depth: { type: Number, default: 0 }, contentId: String, targets: { type: Array, default: () => [] }, referenceTypes: { type: Array, default: () => [] } },
     emits: ['create', 'update', 'pending'],
-    data: () => ({ title: '', fields: [] }),
+    data: () => ({ title: '', fields: [], blockScaleLevels: '5', blockScaleDisplay: 'both', preserveBlockScale: false, scalePending: false }),
     computed: {
         types() { return Object.fromEntries(Object.entries(fieldTypes).filter(([type]) => type !== 'json' && (this.depth < 3 || type !== 'repeatable'))); },
         limit() { return this.groupMode ? 20 : 200; },
+        scaleFields() { return this.fields.filter(field => field.type === 'scale'); },
+        scaleChanges() { return this.scaleFields.filter(field => (field.existingId || field.existingKey) && Number(this.blockScaleLevels) !== Number(field.originalLevels)); },
+        canApplyBlockScale() {
+            const levels = Number(this.blockScaleLevels);
+            return this.scaleFields.length > 0 && Number.isInteger(levels) && levels >= 2 && levels <= 20
+                && ['both', 'segments', 'number'].includes(this.blockScaleDisplay) && (!this.scaleChanges.length || this.preserveBlockScale);
+        },
         valid() {
-            return this.title.trim() && (this.groupMode || this.fields.length > 0) && this.fields.every(field => field.label.trim()
+            return !this.scalePending && this.title.trim() && (this.groupMode || this.fields.length > 0) && this.fields.every(field => field.label.trim()
                 && this.types[field.type] && !field.groupPending && (!field.default_enabled || field.default_value != null)
                 && (field.type !== 'scale' || Number.isInteger(Number(field.levels)) && Number(field.levels) >= 2 && Number(field.levels) <= 20
                     && (!(field.existingId || field.existingKey) || Number(field.levels) === field.originalLevels || field.preserveScale)));
@@ -44,6 +51,7 @@ export default {
                     repeatable_level_mode: field.repeatable_level_mode ?? 'text', calculation: field.calculation ?? 'none', allow_reference_creation: Boolean(field.allow_reference_creation),
                 };
             });
+            this.resetBlockScale();
         },
         addField() {
             if (this.fields.length >= this.limit) return;
@@ -74,7 +82,7 @@ export default {
                 ...(['reference', 'references'].includes(field.type) ? { reference_types: field.reference_types, allow_reference_creation: field.allow_reference_creation } : {}),
                 ...(field.type === 'scale' ? { levels: Number(field.levels), scale_display: field.scale_display,
                     ...(field.preserveScale ? { scale_strategy: 'preserve' } : {}),
-                    level_descriptions: field.levelDescriptions.split('\n').slice(0, Number(field.levels)).map(value => value.trim() || null) } : {}),
+                    level_descriptions: field.levelDescriptions.split('\n').slice(0, 20).map(value => value.trim() || null) } : {}),
             }));
             this.$emit(this.schema ? 'update' : 'create', { title, fields });
             this.reset();
@@ -82,6 +90,7 @@ export default {
         reset() {
             if (this.schema) this.loadSchema(this.schema);
             else { this.title = ''; this.fields = []; }
+            this.resetBlockScale();
             this.$emit('pending', false);
         },
         previewEntryFields,
@@ -92,5 +101,21 @@ export default {
             this.$emit('pending', true);
         },
         removeField(index) { this.fields.splice(index, 1); this.$emit('pending', true); },
+        resetBlockScale() {
+            this.blockScaleLevels = String(this.scaleFields[0]?.levels ?? 5);
+            this.blockScaleDisplay = this.scaleFields[0]?.scale_display ?? 'both';
+            this.preserveBlockScale = false;
+            this.scalePending = false;
+        },
+        applyBlockScale() {
+            if (this.disabled || !this.canApplyBlockScale) return;
+            for (const field of this.scaleFields) {
+                field.levels = String(Number(this.blockScaleLevels));
+                field.scale_display = this.blockScaleDisplay;
+                field.preserveScale = Boolean(field.existingId || field.existingKey) && Number(field.levels) !== Number(field.originalLevels);
+            }
+            this.scalePending = false;
+            this.$emit('pending', true);
+        },
     },
 };

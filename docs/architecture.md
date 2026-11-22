@@ -269,3 +269,12 @@ contexte du projet et les types accessibles traversent récursivement les
 numérique ou l’UUID canonique de la fiche créée. Le résultat doit appartenir
 au projet et à un type autorisé. Les erreurs conservent la saisie et la limite
 de deux cents références reste appliquée, y compris après une création lente.
+
+L’éditeur de champs propose un réglage commun aux échelles d’un bloc : nombre
+de niveaux et affichage en segments, chiffres ou les deux. Ce réglage est
+préparé localement, avec aperçu des changements et confirmation de conservation
+pour les échelles existantes ; il doit être appliqué ou annulé avant de préparer
+le bloc. Les paramètres sont ensuite persistés sur chaque champ par le même
+contrat de schéma, sans deuxième mécanisme d’écriture. Les descriptions des
+niveaux supérieurs restent enregistrées lors d’une réduction de l’échelle,
+même si seules les descriptions des niveaux affichés sont présentées.

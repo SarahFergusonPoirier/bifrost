@@ -71,7 +71,7 @@ class RepeatableFieldsTest extends TestCase
         $layout['tabs'][0]['placements'] = [['id' => '62d62476-6c05-4e1b-af03-9e4b1fd6e5e6', 'source' => 'fields:'.$block->public_id, 'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false]];
         $layout['block_updates'] = [['id' => $block->public_id, 'title' => 'Parcours', 'fields' => [[
             'id' => $field->id, 'label' => 'Parcours', 'type' => 'repeatable', 'section' => 'Parcours', 'entry_fields' => [
-                ['key' => $scaleKey, 'label' => 'Maîtrise', 'type' => 'scale', 'levels' => 3],
+                ['key' => $scaleKey, 'label' => 'Maîtrise', 'type' => 'scale', 'levels' => 3, 'level_descriptions' => ['Débutant', 'Apprenti', 'Confirmé', 'Expert', 'Maître']],
                 ['key' => $newKey, 'label' => 'Allié', 'type' => 'reference', 'reference_types' => [$local->id]],
             ],
         ]]]];
@@ -83,6 +83,7 @@ class RepeatableFieldsTest extends TestCase
         $this->assertSame([$scaleKey, $newKey, $oldKey], array_column($schema, 'key'));
         $this->assertTrue($schema[2]['retired']);
         $this->assertSame(3, $schema[0]['display_options']['scale_levels']);
+        $this->assertSame(['Débutant', 'Apprenti', 'Confirmé', 'Expert', 'Maître'], $schema[0]['display_options']['level_descriptions']);
         $this->assertSame(5, $field->fresh()->options_data['entry_fields'][1]['field_definition']['options_data']['levels']);
         $this->assertSame($entries, $content->fieldValues()->sole()->value_json);
         $payload = ['title' => 'Élia', 'summary' => null, 'field_values' => [['field_definition_id' => $field->id, 'value_json' => $entries]]];
