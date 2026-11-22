@@ -6,6 +6,7 @@ use App\FieldSchema;
 use App\Models\ContentTemplate;
 use App\Models\FieldDefinition;
 use App\Models\TemplateVersion;
+use App\RepeatableFields;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,9 @@ class ContentTemplateAuthoringController extends Controller
             ));
             $default = array_key_exists('default_value', $field) ? $field['default_value'] : $original?->default_value;
             $display = FieldSchema::displayOptions($field + ['default_value' => $default], $definition, $original?->display_options ?? [], $original?->section_key, $original !== null);
+            if ($template->scope_type === 'global') {
+                RepeatableFields::assertGlobal(['value_type' => $definition->value_type, 'options_data' => $definition->options_data], $default, $display);
+            }
 
             $version->fields()->create([
                 'field_definition_id' => $definition->id,

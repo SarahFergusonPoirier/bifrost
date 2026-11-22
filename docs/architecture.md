@@ -308,3 +308,10 @@ dans la même transaction que le layout. Un schéma partagé par plusieurs place
 n’est créé qu’une fois ; seules les valeurs par défaut configurées sont appliquées.
 Les positions des champs, les types liés, la version du modèle et les placements
 cibles sont vérifiés avant l’enregistrement. L’aperçu liste les nouveaux champs.
+
+La publication des modèles de fiches globaux réutilise le même contrôle des
+défauts que la bibliothèque de blocs. Les références à des fiches et aux fichiers
+locaux y sont refusées, y compris les images des équipements intégrés, les
+défauts des membres de groupes et les valeurs imbriquées d’un défaut de groupe.
+Les équipements sans fichier et les états explicites restent réutilisables.
+Un refus annule la version, ses définitions et son modèle lorsqu’il est nouveau.

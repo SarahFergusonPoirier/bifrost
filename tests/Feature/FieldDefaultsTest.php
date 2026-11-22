@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Content;
 use App\Models\ContentType;
+use App\Models\FieldDefinition;
 use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,6 +12,56 @@ use Tests\TestCase;
 class FieldDefaultsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_global_fiche_templates_reject_project_bound_defaults_including_equipment_images_in_nested_groups(): void
+    {
+        $content = $this->content();
+        $image = 'b51cc6b4-6bf9-4e85-8063-0969bba5aaf8';
+        $member = '6e0d894f-e6c7-4bce-a27c-74f41081b42b';
+        $equipment = ['value_json' => [['label' => 'Épée', 'image' => $image]]];
+        foreach ([
+            ['type' => 'equipment', 'default_value' => $equipment],
+            ['type' => 'reference', 'default_value' => ['reference_content_id' => $content->id]],
+            ['type' => 'repeatable', 'entry_fields' => [['key' => $member, 'label' => 'Objet', 'type' => 'equipment', 'default_value' => $equipment]]],
+            ['type' => 'repeatable', 'entry_fields' => [['key' => $member, 'label' => 'Objet', 'type' => 'equipment']], 'default_value' => ['value_json' => [[
+                'id' => 'dc90806d-a22b-4b1a-b3db-93ead13c3a64', 'label' => 'Inventaire', 'values' => [$member => $equipment],
+            ]]]],
+        ] as $field) {
+            $this->postJson('/api/content-templates', ['name' => 'Modèle global', 'content_type_id' => $content->content_type_id,
+                'fields' => [$field + ['label' => 'Sources', 'section' => 'Sources']],
+            ])->assertUnprocessable();
+            $this->assertDatabaseCount('content_templates', 0);
+            $this->assertDatabaseCount('template_versions', 0);
+            $this->assertDatabaseCount('field_definitions', 0);
+        }
+        $template = $this->postJson('/api/content-templates', ['name' => 'Équipement global', 'content_type_id' => $content->content_type_id,
+            'fields' => [['label' => 'Objets', 'section' => 'Équipement', 'type' => 'equipment', 'default_value' => ['value_json' => [['label' => 'Épée d’entraînement']]]]],
+        ])->assertCreated()->json();
+        $id = $this->postJson('/api/contents', ['title' => 'Autre fiche', 'project_id' => $content->project_id,
+            'content_type_id' => $content->content_type_id, 'template_version_id' => $template['version_id'],
+        ])->assertCreated()->json('public_id');
+        $this->getJson('/api/contents/'.$id)->assertOk()->assertJsonPath('field_values.0.value_json.0.label', 'Épée d’entraînement');
+    }
+
+    public function test_global_block_models_reject_equipment_image_defaults_while_project_models_keep_their_scope(): void
+    {
+        $content = $this->content();
+        $field = FieldDefinition::create(['key' => 'equipment-default', 'label' => 'Équipement', 'value_type' => 'json', 'options_data' => ['format' => 'equipment']]);
+        $block = $content->blocks()->create(['block_type' => 'fields', 'title' => 'Équipement', 'field_schema' => [[
+            'field_definition_id' => $field->id, 'default_value' => ['value_json' => [['label' => 'Objet', 'image' => '41bb9a78-8738-4d24-85fb-2b1cb52ce84a']]],
+        ]]]);
+        $base = "/api/projects/{$content->project_id}/contents/{$content->public_id}";
+        $layout = $this->getJson("$base/fiche-layout")->json();
+        $layout['tabs'][0]['placements'] = [['id' => '12fe566f-7bfd-4350-9b88-7b6bf94e06b2', 'source' => 'fields:'.$block->public_id,
+            'width' => 6, 'height' => 2, 'hidden' => false, 'collapsed' => false,
+        ]];
+        $this->putJson("$base/fiche-layout", $layout)->assertOk();
+        $input = ['name' => 'Équipement', 'scope' => 'global', 'tab' => 'overview', 'version' => 1];
+        $this->postJson("$base/fiche-tab-templates", $input)->assertUnprocessable();
+        $this->assertDatabaseCount('fiche_tab_templates', 0);
+        $input['scope'] = 'project';
+        $this->postJson("$base/fiche-tab-templates", $input)->assertCreated()->assertJsonPath('scope', 'project');
+    }
 
     public function test_block_defaults_are_typed_validated_and_not_reapplied_to_copies_of_cleared_values(): void
     {
